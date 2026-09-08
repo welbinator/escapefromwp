@@ -120,3 +120,4 @@ section { padding: var(--gap-section) 0; position: relative; }
 .section-lead { color: var(--slate); font-size: 18px; max-width: 620px; }
 
 .hair { border: 0; border-top: 1px solid var(--steel); }
+#plan, #outside { padding-top: calc(var(--gap-section) + 32px); }
