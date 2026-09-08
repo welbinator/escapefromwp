@@ -186,6 +186,12 @@ const outside = [
     if (form) {
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
+        // Staging preview (GitHub Pages) has no backend — short-circuit with a friendly note.
+        if (location.hostname.endsWith("github.io")) {
+          status.textContent = "◦ Preview mode — the extraction request form is live on escapefromwp.com.";
+          status.className = "form-status ok";
+          return;
+        }
         status.textContent = "◦ Transmitting extraction request…";
         status.className = "form-status pending";
         const data = Object.fromEntries(new FormData(form));
