@@ -1,0 +1,47 @@
+---
+export interface Props { title?: string; description?: string; }
+const {
+  title = "Escape From WP — Break out of WordPress",
+  description = "A tactical migration service that gets your site off WordPress and onto a faster, more secure, modern stack. Plan your escape.",
+} = Astro.props;
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const isStaging = base !== "";
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {isStaging && <meta name="robots" content="noindex, nofollow" />}
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content={`${base}/images/hero-1600.webp`} />
+    <meta name="theme-color" content="#0b0405" />
+    <link rel="icon" href={`${base}/favicon.svg`} type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="preload" as="image" href={`${base}/images/hero-1600.webp`} />
+  </head>
+  <body>
+    <slot />
+    <script is:inline>
+      document.documentElement.classList.add("js");
+      const risers = [...document.querySelectorAll(".rise")];
+      const io = new IntersectionObserver(
+        (es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } }),
+        { rootMargin: "0px 0px -8% 0px", threshold: 0.08 }
+      );
+      risers.forEach((el) => io.observe(el));
+      setTimeout(() => risers.forEach((el) => el.classList.add("in")), 2500);
+    </script>
+  </body>
+</html>
+<style is:global>@import "../styles/global.css";</style>

@@ -1,0 +1,346 @@
+---
+import Layout from "../layouts/Layout.astro";
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+const prison = [
+  { code: "SEC-01", t: "Constant target", d: "43% of the web runs WordPress, so it's the #1 target on the internet. Every plugin is a door someone else installed on your house." },
+  { code: "SEC-02", t: "Plugin dependency hell", d: "One abandoned plugin, one bad update, and the whole site goes down. You're renting stability from strangers." },
+  { code: "SEC-03", t: "Bloat & slow loads", d: "Page builders ship 2MB of CSS to render a headline. Google notices. So do the visitors who bounce before it loads." },
+  { code: "SEC-04", t: "Maintenance tax", d: "Core, themes, plugins, PHP versions — endless updates that break things, forever, just to stay in place." },
+];
+
+const steps = [
+  { n: "01", t: "Recon", d: "I audit your current site — content, structure, forms, SEO, every URL. Nothing gets left behind in the old cell." },
+  { n: "02", t: "Rebuild", d: "Your site is rebuilt on a modern static/headless stack — hand-built, no page-builder bloat, pixel-faithful or better." },
+  { n: "03", t: "Redirect", d: "Every old URL maps to its new home. Search rankings carry over. No 404s, no lost traffic, no broken links." },
+  { n: "04", t: "Extract", d: "We cut over on a schedule you approve. The old WordPress install goes dark. You're out." },
+];
+
+const outside = [
+  { stat: "90+", label: "PageSpeed scores", d: "Static pages load in milliseconds, not seconds. Real Core Web Vitals wins, not a caching band-aid." },
+  { stat: "0", label: "Plugins to patch", d: "No plugin surface means almost nothing to hack. No admin login for bots to hammer. Nothing to update at 2am." },
+  { stat: "1/10", label: "Hosting cost", d: "Static sites run on cheap, global CDNs. No heavy PHP host, no managed-WP premium, no surprise renewal spike." },
+];
+---
+<Layout>
+  <!-- NAV -->
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a href="#top" class="wordmark">
+        ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#prison">The Prison</a>
+        <a href="#plan">The Plan</a>
+        <a href="#outside">The Outside</a>
+        <a href="#breakout" class="btn btn-primary nav-cta">Plan your escape</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero" id="top">
+    <div class="hero-img" style={`background-image:url('${base}/images/hero-1600.webp')`}></div>
+    <div class="hero-scan"></div>
+    <div class="wrap hero-content">
+      <span class="eyebrow danger rise">◦ Containment status: WordPress</span>
+      <h1 class="hero-title rise">
+        You have 24&nbsp;hours<br />to get off <span class="wp-out">WordPress</span>.
+      </h1>
+      <p class="hero-sub rise">
+        Escape From WP is a migration service for people done with plugin bloat,
+        security holes, and update hell. We break your site out of WordPress and
+        rebuild it on something modern, secure, and fast. Then we bolt the door behind you.
+      </p>
+      <div class="hero-cta rise">
+        <a href="#breakout" class="btn btn-primary">▸ Plan your escape</a>
+        <a href="#prison" class="btn btn-ghost">Why escape?</a>
+      </div>
+      <div class="hero-readout rise">
+        <span>LAT 40.71°N</span><span>LONG 74.00°W</span><span class="ok">◦ EXTRACTION ROUTE: OPEN</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- THE PRISON -->
+  <section id="prison" class="wrap">
+    <span class="section-num rise">// 01 — THE PRISON</span>
+    <h2 class="section-title rise">WordPress is a walled city.</h2>
+    <p class="section-lead rise">
+      It was fine when you moved in. Then came the plugins, the updates, the
+      vulnerabilities, the slow crawl. Here's what's actually holding your site captive.
+    </p>
+    <div class="grid-4">
+      {prison.map((p) => (
+        <div class="cell rise">
+          <span class="cell-code">{p.code}</span>
+          <h3 class="cell-title">{p.t}</h3>
+          <p class="cell-desc">{p.d}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <hr class="hair" />
+
+  <!-- THE PLAN -->
+  <section id="plan" class="wrap">
+    <span class="section-num rise">// 02 — THE PLAN</span>
+    <h2 class="section-title rise">The extraction, in four moves.</h2>
+    <p class="section-lead rise">
+      No downtime surprises. No lost rankings. A clean, scheduled breakout you sign off on
+      at every stage.
+    </p>
+    <div class="steps">
+      {steps.map((s) => (
+        <div class="step rise">
+          <span class="step-n">{s.n}</span>
+          <div class="step-body">
+            <h3 class="step-title">{s.t}</h3>
+            <p class="cell-desc">{s.d}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <hr class="hair" />
+
+  <!-- THE OUTSIDE -->
+  <section id="outside" class="wrap">
+    <span class="section-num rise">// 03 — THE OUTSIDE</span>
+    <h2 class="section-title rise">Life outside the wall.</h2>
+    <p class="section-lead rise">
+      Same site, same content, same brand — rebuilt on a stack that's faster, cheaper,
+      and almost nothing to attack.
+    </p>
+    <div class="grid-3">
+      {outside.map((o) => (
+        <div class="stat-cell rise">
+          <span class="stat-num">{o.stat}</span>
+          <span class="stat-label">{o.label}</span>
+          <p class="cell-desc">{o.d}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <hr class="hair" />
+
+  <!-- THE BREAKOUT / CONTACT -->
+  <section id="breakout" class="breakout">
+    <div class="wrap breakout-inner">
+      <div class="breakout-left rise">
+        <span class="eyebrow">◦ Extraction request</span>
+        <h2 class="section-title">Start the breakout.</h2>
+        <p class="section-lead">
+          Tell me about the site you want out of WordPress. I'll come back with a plain
+          assessment — what it takes, what it costs, and what you gain. No obligation,
+          no sales theater.
+        </p>
+        <ul class="breakout-list">
+          <li>◦ Free migration assessment</li>
+          <li>◦ Your current URL keeps its rankings</li>
+          <li>◦ Fixed quote before any work starts</li>
+        </ul>
+      </div>
+      <form class="breakout-form rise" id="escape-form">
+        <div class="field">
+          <label for="name">Name / Callsign</label>
+          <input id="name" name="name" type="text" required autocomplete="name" />
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" required autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="site">Site to extract (URL)</label>
+          <input id="site" name="site" type="text" placeholder="yoursite.com" />
+        </div>
+        <div class="field">
+          <label for="message">What's the situation?</label>
+          <textarea id="message" name="message" rows="4" placeholder="Slow? Hacked? Just sick of WordPress?"></textarea>
+        </div>
+        <div class="field" aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;height:0;overflow:hidden">
+          <label for="website_hp">Website</label>
+          <input id="website_hp" name="website_hp" type="text" tabindex="-1" autocomplete="off" />
+        </div>
+        <button type="submit" class="btn btn-primary form-submit">▸ Request extraction</button>
+        <p class="form-status" id="form-status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <span class="wordmark small">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
+      <span class="footer-mono">◦ WordPress migration &amp; rescue · escapefromwp.com</span>
+      <span class="footer-mono dim">© {new Date().getFullYear()} — All units accounted for.</span>
+    </div>
+  </footer>
+
+  <script is:inline>
+    const form = document.getElementById("escape-form");
+    const status = document.getElementById("form-status");
+    if (form) {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        status.textContent = "◦ Transmitting extraction request…";
+        status.className = "form-status pending";
+        const data = Object.fromEntries(new FormData(form));
+        try {
+          const res = await fetch("/api/contact", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+          if (res.ok) {
+            form.reset();
+            status.textContent = "◦ Received. I'll be in touch within one business day. Stay low.";
+            status.className = "form-status ok";
+          } else {
+            const j = await res.json().catch(() => ({}));
+            throw new Error(j.error || "Transmission failed");
+          }
+        } catch (err) {
+          status.textContent = "◦ " + (err.message || "Transmission failed") + ". Please try again in a moment.";
+          status.className = "form-status err";
+        }
+      });
+    }
+  </script>
+
+  <style>
+    /* NAV */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(11, 4, 5, 0.72);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--steel);
+    }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; }
+    .wordmark {
+      font-family: var(--font-mono); font-weight: 700; font-size: 15px;
+      letter-spacing: 0.06em; color: var(--chalk);
+    }
+    .wordmark .wp { color: var(--signal-red); }
+    .wordmark.small { font-size: 13px; }
+    .nav-links { display: flex; align-items: center; gap: 28px; }
+    .nav-links a:not(.btn) {
+      font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--slate); transition: color .15s;
+    }
+    .nav-links a:not(.btn):hover { color: var(--term-green); }
+    .nav-cta { padding: 9px 16px; }
+
+    /* HERO */
+    .hero { min-height: 100vh; display: flex; align-items: center; padding: 0; overflow: hidden; }
+    .hero-img {
+      position: absolute; inset: 0; background-size: cover; background-position: center 30%;
+      z-index: 0;
+    }
+    .hero-img::after {
+      content: ""; position: absolute; inset: 0;
+      background:
+        linear-gradient(90deg, rgba(11,4,5,0.95) 0%, rgba(11,4,5,0.72) 42%, rgba(11,4,5,0.25) 100%),
+        linear-gradient(0deg, rgba(11,4,5,0.95) 0%, rgba(11,4,5,0) 45%);
+    }
+    .hero-scan {
+      position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: .5;
+      background: repeating-linear-gradient(to bottom, transparent 0 3px, rgba(78,227,107,0.03) 3px 4px);
+    }
+    .hero-content { position: relative; z-index: 2; padding-top: 90px; padding-bottom: 60px; }
+    .hero-title {
+      font-size: clamp(38px, 7.5vw, 88px); line-height: 0.98; margin: 22px 0 26px;
+      max-width: 16ch; letter-spacing: -0.04em;
+    }
+    .hero-title .wp-out {
+      color: var(--signal-red); position: relative; white-space: nowrap;
+    }
+    .hero-title .wp-out::after {
+      content: ""; position: absolute; left: -2%; right: -2%; top: 52%; height: 5px;
+      background: var(--signal-red); transform: rotate(-2.5deg);
+      box-shadow: 0 0 14px rgba(227,39,53,.6);
+    }
+    .hero-sub { color: var(--slate); font-size: clamp(15px, 1.6vw, 19px); max-width: 56ch; line-height: 1.65; }
+    .hero-cta { display: flex; gap: 14px; margin: 34px 0 40px; flex-wrap: wrap; }
+    .hero-readout {
+      display: flex; gap: 26px; flex-wrap: wrap;
+      font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em;
+      color: var(--slate-dim); text-transform: uppercase;
+      border-top: 1px solid var(--steel); padding-top: 18px; max-width: 620px;
+    }
+    .hero-readout .ok { color: var(--term-green); }
+
+    /* GRIDS / CELLS */
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; margin-top: 48px;
+      background: var(--steel); border: 1px solid var(--steel); }
+    .cell { background: var(--carbon); padding: 30px 26px 34px; }
+    .cell-code { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; color: var(--signal-red); }
+    .cell-title { font-size: 19px; margin: 16px 0 10px; }
+    .cell-desc { color: var(--slate); font-size: 14.5px; line-height: 1.62; }
+
+    /* STEPS */
+    .steps { margin-top: 48px; border-top: 1px solid var(--steel); }
+    .step { display: grid; grid-template-columns: 120px 1fr; gap: 30px; align-items: start;
+      padding: 34px 0; border-bottom: 1px solid var(--steel); }
+    .step-n { font-family: var(--font-mono); font-size: 40px; font-weight: 700;
+      color: var(--graphite); -webkit-text-stroke: 1px var(--steel-lit); }
+    .step-title { font-size: 22px; margin-bottom: 8px; }
+    .step:hover .step-n { color: var(--term-green-dim); -webkit-text-stroke: 1px var(--term-green); }
+
+    /* STATS */
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: 48px;
+      background: var(--steel); border: 1px solid var(--steel); }
+    .stat-cell { background: var(--carbon); padding: 36px 30px 40px; }
+    .stat-num { font-family: var(--font-mono); font-size: 52px; font-weight: 700; color: var(--term-green);
+      display: block; line-height: 1; letter-spacing: -0.02em; text-shadow: 0 0 24px rgba(78,227,107,.28); }
+    .stat-label { display: block; font-size: 15px; font-weight: 600; margin: 14px 0 12px; letter-spacing: -0.01em; }
+
+    /* BREAKOUT / CONTACT */
+    .breakout { background:
+      radial-gradient(120% 100% at 100% 0%, rgba(227,39,53,0.06), transparent 55%),
+      var(--graphite); border-top: 1px solid var(--steel); }
+    .breakout-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
+    .breakout-list { list-style: none; margin-top: 28px; display: grid; gap: 12px;
+      font-family: var(--font-mono); font-size: 13px; color: var(--term-green); letter-spacing: 0.02em; }
+    .breakout-form { background: var(--carbon); border: 1px solid var(--steel); border-radius: var(--radius);
+      padding: 32px; display: grid; gap: 18px; }
+    .field { display: grid; gap: 7px; }
+    .field label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--slate); }
+    .field input, .field textarea {
+      background: var(--graphite-2); border: 1px solid var(--steel); border-radius: var(--radius);
+      color: var(--chalk); font-family: var(--font-display); font-size: 15px; padding: 12px 14px;
+      transition: border-color .15s; resize: vertical;
+    }
+    .field input:focus, .field textarea:focus { outline: none; border-color: var(--term-green); }
+    .field input::placeholder, .field textarea::placeholder { color: var(--slate-dim); }
+    .form-submit { width: 100%; justify-content: center; margin-top: 4px; }
+    .form-status { font-family: var(--font-mono); font-size: 12px; min-height: 16px; letter-spacing: 0.02em; }
+    .form-status.ok { color: var(--term-green); }
+    .form-status.err { color: var(--signal-red-lit); }
+    .form-status.pending { color: var(--slate); }
+
+    /* FOOTER */
+    .footer { border-top: 1px solid var(--steel); padding: 40px 0; }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+    .footer-mono { font-family: var(--font-mono); font-size: 12px; color: var(--slate); letter-spacing: 0.04em; }
+    .footer-mono.dim { color: var(--slate-dim); }
+
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .breakout-inner { grid-template-columns: 1fr; gap: 40px; }
+      .nav-links a:not(.btn) { display: none; }
+    }
+    @media (max-width: 640px) {
+      :root { --gap-section: 84px; }
+      .grid-4, .grid-3 { grid-template-columns: 1fr; }
+      .step { grid-template-columns: 60px 1fr; gap: 18px; }
+      .step-n { font-size: 30px; }
+      .hero-readout { gap: 16px; }
+    }
+  </style>
+</Layout>

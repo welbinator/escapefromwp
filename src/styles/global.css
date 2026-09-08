@@ -1,0 +1,122 @@
+/* ESCAPE FROM WP — design system
+   Spine: Andercore ("steel blueprint at midnight") — carbon canvas, rationed signal red,
+   4px corners, 1px hairline borders, no shadows.
+   Film layer: John Carpenter's Escape from NY/LA — CRT terminal green as a second rationed
+   signal (the "way out"), scanline atmosphere, instrument-panel mono labels. */
+
+:root {
+  /* Canvas — Carpenter near-black, faint warm cast */
+  --carbon:      #0b0405;   /* primary background */
+  --graphite:    #150e0f;   /* raised panels / cards */
+  --graphite-2:  #1a1213;   /* nested surface */
+  --steel:       #382e30;   /* hairline borders */
+  --steel-lit:   #4a3d3f;   /* hover border */
+  --slate:       #9a9294;   /* secondary text */
+  --slate-dim:   #6f686a;   /* tertiary / captions */
+  --chalk:       #f3efe9;   /* primary text on dark (warm white, not clinical) */
+
+  /* Two rationed signals */
+  --signal-red:  #e32735;   /* DANGER / WordPress / primary CTA — activates, never decorates */
+  --signal-red-lit: #ff3b48;
+  --term-green:  #4ee36b;   /* THE WAY OUT — escape route, mission "ok" states, wireframe */
+  --term-green-dim: #2f8f45;
+
+  --amber:       #f0a52a;   /* rare warning-lamp accent (searchlight glow) */
+
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-mono:    "Space Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --maxw: 1200px;
+  --radius: 4px;
+  --gap-section: 120px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+html.js .rise { opacity: 0; transform: translateY(18px); }
+html.js .rise.in { opacity: 1; transform: none; }
+.rise { transition: opacity .7s cubic-bezier(.2,.6,.2,1), transform .7s cubic-bezier(.2,.6,.2,1); }
+@media (prefers-reduced-motion: reduce) {
+  html.js .rise, .rise { opacity: 1 !important; transform: none !important; transition: none; }
+  html { scroll-behavior: auto; }
+}
+
+body {
+  background: var(--carbon);
+  color: var(--chalk);
+  font-family: var(--font-display);
+  font-size: 16px;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Global CRT scanline + vignette wash — atmospheric chrome, very subtle */
+body::before {
+  content: "";
+  position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0,0,0,0) 0,
+    rgba(0,0,0,0) 2px,
+    rgba(0,0,0,0.045) 3px,
+    rgba(0,0,0,0) 4px
+  );
+  mix-blend-mode: multiply;
+}
+body::after {
+  content: "";
+  position: fixed; inset: 0; z-index: 9998; pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 40%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.55) 100%);
+}
+
+.wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+
+a { color: inherit; text-decoration: none; }
+
+h1, h2, h3 { font-weight: 600; letter-spacing: -0.03em; line-height: 1.02; }
+
+/* Instrument-panel eyebrow — Space Mono stamp, the Carpenter cockpit-readout tell */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--slate);
+  display: inline-flex; align-items: center; gap: 10px;
+}
+.eyebrow::before {
+  content: "";
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--term-green);
+  box-shadow: 0 0 10px var(--term-green);
+  animation: pulse 2.4s ease-in-out infinite;
+}
+.eyebrow.danger::before { background: var(--signal-red); box-shadow: 0 0 10px var(--signal-red); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+/* Buttons */
+.btn {
+  font-family: var(--font-mono);
+  font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 14px 26px; border-radius: var(--radius);
+  border: 1px solid transparent; cursor: pointer; display: inline-flex;
+  align-items: center; gap: 10px; transition: all .18s ease; white-space: nowrap;
+}
+.btn-primary { background: var(--signal-red); color: #fff; }
+.btn-primary:hover { background: var(--signal-red-lit); box-shadow: 0 0 24px rgba(227,39,53,.35); }
+.btn-ghost { background: transparent; color: var(--chalk); border-color: var(--steel); }
+.btn-ghost:hover { border-color: var(--term-green); color: var(--term-green); }
+
+/* Section scaffolding */
+section { padding: var(--gap-section) 0; position: relative; }
+.section-num {
+  font-family: var(--font-mono); font-size: 12px; color: var(--signal-red);
+  letter-spacing: 0.1em; margin-bottom: 18px; display: block;
+}
+.section-title { font-size: clamp(30px, 5vw, 52px); margin-bottom: 20px; }
+.section-lead { color: var(--slate); font-size: 18px; max-width: 620px; }
+
+.hair { border: 0; border-top: 1px solid var(--steel); }

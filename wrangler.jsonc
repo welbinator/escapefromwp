@@ -1,0 +1,12 @@
+{
+  "name": "escapefromwp",
+  "compatibility_date": "2025-01-01",
+  "pages_build_output_dir": "dist",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "escapefromwp-db",
+      "database_id": "795e4fee-fb3e-4f20-8499-6c07faa2b54a"
+    }
+  ]
+}
