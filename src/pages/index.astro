@@ -29,7 +29,12 @@ const outside = [
       <a href="#top" class="wordmark">
         ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span>
       </a>
-      <nav class="nav-links">
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-menu">
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+      <nav class="nav-links" id="nav-menu">
         <a href="#prison">The Prison</a>
         <a href="#plan">The Plan</a>
         <a href="#outside">The Outside</a>
@@ -181,6 +186,22 @@ const outside = [
   </footer>
 
   <script is:inline>
+    // Mobile nav toggle
+    const navToggle = document.querySelector(".nav-toggle");
+    const navMenu = document.getElementById("nav-menu");
+    if (navToggle && navMenu) {
+      navToggle.addEventListener("click", () => {
+        const open = navMenu.classList.toggle("open");
+        navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+      navMenu.querySelectorAll("a").forEach((a) =>
+        a.addEventListener("click", () => {
+          navMenu.classList.remove("open");
+          navToggle.setAttribute("aria-expanded", "false");
+        })
+      );
+    }
+
     const form = document.getElementById("escape-form");
     const status = document.getElementById("form-status");
     if (form) {
@@ -239,6 +260,17 @@ const outside = [
     }
     .nav-links a:not(.btn):hover { color: var(--term-green); }
     .nav-cta { padding: 9px 16px; }
+
+    /* HAMBURGER (hidden on desktop) */
+    .nav-toggle {
+      display: none; background: none; border: 1px solid var(--steel);
+      width: 40px; height: 36px; cursor: pointer; padding: 0;
+      flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    }
+    .nav-toggle-bar { display: block; width: 20px; height: 2px; background: var(--chalk); transition: transform .2s, opacity .2s; }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(2) { opacity: 0; }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
     /* HERO */
     .hero { min-height: 100vh; display: flex; align-items: center; padding: 0; overflow: hidden; }
@@ -339,7 +371,17 @@ const outside = [
     @media (max-width: 900px) {
       .grid-4 { grid-template-columns: repeat(2, 1fr); }
       .breakout-inner { grid-template-columns: 1fr; gap: 40px; }
-      .nav-links a:not(.btn) { display: none; }
+      .nav-toggle { display: flex; }
+      .nav-links {
+        position: absolute; top: 62px; left: 0; right: 0;
+        flex-direction: column; align-items: stretch; gap: 0;
+        background: rgba(11, 4, 5, 0.97); backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--steel);
+        max-height: 0; overflow: hidden; transition: max-height .25s ease;
+      }
+      .nav-links.open { max-height: 400px; }
+      .nav-links a:not(.btn) { padding: 16px 20px; border-top: 1px solid var(--steel); }
+      .nav-links .nav-cta { margin: 14px 20px 18px; text-align: center; }
     }
     @media (max-width: 640px) {
       :root { --gap-section: 84px; }
