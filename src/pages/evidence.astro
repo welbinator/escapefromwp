@@ -1,0 +1,270 @@
+---
+import Layout from "../layouts/Layout.astro";
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+// EVIDENCE ENTRIES — reasons to escape WordPress, collected from the wild.
+// Each entry: {
+//   title, url, source (site/author), type (article|tweet|linkedin|video|post),
+//   date (YYYY-MM-DD), summary (1–2 sentences),
+//   image (optional path under /images/evidence/ — OMIT when the link has no usable OG image)
+// }
+// The card layout works WITH or WITHOUT an image. No image → a "case file" tile
+// is drawn from the entry's type + source instead, so rows stay uniform.
+const evidence = [
+  {
+    title: "Cleaning 60+ WordPress Installs on a Fully-Infected WHM Server",
+    url: "https://vapvarun.com/cleaning-60-wordpress-installs-on-a-fully-infected-whm-server/",
+    source: "vapvarun.com",
+    type: "article",
+    date: "2026-09-13",
+    summary:
+      "A hands-on incident report: one cPanel server with 22 accounts and 60+ WordPress installs reinfected itself over and over because the backdoor hid in nine places at once — mu-plugins, drop-ins, the database, cron, rogue admins, theme code, .htaccess, decoy files, and an SSH key. A stark look at how fragile a plugin-heavy WordPress stack really is.",
+    image: null,
+  },
+];
+
+const TYPE_LABEL = {
+  article: "Blog article",
+  tweet: "Post on X",
+  linkedin: "LinkedIn post",
+  video: "Video",
+  post: "Post",
+};
+
+const fmtDate = (d) => {
+  if (!d) return "";
+  const dt = new Date(d + "T00:00:00");
+  return dt.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+};
+---
+<Layout
+  title="Evidence — Escape From WP"
+  description="The case for leaving WordPress: real-world articles, posts, and reports on WordPress security, bloat, and maintenance pain — collected in one place."
+>
+  <!-- NAV -->
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a href={`${base}/`} class="wordmark">
+        ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span>
+      </a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-menu">
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+      <nav class="nav-links" id="nav-menu">
+        <a href={`${base}/#prison`}>The Prison</a>
+        <a href={`${base}/#plan`}>The Plan</a>
+        <a href={`${base}/evidence`} class="active">Evidence</a>
+        <a href={`${base}/escapees`}>Previous Prisoners</a>
+        <a href={`${base}/#breakout`} class="btn btn-primary nav-cta">Plan your escape</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- PAGE HEADER -->
+  <section class="wrap page-head">
+    <span class="eyebrow danger rise">◦ Case files · the evidence room</span>
+    <h1 class="page-title rise">The evidence.</h1>
+    <p class="section-lead rise">
+      Don't take our word for it. Here's a growing file of articles, posts, and reports
+      from across the web — every one a reason someone would want to break out of WordPress.
+      Read the evidence, then plan your escape.
+    </p>
+  </section>
+
+  <!-- EVIDENCE LIST -->
+  <section class="wrap">
+    <div class="ev-grid">
+      {evidence.map((e, i) => (
+        <article class="ev-card rise">
+          <a class="ev-media" href={e.url} target="_blank" rel="noopener" aria-hidden="true" tabindex="-1">
+            {e.image
+              ? <img src={`${base}${e.image}`} alt={`${e.title} — featured image`} loading="lazy" />
+              : (
+                <div class="ev-nomedia">
+                  <span class="ev-nomedia-no">EXHIBIT&nbsp;{String(i + 1).padStart(2, "0")}</span>
+                  <span class="ev-nomedia-type">{TYPE_LABEL[e.type] || "Case file"}</span>
+                  <span class="ev-nomedia-src">◦ {e.source}</span>
+                </div>
+              )}
+          </a>
+          <div class="ev-body">
+            <div class="ev-tags">
+              <span class="ev-type">{TYPE_LABEL[e.type] || "Case file"}</span>
+              {e.date && <span class="ev-date">{fmtDate(e.date)}</span>}
+            </div>
+            <h2 class="ev-title">
+              <a href={e.url} target="_blank" rel="noopener">{e.title}</a>
+            </h2>
+            <p class="ev-summary">{e.summary}</p>
+            <div class="ev-foot">
+              <span class="ev-src">◦ {e.source}</span>
+              <a class="ev-link" href={e.url} target="_blank" rel="noopener">Read the evidence ↗</a>
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="wrap breakout-cta rise">
+    <h2 class="section-title">Seen enough? Plan your way out.</h2>
+    <a href={`${base}/#breakout`} class="btn btn-primary">▸ Plan your escape</a>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <span class="wordmark small">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
+      <span class="footer-mono">◦ WordPress migration &amp; rescue · escapefromwp.com</span>
+      <span class="footer-mono dim">© {new Date().getFullYear()} — All units accounted for.</span>
+    </div>
+  </footer>
+
+  <style>
+    /* NAV (shared with home page) */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(11, 4, 5, 0.72);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--steel);
+    }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; }
+    .wordmark {
+      font-family: var(--font-mono); font-weight: 700; font-size: 15px;
+      letter-spacing: 0.06em; color: var(--chalk);
+    }
+    .wordmark .wp { color: var(--signal-red); }
+    .wordmark.small { font-size: 13px; }
+    .nav-links { display: flex; align-items: center; gap: 28px; }
+    .nav-links a:not(.btn) {
+      font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--slate); transition: color .15s;
+    }
+    .nav-links a:not(.btn):hover { color: var(--term-green); }
+    .nav-links .active { color: var(--term-green); }
+    .nav-cta { padding: 9px 16px; }
+
+    /* HAMBURGER (hidden on desktop) */
+    .nav-toggle {
+      display: none; background: none; border: 1px solid var(--steel);
+      width: 40px; height: 36px; cursor: pointer; padding: 0;
+      flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    }
+    .nav-toggle-bar { display: block; width: 20px; height: 2px; background: var(--chalk); transition: transform .2s, opacity .2s; }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(2) { opacity: 0; }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* FOOTER (shared with home page) */
+    .footer { border-top: 1px solid var(--steel); padding: 40px 0; }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+    .footer-mono { font-family: var(--font-mono); font-size: 12px; color: var(--slate); letter-spacing: 0.04em; }
+    .footer-mono.dim { color: var(--slate-dim); }
+
+    .page-head { padding-top: 140px; padding-bottom: 24px; }
+    .page-title { font-size: clamp(38px, 7vw, 72px); margin-bottom: 20px; line-height: 1.02; }
+
+    /* EVIDENCE GRID */
+    .ev-grid {
+      display: grid; gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      padding-bottom: 40px;
+    }
+    .ev-card {
+      border: 1px solid var(--steel); background: rgba(255,255,255,0.015);
+      display: flex; flex-direction: column;
+      transition: border-color .15s, transform .15s;
+    }
+    .ev-card:hover { border-color: var(--term-green); transform: translateY(-2px); }
+
+    /* MEDIA — image when present, "case file" tile when not */
+    .ev-media {
+      display: block; position: relative; aspect-ratio: 1200 / 630; overflow: hidden;
+      border-bottom: 1px solid var(--steel); background: #0b0405;
+    }
+    .ev-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .ev-nomedia {
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end;
+      gap: 6px; padding: 18px;
+      background:
+        repeating-linear-gradient(0deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 7px),
+        linear-gradient(150deg, #150a0c 0%, #0b0405 60%);
+    }
+    .ev-nomedia::before {
+      content: "◦ NO IMAGE ON FILE";
+      position: absolute; top: 16px; left: 18px;
+      font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.22em;
+      color: var(--slate-dim);
+    }
+    .ev-nomedia-no {
+      font-family: var(--font-mono); font-weight: 700; font-size: 13px;
+      letter-spacing: 0.22em; color: var(--signal-red);
+    }
+    .ev-nomedia-type {
+      font-family: var(--font-display, inherit); font-size: 26px; font-weight: 700;
+      line-height: 1.05; color: var(--chalk);
+    }
+    .ev-nomedia-src { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; color: var(--term-green); }
+
+    .ev-body { padding: 18px 18px 20px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+    .ev-tags { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .ev-type {
+      font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--term-green);
+      border: 1px solid var(--steel); padding: 3px 8px;
+    }
+    .ev-date { font-family: var(--font-mono); font-size: 11px; color: var(--slate-dim); letter-spacing: 0.04em; }
+    .ev-title { font-size: 20px; line-height: 1.2; }
+    .ev-title a { color: var(--chalk); transition: color .15s; }
+    .ev-title a:hover { color: var(--term-green); }
+    .ev-summary { color: var(--slate); font-size: 15px; line-height: 1.55; flex: 1; }
+    .ev-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 4px; flex-wrap: wrap; }
+    .ev-src { font-family: var(--font-mono); font-size: 11px; color: var(--slate-dim); }
+    .ev-link {
+      font-family: var(--font-mono); font-size: 12px; color: var(--chalk);
+      border-bottom: 1px solid var(--steel); transition: color .15s, border-color .15s;
+    }
+    .ev-link:hover { color: var(--term-green); border-color: var(--term-green); }
+
+    .breakout-cta { text-align: center; padding: 40px 0 90px; display: flex; flex-direction: column; align-items: center; gap: 22px; }
+
+    /* RESPONSIVE (match home page) */
+    @media (max-width: 900px) {
+      .nav-toggle { display: flex; }
+      .nav-links {
+        position: absolute; top: 62px; left: 0; right: 0;
+        flex-direction: column; align-items: stretch; gap: 0;
+        background: rgba(11, 4, 5, 0.97); backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--steel);
+        max-height: 0; overflow: hidden; transition: max-height .25s ease;
+      }
+      .nav-links.open { max-height: 460px; }
+      .nav-links a:not(.btn) { padding: 16px 20px; border-top: 1px solid var(--steel); }
+      .nav-links .nav-cta { margin: 14px 20px 18px; text-align: center; }
+    }
+    @media (max-width: 480px) {
+      .ev-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+
+  <script is:inline>
+    const navToggle = document.querySelector(".nav-toggle");
+    const navMenu = document.getElementById("nav-menu");
+    if (navToggle && navMenu) {
+      navToggle.addEventListener("click", () => {
+        const open = navMenu.classList.toggle("open");
+        navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+      navMenu.querySelectorAll("a").forEach((a) =>
+        a.addEventListener("click", () => {
+          navMenu.classList.remove("open");
+          navToggle.setAttribute("aria-expanded", "false");
+        })
+      );
+    }
+  </script>
+</Layout>
