@@ -12,6 +12,16 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 // is drawn from the entry's type + source instead, so rows stay uniform.
 const evidence = [
   {
+    title: "A critical Elementor flaw let attackers create admin accounts from one link",
+    url: "https://x.com/bradvin/status/2105643896659480912",
+    source: "@bradvin",
+    type: "tweet",
+    date: "2026-10-01",
+    summary:
+      "WordPress plugin developer Brad Vincent urges everyone on Elementor 4.3.0/4.3.1 to update immediately: both carry a CSRF bug rated 8.8/10. If a logged-in admin opens a crafted link, an attacker can silently create a new admin account. It's the kind of plugin-layer vulnerability that simply doesn't exist when there are no plugins to exploit.",
+    image: null,
+  },
+  {
     title: "Cleaning 60+ WordPress Installs on a Fully-Infected WHM Server",
     url: "https://vapvarun.com/cleaning-60-wordpress-installs-on-a-fully-infected-whm-server/",
     source: "vapvarun.com",
