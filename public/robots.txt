@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://escapefromwp.com/sitemap-index.xml

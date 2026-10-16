@@ -8,7 +8,32 @@ const {
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 const isStaging = base !== "";
 const ogImage = new URL(`${base}/images/og-card.png`, Astro.site).href;
-const canonical = new URL(Astro.url.pathname, Astro.site).href;
+// Canonical always points at the production domain so it's correct even if a
+// staging/preview copy is ever crawled.
+const PROD = "https://escapefromwp.com";
+const path = Astro.url.pathname.replace(base, "") || "/";
+const canonical = new URL(path, PROD).href;
+
+const orgSchema = {
+  "@context": "https://schema.org",
+  "@type": "ProfessionalService",
+  name: "Escape From WP",
+  description:
+    "A tactical WordPress migration service that moves your site off WordPress onto a faster, more secure, modern static/headless stack.",
+  url: PROD,
+  image: `${PROD}/images/og-card.png`,
+  logo: `${PROD}/favicon.svg`,
+  areaServed: "US",
+  serviceType: "WordPress migration and website rebuild",
+  slogan: "Break out of WordPress.",
+  sameAs: ["https://twitter.com/EscapeFromWP"],
+  offers: {
+    "@type": "Offer",
+    description: "Free WordPress migration assessment with a fixed quote before any work starts.",
+    price: "0",
+    priceCurrency: "USD",
+  },
+};
 ---
 <!doctype html>
 <html lang="en">
@@ -25,6 +50,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
     </script>
     <title>{title}</title>
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
     {isStaging && <meta name="robots" content="noindex, nofollow" />}
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -48,6 +74,13 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
       rel="stylesheet"
     />
     <link rel="preload" as="image" href={`${base}/images/hero-1600.webp`} />
+    {!isStaging && (
+      <script
+        type="application/ld+json"
+        is:inline
+        set:html={JSON.stringify(orgSchema)}
+      />
+    )}
   </head>
   <body>
     <slot />
