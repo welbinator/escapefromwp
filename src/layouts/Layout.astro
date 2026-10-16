@@ -7,6 +7,8 @@ const {
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 const isStaging = base !== "";
+const ogImage = new URL(`${base}/images/og-card.png`, Astro.site).href;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
 ---
 <!doctype html>
 <html lang="en">
@@ -27,7 +29,16 @@ const isStaging = base !== "";
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content={`${base}/images/hero-1600.webp`} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Escape From WordPress — tactical migration service" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <meta name="twitter:image:alt" content="Escape From WordPress — tactical migration service" />
     <meta name="theme-color" content="#0b0405" />
     <link rel="icon" href={`${base}/favicon.svg`} type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
