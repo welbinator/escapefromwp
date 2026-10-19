@@ -12,6 +12,16 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 // is drawn from the entry's type + source instead, so rows stay uniform.
 const evidence = [
   {
+    title: "Stolen UpdraftCentral keys are backdooring WordPress sites",
+    url: "https://patchstack.com/articles/updraftcentral-key-compromise-wordpress-backdoors/",
+    source: "Patchstack",
+    type: "article",
+    date: "2026-10-19",
+    summary:
+      "Attackers holding valid UpdraftCentral keys are silently installing backdoor plugins on sites running UpdraftPlus — WordPress's most popular backup plugin, with 4M+ installs. There's no CVE and no plugin update that stops it: the commands are correctly signed, so every check passes. Worse, the remote-control checkbox ships ticked by default, enrolling sites that never knowingly used the service. The only fix is to delete your UpdraftCentral keys. A textbook case of plugin-layer risk that simply can't exist on a static, plugin-free stack.",
+    image: null,
+  },
+  {
     title: "Even WordPress leadership can't make the case for WordPress",
     url: "https://x.com/PineDigitalCo/status/2106712178363670769",
     source: "@PineDigitalCo",
