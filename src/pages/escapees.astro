@@ -147,6 +147,12 @@ const monogram = (name) =>
         <span class="hint">The site that was on WordPress before the breakout.</span>
       </div>
 
+      <div class="field">
+        <label for="f-thumb">Thumbnail <span class="opt">(optional)</span></label>
+        <input type="file" id="f-thumb" name="thumbnail" accept="image/png,image/jpeg,image/webp,image/gif" />
+        <span class="hint">If you don't upload a thumbnail, we'll just try to use the site's OG image.</span>
+      </div>
+
       <!-- honeypot -->
       <input type="text" name="website_hp" tabindex="-1" autocomplete="off" class="hp-field" aria-hidden="true" />
 
@@ -296,6 +302,7 @@ const monogram = (name) =>
       text-transform: uppercase; color: var(--chalk);
     }
     .field .req { color: var(--signal-red); }
+    .field .opt { color: var(--slate-dim); font-weight: 400; text-transform: none; letter-spacing: 0; }
     .field input, .field textarea {
       background: rgba(0,0,0,0.35); border: 1px solid var(--steel); color: var(--chalk);
       font-family: inherit; font-size: 15px; padding: 12px 14px; border-radius: 0;
