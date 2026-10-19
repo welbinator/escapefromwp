@@ -136,26 +136,15 @@ const monogram = (name) =>
       </div>
 
       <div class="field">
-        <label for="f-website">Link to the website <span class="req">*</span></label>
+        <label for="f-website">Business website <span class="req">*</span></label>
         <input type="url" id="f-website" name="website_url" required placeholder="https://theirsite.com" />
-        <span class="hint">The free site, running now.</span>
+        <span class="hint">The new site, running now.</span>
       </div>
 
       <div class="field">
-        <label for="f-rescued">Link to the site you rescued it from</label>
-        <input type="url" id="f-rescued" name="rescued_url" placeholder="https://old-wordpress-site.com (if still up)" />
-        <span class="hint">The old WordPress version, if it's still online.</span>
-      </div>
-
-      <div class="field">
-        <label for="f-thumb">Thumbnail image</label>
-        <input type="file" id="f-thumb" name="thumbnail" accept="image/png,image/jpeg,image/webp,image/gif" />
-        <span class="hint">Optional. If you don't upload one, we'll try to use the site's OG image. PNG/JPG/WEBP, under 5&nbsp;MB.</span>
-      </div>
-
-      <div class="field">
-        <label for="f-story">The story of the breakout</label>
-        <textarea id="f-story" name="story" rows="6" maxlength="4000" placeholder="How did this site get out of WordPress? What was it stuck on, and what's better now?"></textarea>
+        <label for="f-rescued">Website you rescued <span class="req">*</span></label>
+        <input type="url" id="f-rescued" name="rescued_url" required placeholder="https://oldsite.com" />
+        <span class="hint">The site that was on WordPress before the breakout.</span>
       </div>
 
       <!-- honeypot -->
@@ -515,9 +504,10 @@ const monogram = (name) =>
 
       const biz = form.business_name.value.trim();
       const site = form.website_url.value.trim();
-      if (!biz || !site) {
+      const rescued = form.rescued_url.value.trim();
+      if (!biz || !site || !rescued) {
         statusEl.className = "form-status err";
-        statusEl.textContent = "Business name and website link are required.";
+        statusEl.textContent = "All three fields are required.";
         return;
       }
 
