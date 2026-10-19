@@ -67,6 +67,7 @@ export async function onRequestPost({ request, env }) {
   const website_url = normUrl(form.get("website_url"));
   const rescued_url = normUrl(form.get("rescued_url"));
   const story = (form.get("story") || "").toString().trim();
+  const case_study_url = normUrl(form.get("case_study_url"));
   const honeypot = (form.get("website_hp") || "").toString().trim();
   const thumb = form.get("thumbnail");
 
@@ -109,9 +110,9 @@ export async function onRequestPost({ request, env }) {
   try {
     await env.DB.prepare(
       `INSERT INTO ec_escapee_submissions
-        (business_name, website_url, rescued_url, story, thumb_key, status, is_spam, spam_reason, form_name, created_at)
-       VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, 'escapee', ?)`
-    ).bind(business_name, website_url, rescued_url, story, thumbKey, isSpam, spamReason, new Date().toISOString()).run();
+        (business_name, website_url, rescued_url, story, case_study_url, thumb_key, status, is_spam, spam_reason, form_name, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, 'escapee', ?)`
+    ).bind(business_name, website_url, rescued_url, story, case_study_url, thumbKey, isSpam, spamReason, new Date().toISOString()).run();
   } catch (err) {
     return json({ ok: false, error: "Could not save your submission" }, 500);
   }

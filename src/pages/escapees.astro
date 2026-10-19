@@ -153,6 +153,18 @@ const monogram = (name) =>
         <span class="hint">If you don't upload a thumbnail, we'll just try to use the site's OG image.</span>
       </div>
 
+      <div class="field">
+        <label for="f-story">The story <span class="opt">(optional)</span></label>
+        <textarea id="f-story" name="story" maxlength="4000" placeholder="How did you get this site off WordPress? What was it doing time for, and how's it running now?"></textarea>
+        <span class="hint">Tell the story of the breakout — shown on the site's release record.</span>
+      </div>
+
+      <div class="field">
+        <label for="f-casestudy">Case study link <span class="opt">(optional)</span></label>
+        <input type="url" id="f-casestudy" name="case_study_url" placeholder="https://yoursite.com/case-study" />
+        <span class="hint">A write-up or case study page, if you have one.</span>
+      </div>
+
       <!-- honeypot -->
       <input type="text" name="website_hp" tabindex="-1" autocomplete="off" class="hp-field" aria-hidden="true" />
 
@@ -426,6 +438,7 @@ const monogram = (name) =>
         : `<span class="mug-mono">${esc(monogram(d.name))}</span>`;
       let links = `<a href="${esc(d.url)}" target="_blank" rel="noopener">Visit free site ↗</a>`;
       if (d.rescued) links += `<a class="rescued" href="${esc(d.rescued)}" target="_blank" rel="noopener">The old WordPress site ↗</a>`;
+      if (d.caseStudy) links += `<a href="${esc(d.caseStudy)}" target="_blank" rel="noopener">Read the case study ↗</a>`;
       mLinks.innerHTML = links;
       overlay.classList.add("open");
       overlay.setAttribute("aria-hidden", "false");
@@ -446,7 +459,7 @@ const monogram = (name) =>
       const open = () => openModal({
         name: el.dataset.name, url: el.dataset.url, rescued: el.dataset.rescued,
         prisoner: el.dataset.prisoner, served: el.dataset.served,
-        story: el.dataset.story, image: el.dataset.image,
+        story: el.dataset.story, image: el.dataset.image, caseStudy: el.dataset.casestudy,
       });
       el.addEventListener("click", open);
       el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
@@ -468,6 +481,7 @@ const monogram = (name) =>
           art.dataset.name = e.name; art.dataset.url = e.url;
           art.dataset.rescued = e.rescued_url || ""; art.dataset.prisoner = e.prisoner_no;
           art.dataset.served = "Time on WordPress"; art.dataset.story = e.story || "";
+          art.dataset.casestudy = e.case_study_url || "";
           art.dataset.image = e.image ? (e.image.startsWith("http") ? e.image : base + e.image) : "";
           const img = art.dataset.image;
           const crime = (e.story || "").slice(0, 120) + ((e.story || "").length > 120 ? "…" : "");

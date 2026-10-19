@@ -5,7 +5,7 @@ const JSON_HEADERS = { "Content-Type": "application/json", "Cache-Control": "pub
 export async function onRequestGet({ env }) {
   try {
     const { results } = await env.DB.prepare(
-      `SELECT id, business_name, website_url, rescued_url, story, thumb_key, og_image, prisoner_no, approved_at
+      `SELECT id, business_name, website_url, rescued_url, story, case_study_url, thumb_key, og_image, prisoner_no, approved_at
          FROM ec_escapee_submissions
         WHERE status = 'approved' AND is_spam = 0
         ORDER BY approved_at ASC, id ASC`
@@ -17,6 +17,7 @@ export async function onRequestGet({ env }) {
       url: r.website_url,
       rescued_url: r.rescued_url || null,
       story: r.story || "",
+      case_study_url: r.case_study_url || null,
       prisoner_no: r.prisoner_no || String(r.id).padStart(4, "0"),
       image: r.thumb_key ? `/escapee-thumb/${r.thumb_key.replace(/^thumbs\//, "")}` : (r.og_image || null),
     }));
