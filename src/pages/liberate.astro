@@ -301,7 +301,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
           notice +
           (rows ? '<table class="res-table"><tbody>' + rows + "</tbody></table>" : "") +
           '<p class="res-total">Total: ' + (summary.total_entries || 0) + " entries bundled into <code>" + esc(filename) + "</code></p>" +
-          '<a class="btn btn-primary res-download" href="' + esc(data.download_url) + '">⬇ Download your content bundle</a>' +
+          '<a class="btn btn-primary res-download" href="' + esc(data.download_url) + '">Download</a>' +
           '<p class="res-expiry">' + emailLine + ' This link works for <strong>24 hours</strong>, then the file is deleted.</p>' +
           "<p style='color:var(--slate);font-size:14px;line-height:1.6;margin-top:16px'>Unzip it and hand the whole folder to your AI coding agent along with the included <code>AGENT_INSTRUCTIONS.md</code> — it'll rebuild your content for you. Want us to do it instead? <a href='" + ccBase + "/#breakout' style='color:var(--term-green)'>Plan your escape ↗</a></p>" +
           '<button type="button" class="res-again" id="lf-again">↻ Liberate another site</button>';
