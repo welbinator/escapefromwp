@@ -1,0 +1,323 @@
+---
+import Layout from "../layouts/Layout.astro";
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+---
+<Layout
+  title="Liberate Your Content — Escape From WP"
+  description="Paste your WordPress URL and get your content out — posts, pages, and custom content exported as a clean, AI-ready bundle you can hand to your coding agent to rebuild in a modern CMS."
+>
+  <!-- NAV -->
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a href={`${base}/`} class="wordmark">
+        ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span>
+      </a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-menu">
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+      <nav class="nav-links" id="nav-menu">
+        <a href={`${base}/#prison`}>The Prison</a>
+        <a href={`${base}/#plan`}>The Plan</a>
+        <a href={`${base}/liberate`} class="active">Liberate</a>
+        <a href={`${base}/evidence`}>Evidence</a>
+        <a href={`${base}/escapees`}>Previous Prisoners</a>
+        <a href={`${base}/#breakout`} class="btn btn-primary nav-cta">Plan your escape</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="wrap tool-hero rise">
+    <span class="eyebrow">◦ Extraction tool · 01</span>
+    <h1 class="tool-title">Get your content out.</h1>
+    <p class="tool-lead">
+      Your words aren't the hostage — WordPress is just the cell. Paste your site's URL,
+      pick where you're headed, and we'll pull your posts, pages, and custom content into a
+      clean, <strong>AI-ready bundle</strong> you can hand straight to a coding agent to
+      rebuild on a modern stack. Content only — no plugins, no bloat, no lock-in.
+    </p>
+  </section>
+
+  <!-- TOOL -->
+  <section class="wrap tool-section rise">
+    <form id="liberate-form" class="tool-form" novalidate>
+      <div class="field">
+        <label for="lf-url">Your WordPress site URL</label>
+        <input id="lf-url" name="url" type="text" inputmode="url" autocomplete="url"
+               placeholder="yoursite.com" required />
+      </div>
+
+      <div class="field">
+        <label for="lf-target">Where are you moving to?</label>
+        <div class="select-wrap">
+          <select id="lf-target" name="target" required>
+            <option value="emdash">EmDash CMS (recommended)</option>
+            <option value="generic">Generic / other CMS — portable markdown</option>
+          </select>
+        </div>
+        <p class="field-hint">
+          EmDash gets a ready-to-use <code>seed.json</code> content model. Generic gives you
+          portable markdown + a manifest any agent can read.
+        </p>
+      </div>
+
+      <div class="field">
+        <label for="lf-email">Your email</label>
+        <input id="lf-email" name="email" type="email" autocomplete="email"
+               placeholder="you@example.com" required />
+        <p class="field-hint">We send your download here and may follow up about your migration. No spam.</p>
+      </div>
+
+      <!-- honeypot -->
+      <input type="text" name="website_hp" tabindex="-1" autocomplete="off"
+             style="position:absolute;left:-9999px;opacity:0;" aria-hidden="true" />
+
+      <button type="submit" class="btn btn-primary tool-submit" id="lf-submit">
+        ▸ Liberate my content
+      </button>
+      <p class="tool-note">Free. Content only — we never touch your live site.</p>
+    </form>
+
+    <!-- STATUS / RESULT -->
+    <div id="lf-status" class="tool-status" hidden></div>
+    <div id="lf-result" class="tool-result" hidden></div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="wrap how-section">
+    <h2 class="how-head">How the breakout works</h2>
+    <ol class="how-steps">
+      <li>
+        <span class="how-no">01</span>
+        <div>
+          <h3>We read the public content API</h3>
+          <p>Every standard WordPress site exposes its published content at a built-in address. We walk it — posts, pages, and any custom content types your site defines — no login, no plugin, no access to your server.</p>
+        </div>
+      </li>
+      <li>
+        <span class="how-no">02</span>
+        <div>
+          <h3>We clean and convert it</h3>
+          <p>Page-builder junk, shortcodes, and tracking markup get stripped out. What's left is clean markdown with your titles, dates, excerpts, categories, tags, and image links intact.</p>
+        </div>
+      </li>
+      <li>
+        <span class="how-no">03</span>
+        <div>
+          <h3>You get an AI-ready bundle</h3>
+          <p>A <code>.zip</code> with your content as markdown, a content model for your target CMS, and an <code>AGENT_INSTRUCTIONS.md</code> file. Hand the folder to your AI coding agent and it rebuilds your site's content for you.</p>
+        </div>
+      </li>
+    </ol>
+    <p class="how-foot">
+      Don't want to DIY? <a href={`${base}/#breakout`}>Let us run the whole migration for you ↗</a>
+    </p>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <span class="wordmark small">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
+      <span class="footer-mono">◦ WordPress migration &amp; rescue · escapefromwp.com</span>
+      <span class="footer-mono dim">© {new Date().getFullYear()} — All units accounted for.</span>
+    </div>
+  </footer>
+
+  <style>
+    .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(11, 4, 5, 0.72); backdrop-filter: blur(10px); border-bottom: 1px solid var(--steel); }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; }
+    .wordmark { font-family: var(--font-mono); font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: var(--chalk); }
+    .wordmark .wp { color: var(--signal-red); }
+    .wordmark.small { font-size: 13px; }
+    .nav-links { display: flex; align-items: center; gap: 28px; }
+    .nav-links a:not(.btn) { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--slate); transition: color .15s; }
+    .nav-links a:not(.btn):hover { color: var(--term-green); }
+    .nav-links .active { color: var(--term-green); }
+    .nav-cta { padding: 9px 16px; }
+    .nav-toggle { display: none; background: none; border: 1px solid var(--steel); width: 40px; height: 36px; cursor: pointer; padding: 0; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
+    .nav-toggle-bar { display: block; width: 20px; height: 2px; background: var(--chalk); transition: transform .2s, opacity .2s; }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(2) { opacity: 0; }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    .footer { border-top: 1px solid var(--steel); padding: 40px 0; margin-top: 40px; }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+    .footer-mono { font-family: var(--font-mono); font-size: 12px; color: var(--slate); letter-spacing: 0.04em; }
+    .footer-mono.dim { color: var(--slate-dim); }
+
+    .tool-hero { padding-top: 120px; max-width: 760px; }
+    .eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--term-green); display: block; margin-bottom: 16px; }
+    .tool-title { font-size: clamp(34px, 6vw, 60px); line-height: 1.02; margin-bottom: 18px; }
+    .tool-lead { color: var(--slate); font-size: 18px; line-height: 1.6; }
+    .tool-lead strong { color: var(--chalk); }
+
+    .tool-section { max-width: 640px; padding-top: 36px; }
+    .tool-form { display: flex; flex-direction: column; gap: 22px; border: 1px solid var(--steel); padding: 30px; background: rgba(255,255,255,0.015); }
+    .field { display: flex; flex-direction: column; gap: 8px; }
+    .field label { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--chalk); }
+    .field input, .field select { background: #0b0405; border: 1px solid var(--steel); color: var(--chalk); padding: 13px 14px; font-family: var(--font-sans); font-size: 15px; border-radius: 0; transition: border-color .15s; width: 100%; }
+    .field input:focus, .field select:focus { outline: none; border-color: var(--term-green); }
+    .field input::placeholder { color: var(--slate-dim); }
+    .select-wrap { position: relative; }
+    .select-wrap::after { content: "▾"; position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--term-green); pointer-events: none; font-size: 12px; }
+    .field select { appearance: none; -webkit-appearance: none; cursor: pointer; padding-right: 36px; }
+    .field-hint { font-family: var(--font-mono); font-size: 11px; color: var(--slate-dim); line-height: 1.5; }
+    .field-hint code, .how-steps code, .tool-result code { font-family: var(--font-mono); color: var(--term-green); font-size: 0.92em; }
+    .tool-submit { margin-top: 4px; width: 100%; justify-content: center; }
+    .tool-note { font-family: var(--font-mono); font-size: 11px; color: var(--slate-dim); text-align: center; }
+
+    .tool-status { margin-top: 24px; border: 1px solid var(--steel); padding: 20px 22px; font-family: var(--font-mono); font-size: 13px; color: var(--slate); }
+    .tool-status .spin { color: var(--term-green); }
+    .tool-status.error { border-color: var(--signal-red); color: #f6b8bd; }
+
+    .tool-result { margin-top: 24px; border: 1px solid var(--term-green); padding: 26px; background: rgba(78,227,107,0.04); }
+    .tool-result h2 { font-size: 20px; margin-bottom: 6px; }
+    .tool-result .res-sub { font-family: var(--font-mono); font-size: 12px; color: var(--slate); margin-bottom: 18px; }
+    .res-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-family: var(--font-mono); font-size: 13px; }
+    .res-table td { padding: 7px 0; border-bottom: 1px solid var(--steel); color: var(--slate); }
+    .res-table td.n { text-align: right; color: var(--chalk); }
+    .res-table tr:last-child td { border-bottom: none; }
+    .res-total { font-family: var(--font-mono); font-size: 13px; color: var(--term-green); margin-bottom: 18px; }
+    .res-notice { font-family: var(--font-mono); font-size: 12px; color: #f6d08a; border-left: 2px solid #f6d08a; padding-left: 12px; margin-bottom: 18px; }
+    .res-again { display: inline-block; margin-top: 14px; font-family: var(--font-mono); font-size: 12px; color: var(--slate); cursor: pointer; background: none; border: none; text-decoration: underline; }
+
+    .how-section { max-width: 760px; padding-top: 70px; }
+    .how-head { font-size: clamp(24px, 4vw, 34px); margin-bottom: 30px; }
+    .how-steps { list-style: none; display: flex; flex-direction: column; gap: 26px; }
+    .how-steps li { display: flex; gap: 18px; align-items: flex-start; }
+    .how-no { font-family: var(--font-mono); font-size: 13px; color: var(--term-green); border: 1px solid var(--steel); padding: 6px 9px; flex-shrink: 0; }
+    .how-steps h3 { font-size: 17px; margin-bottom: 6px; }
+    .how-steps p { color: var(--slate); font-size: 15px; line-height: 1.6; }
+    .how-foot { margin-top: 34px; font-family: var(--font-mono); font-size: 13px; color: var(--slate); }
+    .how-foot a { color: var(--term-green); }
+
+    @media (max-width: 900px) {
+      .nav-toggle { display: flex; }
+      .nav-links { position: absolute; top: 62px; left: 0; right: 0; flex-direction: column; align-items: stretch; gap: 0; background: rgba(11, 4, 5, 0.97); backdrop-filter: blur(10px); border-bottom: 1px solid var(--steel); max-height: 0; overflow: hidden; transition: max-height .25s ease; }
+      .nav-links.open { max-height: 520px; }
+      .nav-links a:not(.btn) { padding: 16px 20px; border-top: 1px solid var(--steel); }
+      .nav-links .nav-cta { margin: 14px 20px 18px; text-align: center; }
+      .tool-form { padding: 22px; }
+    }
+  </style>
+
+  <script is:inline>
+    // Mobile nav
+    const navToggle = document.querySelector(".nav-toggle");
+    const navMenu = document.getElementById("nav-menu");
+    if (navToggle && navMenu) {
+      navToggle.addEventListener("click", () => {
+        const open = navMenu.classList.toggle("open");
+        navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+    }
+
+    const form = document.getElementById("liberate-form");
+    const statusEl = document.getElementById("lf-status");
+    const resultEl = document.getElementById("lf-result");
+    const submitBtn = document.getElementById("lf-submit");
+    const isPreview = /github\.io$/.test(location.hostname);
+
+    function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      resultEl.hidden = true;
+      statusEl.hidden = false;
+      statusEl.className = "tool-status";
+
+      if (isPreview) {
+        statusEl.className = "tool-status error";
+        statusEl.textContent = "This is the staging preview — the extraction tool only runs on the live site (escapefromwp.com).";
+        return;
+      }
+
+      const payload = {
+        url: form.url.value.trim(),
+        target: form.target.value,
+        email: form.email.value.trim(),
+        website_hp: form.website_hp.value,
+      };
+      if (!payload.url || !payload.email) {
+        statusEl.className = "tool-status error";
+        statusEl.textContent = "Please enter both your site URL and email.";
+        return;
+      }
+
+      submitBtn.disabled = true;
+      const siteLabel = esc(payload.url.replace(/^https?:\/\//, ""));
+      statusEl.innerHTML = '<span class="spin">▸ Breaking in…</span> reading ' + siteLabel + "'s content API. Large sites can take 20–40 seconds — hang tight.";
+
+      try {
+        const res = await fetch((location.pathname.replace(/\/liberate\/?$/, "") || "") + "/api/liberate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const ct = res.headers.get("content-type") || "";
+        if (!res.ok || ct.includes("application/json")) {
+          let msg = "Extraction failed. Please check the URL and try again.";
+          try { const j = await res.json(); if (j.error) msg = j.error; } catch {}
+          statusEl.className = "tool-status error";
+          statusEl.textContent = "✕ " + msg;
+          submitBtn.disabled = false;
+          return;
+        }
+
+        // Success — it's a zip. Read summary header, trigger download.
+        let summary = null;
+        const h = res.headers.get("X-Liberation-Summary");
+        if (h) { try { summary = JSON.parse(decodeURIComponent(h)); } catch {} }
+
+        const blob = await res.blob();
+        const dispo = res.headers.get("Content-Disposition") || "";
+        const fnMatch = dispo.match(/filename="([^"]+)"/);
+        const filename = fnMatch ? fnMatch[1] : "content-export.zip";
+
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+
+        statusEl.hidden = true;
+        resultEl.hidden = false;
+
+        let rows = "";
+        let total = 0;
+        if (summary && summary.collections) {
+          for (const c of summary.collections) {
+            rows += "<tr><td>" + esc(c.label) + ' <span style="color:var(--slate-dim)">(' + esc(c.type) + ")</span></td><td class='n'>" + c.entries + "</td></tr>";
+            total += c.entries;
+          }
+        }
+        const notice = summary && summary.notice ? '<p class="res-notice">⚠️ ' + esc(summary.notice) + "</p>" : "";
+        resultEl.innerHTML =
+          "<h2>✓ Content liberated.</h2>" +
+          '<p class="res-sub">Extracted from ' + esc(summary ? summary.site : siteLabel) + " — your download should be starting now.</p>" +
+          notice +
+          (rows ? '<table class="res-table"><tbody>' + rows + "</tbody></table>" : "") +
+          '<p class="res-total">Total: ' + (summary ? summary.total_entries : total) + " entries bundled into <code>" + esc(filename) + "</code></p>" +
+          "<p style='color:var(--slate);font-size:14px;line-height:1.6'>Unzip it and hand the whole folder to your AI coding agent along with the included <code>AGENT_INSTRUCTIONS.md</code> — it'll rebuild your content for you. Want us to do it instead? <a href='" + (location.pathname.replace(/\/liberate\/?$/, "") || "") + "/#breakout' style='color:var(--term-green)'>Plan your escape ↗</a></p>" +
+          '<button type="button" class="res-again" id="lf-again">↻ Liberate another site</button>';
+
+        const again = document.getElementById("lf-again");
+        if (again) again.addEventListener("click", () => {
+          resultEl.hidden = true;
+          form.reset();
+          submitBtn.disabled = false;
+          window.scrollTo({ top: form.offsetTop - 120, behavior: "smooth" });
+        });
+      } catch (err) {
+        statusEl.className = "tool-status error";
+        statusEl.textContent = "✕ Something went wrong reaching the extraction service. Please try again.";
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</Layout>
