@@ -1,0 +1,231 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { evidence, TYPE_LABEL, fmtDate, getSlug } from "../../data/evidence.js";
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+export function getStaticPaths() {
+  return evidence.map((e) => ({
+    params: { slug: getSlug(e) },
+    props: { entry: e },
+  }));
+}
+
+const { entry: e } = Astro.props;
+const typeLabel = TYPE_LABEL[e.type] || "Case file";
+
+// "Read the source" verb reads naturally per type.
+const sourceVerb =
+  e.type === "tweet" ? "View the post on X"
+  : e.type === "linkedin" ? "View the post on LinkedIn"
+  : e.type === "video" ? "Watch the video"
+  : "Read the full article";
+
+// Other evidence (everything but this one), newest first already.
+const more = evidence.filter((x) => getSlug(x) !== getSlug(e)).slice(0, 3);
+---
+<Layout
+  title={`${e.title} — The Evidence | Escape From WP`}
+  description={e.summary}
+>
+  <!-- NAV -->
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a href={`${base}/`} class="wordmark">
+        ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span>
+      </a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-menu">
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+      <nav class="nav-links" id="nav-menu">
+        <a href={`${base}/#prison`}>The Prison</a>
+        <a href={`${base}/#plan`}>The Plan</a>
+        <a href={`${base}/evidence`} class="active">Evidence</a>
+        <a href={`${base}/escapees`}>Previous Prisoners</a>
+        <a href={`${base}/#breakout`} class="btn btn-primary nav-cta">Plan your escape</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- POST -->
+  <article class="wrap post">
+    <a href={`${base}/evidence`} class="post-back">← Back to the evidence room</a>
+
+    <div class="post-tags">
+      <span class="ev-type">{typeLabel}</span>
+      {e.date && <span class="ev-date">{fmtDate(e.date)}</span>}
+    </div>
+
+    <h1 class="post-title rise">{e.title}</h1>
+    <p class="post-source">◦ Source: {e.source}</p>
+
+    {e.image && (
+      <div class="post-media">
+        <img src={`${base}${e.image}`} alt={`${e.title} — featured image`} />
+      </div>
+    )}
+
+    <div class="post-body">
+      <p class="post-summary">{e.summary}</p>
+    </div>
+
+    <div class="post-actions">
+      <a class="btn btn-primary" href={e.url} target="_blank" rel="noopener">▸ {sourceVerb} ↗</a>
+      <a class="btn btn-ghost" href={`${base}/#breakout`}>Plan your escape</a>
+    </div>
+  </article>
+
+  <!-- MORE EVIDENCE -->
+  {more.length > 0 && (
+    <section class="wrap more-section">
+      <h2 class="more-head">More from the evidence room</h2>
+      <div class="more-grid">
+        {more.map((m) => (
+          <a class="more-card" href={`${base}/evidence/${getSlug(m)}`}>
+            <span class="more-type">{TYPE_LABEL[m.type] || "Case file"}</span>
+            <span class="more-title">{m.title}</span>
+            <span class="more-src">◦ {m.source}</span>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <!-- CTA -->
+  <section class="wrap breakout-cta rise">
+    <h2 class="section-title">Seen enough? Plan your way out.</h2>
+    <a href={`${base}/#breakout`} class="btn btn-primary">▸ Plan your escape</a>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <span class="wordmark small">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
+      <span class="footer-mono">◦ WordPress migration &amp; rescue · escapefromwp.com</span>
+      <span class="footer-mono dim">© {new Date().getFullYear()} — All units accounted for.</span>
+    </div>
+  </footer>
+
+  <style>
+    /* NAV (shared) */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(11, 4, 5, 0.72);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--steel);
+    }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; }
+    .wordmark {
+      font-family: var(--font-mono); font-weight: 700; font-size: 15px;
+      letter-spacing: 0.06em; color: var(--chalk);
+    }
+    .wordmark .wp { color: var(--signal-red); }
+    .wordmark.small { font-size: 13px; }
+    .nav-links { display: flex; align-items: center; gap: 28px; }
+    .nav-links a:not(.btn) {
+      font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--slate); transition: color .15s;
+    }
+    .nav-links a:not(.btn):hover { color: var(--term-green); }
+    .nav-links .active { color: var(--term-green); }
+    .nav-cta { padding: 9px 16px; }
+
+    .nav-toggle {
+      display: none; background: none; border: 1px solid var(--steel);
+      width: 40px; height: 36px; cursor: pointer; padding: 0;
+      flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    }
+    .nav-toggle-bar { display: block; width: 20px; height: 2px; background: var(--chalk); transition: transform .2s, opacity .2s; }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(2) { opacity: 0; }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* FOOTER (shared) */
+    .footer { border-top: 1px solid var(--steel); padding: 40px 0; }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+    .footer-mono { font-family: var(--font-mono); font-size: 12px; color: var(--slate); letter-spacing: 0.04em; }
+    .footer-mono.dim { color: var(--slate-dim); }
+
+    /* POST */
+    .post { max-width: 760px; padding-top: 120px; padding-bottom: 20px; }
+    .post-back {
+      font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.04em;
+      color: var(--slate); transition: color .15s; display: inline-block; margin-bottom: 28px;
+    }
+    .post-back:hover { color: var(--term-green); }
+    .post-tags { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+    .ev-type {
+      font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--term-green);
+      border: 1px solid var(--steel); padding: 3px 8px;
+    }
+    .ev-date { font-family: var(--font-mono); font-size: 11px; color: var(--slate-dim); letter-spacing: 0.04em; }
+    .post-title { font-size: clamp(30px, 5vw, 52px); line-height: 1.05; margin-bottom: 14px; }
+    .post-source { font-family: var(--font-mono); font-size: 13px; color: var(--signal-red); margin-bottom: 30px; }
+    .post-media {
+      aspect-ratio: 1200 / 630; overflow: hidden; border: 1px solid var(--steel);
+      margin-bottom: 30px; background: #0b0405;
+    }
+    .post-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .post-body { margin-bottom: 36px; }
+    .post-summary { color: var(--slate); font-size: 18px; line-height: 1.7; }
+    .post-actions { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+    .btn-ghost {
+      border: 1px solid var(--steel); color: var(--chalk); padding: 12px 20px;
+      font-family: var(--font-mono); font-size: 13px; transition: border-color .15s, color .15s;
+    }
+    .btn-ghost:hover { border-color: var(--term-green); color: var(--term-green); }
+
+    /* MORE */
+    .more-section { padding: 50px 0 10px; border-top: 1px solid var(--steel); margin-top: 20px; }
+    .more-head { font-size: 22px; margin-bottom: 22px; }
+    .more-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+    .more-card {
+      border: 1px solid var(--steel); background: rgba(255,255,255,0.015);
+      padding: 16px; display: flex; flex-direction: column; gap: 9px;
+      transition: border-color .15s, transform .15s;
+    }
+    .more-card:hover { border-color: var(--term-green); transform: translateY(-2px); }
+    .more-type {
+      font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--term-green);
+    }
+    .more-title { font-size: 16px; line-height: 1.3; color: var(--chalk); }
+    .more-src { font-family: var(--font-mono); font-size: 11px; color: var(--slate-dim); }
+
+    .breakout-cta { text-align: center; padding: 50px 0 90px; display: flex; flex-direction: column; align-items: center; gap: 22px; }
+    .section-title { font-size: clamp(24px, 4vw, 34px); }
+
+    @media (max-width: 900px) {
+      .nav-toggle { display: flex; }
+      .nav-links {
+        position: absolute; top: 62px; left: 0; right: 0;
+        flex-direction: column; align-items: stretch; gap: 0;
+        background: rgba(11, 4, 5, 0.97); backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--steel);
+        max-height: 0; overflow: hidden; transition: max-height .25s ease;
+      }
+      .nav-links.open { max-height: 460px; }
+      .nav-links a:not(.btn) { padding: 16px 20px; border-top: 1px solid var(--steel); }
+      .nav-links .nav-cta { margin: 14px 20px 18px; text-align: center; }
+    }
+  </style>
+
+  <script is:inline>
+    const navToggle = document.querySelector(".nav-toggle");
+    const navMenu = document.getElementById("nav-menu");
+    if (navToggle && navMenu) {
+      navToggle.addEventListener("click", () => {
+        const open = navMenu.classList.toggle("open");
+        navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+      navMenu.querySelectorAll("a").forEach((a) =>
+        a.addEventListener("click", () => {
+          navMenu.classList.remove("open");
+          navToggle.setAttribute("aria-expanded", "false");
+        })
+      );
+    }
+  </script>
+</Layout>
