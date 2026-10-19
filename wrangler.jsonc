@@ -8,5 +8,11 @@
       "database_name": "escapefromwp-db",
       "database_id": "795e4fee-fb3e-4f20-8499-6c07faa2b54a"
     }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "THUMBS",
+      "bucket_name": "escapefromwp-escapee-thumbs"
+    }
   ]
 }

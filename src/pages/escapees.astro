@@ -2,9 +2,8 @@
 import Layout from "../layouts/Layout.astro";
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-// ⚠️ PLACEHOLDER DATA — replace with REAL clients before promoting this page.
-// Each escapee: { name, url, prisoner_no, crime (theme one-liner OR real quote), quote_is_real }
-// Set `logo` to a path under /images/escapees/ if you have one; else a monogram is generated.
+// Seed escapees (real clients). Each: { name, url, prisoner_no, crime, served, logo, story, rescued_url }
+// `story` = the full write-up shown in the detail modal. `rescued_url` optional (the old WP site).
 const escapees = [
   {
     name: "Matthew Peiper",
@@ -13,6 +12,7 @@ const escapees = [
     crime: "Artist portfolio locked in the Etch page-builder — busted out onto a static, plugin-free stack.",
     served: "Time on WordPress (Etch builder)",
     logo: "/images/escapees/matthewpeiper.webp",
+    story: "An artist portfolio doing time inside WordPress's Etch page-builder — slow to load, a maintenance headache, and locked to one editor. We broke it out onto a static, plugin-free stack: the same design, now loading in a fraction of the time with nothing to update or patch. Zero plugins, zero database, served straight from the edge.",
   },
   {
     name: "Walnut Grove Assembly of God",
@@ -21,6 +21,7 @@ const escapees = [
     crime: "A Spirit-filled church in Ivanhoe, CA, doing time on a plugin-heavy WordPress build — broke free onto a fast, secure static site.",
     served: "Years on WordPress",
     logo: "/images/escapees/walnutgrove.webp",
+    story: "A Spirit-filled church in Ivanhoe, CA, serving years on a plugin-heavy WordPress build. Every plugin was another lock and another thing that could break. We moved them to a fast, secure static site — no login to get hacked, no plugins to update, and pages that load instantly for their congregation.",
   },
   {
     name: "Brewhemia",
@@ -29,6 +30,7 @@ const escapees = [
     crime: "A Cedar Rapids coffee-and-cocktail house serving time on a WordPress/Themify build — broke free onto a fast, static, plugin-free stack.",
     served: "Years on WordPress (Themify)",
     logo: "/images/escapees/brewhemia.webp",
+    story: "A Cedar Rapids coffee-and-cocktail house doing time on a WordPress/Themify build. The Themify builder made every edit a wrestling match and dragged the whole site down. We broke them free onto a fast, static, plugin-free stack — the menu, the hours, the vibe, all loading instantly and costing a fraction to run.",
   },
   {
     name: "James Welbes",
@@ -37,6 +39,7 @@ const escapees = [
     crime: "A designer's own portfolio doing time on a WordPress build — broke free onto a fast, static Astro site served from the edge.",
     served: "Years on WordPress",
     logo: "/images/escapees/jameswelbes.webp",
+    story: "A designer's own portfolio — the one site that should practice what it preaches — was itself doing time on WordPress. It broke free onto a fast, static Astro site served from the edge. No database, no plugins, no monthly patch cycle. Just clean code and instant loads.",
   },
 ];
 
@@ -80,9 +83,22 @@ const monogram = (name) =>
 
   <!-- MUGSHOT GRID -->
   <section class="wrap">
-    <div class="mug-grid">
+    <div class="mug-grid" id="mug-grid">
       {escapees.map((e) => (
-        <article class="mug rise">
+        <article
+          class="mug rise is-clickable"
+          data-escapee
+          data-name={e.name}
+          data-url={e.url}
+          data-rescued={e.rescued_url || ""}
+          data-prisoner={e.prisoner_no}
+          data-served={e.served}
+          data-story={e.story}
+          data-image={e.logo ? `${base}${e.logo}` : ""}
+          tabindex="0"
+          role="button"
+          aria-label={`View release record for ${e.name}`}
+        >
           <div class="mug-photo">
             {e.logo
               ? <img src={`${base}${e.logo}`} alt={`${e.name} website hero`} loading="lazy" />
@@ -96,7 +112,7 @@ const monogram = (name) =>
             <p class="mug-crime">“{e.crime}”</p>
             <div class="mug-meta">
               <span class="mug-served">◦ Served: {e.served}</span>
-              <a class="mug-link" href={e.url} target="_blank" rel="noopener">Visit free site ↗</a>
+              <span class="mug-link">View record ↗</span>
             </div>
           </div>
         </article>
@@ -104,11 +120,76 @@ const monogram = (name) =>
     </div>
   </section>
 
+  <!-- SUBMIT YOUR OWN -->
+  <section class="wrap submit-section rise" id="submit">
+    <span class="eyebrow danger">◦ Report a breakout</span>
+    <h2 class="section-title">Did you break a site out of WordPress?</h2>
+    <p class="section-lead">
+      Rescued a site from WordPress — yours or a client's? Add it to the release records.
+      Submissions are reviewed before they go public.
+    </p>
+
+    <form class="submit-form" id="escapee-form" novalidate>
+      <div class="field">
+        <label for="f-business">Business name <span class="req">*</span></label>
+        <input type="text" id="f-business" name="business_name" required maxlength="120" placeholder="The name on the door" />
+      </div>
+
+      <div class="field">
+        <label for="f-website">Link to the website <span class="req">*</span></label>
+        <input type="url" id="f-website" name="website_url" required placeholder="https://theirsite.com" />
+        <span class="hint">The free site, running now.</span>
+      </div>
+
+      <div class="field">
+        <label for="f-rescued">Link to the site you rescued it from</label>
+        <input type="url" id="f-rescued" name="rescued_url" placeholder="https://old-wordpress-site.com (if still up)" />
+        <span class="hint">The old WordPress version, if it's still online.</span>
+      </div>
+
+      <div class="field">
+        <label for="f-thumb">Thumbnail image</label>
+        <input type="file" id="f-thumb" name="thumbnail" accept="image/png,image/jpeg,image/webp,image/gif" />
+        <span class="hint">Optional. If you don't upload one, we'll try to use the site's OG image. PNG/JPG/WEBP, under 5&nbsp;MB.</span>
+      </div>
+
+      <div class="field">
+        <label for="f-story">The story of the breakout</label>
+        <textarea id="f-story" name="story" rows="6" maxlength="4000" placeholder="How did this site get out of WordPress? What was it stuck on, and what's better now?"></textarea>
+      </div>
+
+      <!-- honeypot -->
+      <input type="text" name="website_hp" tabindex="-1" autocomplete="off" class="hp-field" aria-hidden="true" />
+
+      <div class="form-foot">
+        <button type="submit" class="btn btn-primary" id="submit-btn">▸ Submit for review</button>
+        <span class="form-status" id="form-status" role="status" aria-live="polite"></span>
+      </div>
+    </form>
+  </section>
+
   <!-- CTA -->
   <section class="wrap breakout-cta rise">
     <h2 class="section-title">Your site could be next out the gate.</h2>
     <a href={`${base}/#breakout`} class="btn btn-primary">▸ Plan your escape</a>
   </section>
+
+  <!-- DETAIL MODAL -->
+  <div class="modal-overlay" id="escapee-modal" aria-hidden="true">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-name">
+      <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+      <div class="modal-grid">
+        <div class="modal-photo" id="modal-photo"></div>
+        <div class="modal-body">
+          <span class="mug-no" id="modal-no">PRISONER&nbsp;#0000</span>
+          <h2 class="modal-name" id="modal-name">—</h2>
+          <span class="modal-served" id="modal-served"></span>
+          <div class="modal-story" id="modal-story"></div>
+          <div class="modal-links" id="modal-links"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- FOOTER -->
   <footer class="footer">
@@ -171,6 +252,9 @@ const monogram = (name) =>
       border: 1px solid var(--steel); background: rgba(255,255,255,0.015);
       display: flex; flex-direction: column;
     }
+    .mug.is-clickable { cursor: pointer; transition: border-color .15s, transform .15s; }
+    .mug.is-clickable:hover { border-color: var(--term-green); transform: translateY(-2px); }
+    .mug.is-clickable:focus-visible { outline: 2px solid var(--term-green); outline-offset: 2px; }
     .mug-photo {
       position: relative; aspect-ratio: 16 / 10; overflow: hidden;
       background:
@@ -203,11 +287,86 @@ const monogram = (name) =>
     .mug-meta { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
     .mug-served { font-family: var(--font-mono); font-size: 11px; color: var(--term-green); }
     .mug-link { font-family: var(--font-mono); font-size: 12px; color: var(--chalk); border-bottom: 1px solid var(--steel); }
-    .mug-link:hover { color: var(--term-green); border-color: var(--term-green); }
+    .mug.is-clickable:hover .mug-link { color: var(--term-green); border-color: var(--term-green); }
 
     .breakout-cta { text-align: center; padding: 40px 0 90px; display: flex; flex-direction: column; align-items: center; gap: 22px; }
-
     .nav-links .active { color: var(--term-green); }
+
+    /* SUBMIT FORM */
+    .submit-section {
+      border: 1px solid var(--steel); padding: 40px clamp(20px, 4vw, 44px);
+      margin: 20px 0 60px; background: rgba(255,255,255,0.012);
+    }
+    .submit-section .eyebrow { display: inline-block; margin-bottom: 14px; }
+    .submit-section .section-title { font-size: clamp(24px, 4vw, 34px); margin-bottom: 12px; }
+    .submit-section .section-lead { margin-bottom: 30px; max-width: 60ch; }
+    .submit-form { display: flex; flex-direction: column; gap: 22px; max-width: 640px; }
+    .field { display: flex; flex-direction: column; gap: 7px; }
+    .field label {
+      font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--chalk);
+    }
+    .field .req { color: var(--signal-red); }
+    .field input, .field textarea {
+      background: rgba(0,0,0,0.35); border: 1px solid var(--steel); color: var(--chalk);
+      font-family: inherit; font-size: 15px; padding: 12px 14px; border-radius: 0;
+      transition: border-color .15s;
+    }
+    .field input:focus, .field textarea:focus { outline: none; border-color: var(--term-green); }
+    .field textarea { resize: vertical; min-height: 120px; }
+    .field input[type="file"] { padding: 10px; font-family: var(--font-mono); font-size: 13px; color: var(--slate); cursor: pointer; }
+    .field input[type="file"]::file-selector-button {
+      background: var(--steel); color: var(--chalk); border: none; padding: 8px 14px;
+      font-family: var(--font-mono); font-size: 12px; margin-right: 12px; cursor: pointer;
+    }
+    .field .hint { font-size: 13px; color: var(--slate-dim); line-height: 1.4; }
+    .hp-field { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+    .form-foot { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+    .form-status { font-family: var(--font-mono); font-size: 13px; }
+    .form-status.ok { color: var(--term-green); }
+    .form-status.err { color: var(--signal-red); }
+    .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 200; display: none;
+      align-items: center; justify-content: center; padding: 24px;
+      background: rgba(0,0,0,0.78); backdrop-filter: blur(4px);
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      position: relative; width: 70vw; max-width: 900px; max-height: 86vh; overflow-y: auto;
+      background: #0b0405; border: 1px solid var(--term-green);
+      box-shadow: 0 0 0 1px rgba(78,227,107,0.15);
+    }
+    .modal-close {
+      position: absolute; top: 12px; right: 12px; z-index: 2;
+      background: rgba(0,0,0,0.6); border: 1px solid var(--steel); color: var(--chalk);
+      width: 38px; height: 38px; cursor: pointer; font-size: 16px; line-height: 1;
+      font-family: var(--font-mono); transition: border-color .15s, color .15s;
+    }
+    .modal-close:hover { border-color: var(--signal-red); color: var(--signal-red); }
+    .modal-grid { display: grid; grid-template-columns: 1fr; }
+    .modal-photo {
+      aspect-ratio: 16 / 9; overflow: hidden; border-bottom: 1px solid var(--steel);
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 1px, transparent 1px 46px),
+        linear-gradient(160deg, #14090b, #0b0405);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal-photo img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.05); }
+    .modal-photo .mug-mono { font-size: 64px; }
+    .modal-body { padding: 26px clamp(22px, 4vw, 40px) 34px; display: flex; flex-direction: column; gap: 12px; }
+    .modal-name { font-size: clamp(26px, 4vw, 40px); line-height: 1.05; }
+    .modal-served { font-family: var(--font-mono); font-size: 12px; color: var(--term-green); letter-spacing: 0.04em; }
+    .modal-story { color: var(--slate); font-size: 16px; line-height: 1.7; margin-top: 6px; white-space: pre-wrap; }
+    .modal-links { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 14px; }
+    .modal-links a {
+      font-family: var(--font-mono); font-size: 13px; color: var(--chalk);
+      border: 1px solid var(--steel); padding: 10px 16px; transition: border-color .15s, color .15s;
+    }
+    .modal-links a:hover { border-color: var(--term-green); color: var(--term-green); }
+    .modal-links a.rescued:hover { border-color: var(--signal-red); color: var(--signal-red); }
 
     /* RESPONSIVE (match home page) */
     @media (max-width: 900px) {
@@ -223,9 +382,13 @@ const monogram = (name) =>
       .nav-links a:not(.btn) { padding: 16px 20px; border-top: 1px solid var(--steel); }
       .nav-links .nav-cta { margin: 14px 20px 18px; text-align: center; }
     }
+    @media (max-width: 640px) {
+      .modal-box { width: 92vw; max-height: 90vh; }
+    }
   </style>
 
-  <script is:inline>
+  <script is:inline define:vars={{ base }}>
+    // --- nav toggle ---
     const navToggle = document.querySelector(".nav-toggle");
     const navMenu = document.getElementById("nav-menu");
     if (navToggle && navMenu) {
@@ -240,5 +403,145 @@ const monogram = (name) =>
         })
       );
     }
+
+    const esc = (s) => (s == null ? "" : String(s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"));
+    const monogram = (name) =>
+      (name || "").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "??";
+
+    // --- MODAL ---
+    const overlay = document.getElementById("escapee-modal");
+    const mPhoto = document.getElementById("modal-photo");
+    const mNo = document.getElementById("modal-no");
+    const mName = document.getElementById("modal-name");
+    const mServed = document.getElementById("modal-served");
+    const mStory = document.getElementById("modal-story");
+    const mLinks = document.getElementById("modal-links");
+    let lastFocused = null;
+
+    function openModal(d) {
+      lastFocused = document.activeElement;
+      mNo.innerHTML = "PRISONER&nbsp;#" + esc(d.prisoner || "0000");
+      mName.textContent = d.name || "";
+      mServed.textContent = d.served ? "◦ Served: " + d.served : "";
+      mStory.textContent = d.story || "No story on file for this breakout — but the site's running free.";
+      mPhoto.innerHTML = d.image
+        ? `<img src="${esc(d.image)}" alt="${esc(d.name)} website">`
+        : `<span class="mug-mono">${esc(monogram(d.name))}</span>`;
+      let links = `<a href="${esc(d.url)}" target="_blank" rel="noopener">Visit free site ↗</a>`;
+      if (d.rescued) links += `<a class="rescued" href="${esc(d.rescued)}" target="_blank" rel="noopener">The old WordPress site ↗</a>`;
+      mLinks.innerHTML = links;
+      overlay.classList.add("open");
+      overlay.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      document.getElementById("modal-close").focus();
+    }
+    function closeModal() {
+      overlay.classList.remove("open");
+      overlay.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+      if (lastFocused) lastFocused.focus();
+    }
+    document.getElementById("modal-close").addEventListener("click", closeModal);
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) closeModal(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && overlay.classList.contains("open")) closeModal(); });
+
+    function wireCard(el) {
+      const open = () => openModal({
+        name: el.dataset.name, url: el.dataset.url, rescued: el.dataset.rescued,
+        prisoner: el.dataset.prisoner, served: el.dataset.served,
+        story: el.dataset.story, image: el.dataset.image,
+      });
+      el.addEventListener("click", open);
+      el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+    }
+    document.querySelectorAll("[data-escapee]").forEach(wireCard);
+
+    // --- LOAD APPROVED SUBMISSIONS and append ---
+    (async () => {
+      try {
+        const res = await fetch(`${base}/api/escapees`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.ok || !data.escapees || !data.escapees.length) return;
+        const grid = document.getElementById("mug-grid");
+        for (const e of data.escapees) {
+          const art = document.createElement("article");
+          art.className = "mug is-clickable";
+          art.tabIndex = 0; art.setAttribute("role", "button");
+          art.dataset.name = e.name; art.dataset.url = e.url;
+          art.dataset.rescued = e.rescued_url || ""; art.dataset.prisoner = e.prisoner_no;
+          art.dataset.served = "Time on WordPress"; art.dataset.story = e.story || "";
+          art.dataset.image = e.image ? (e.image.startsWith("http") ? e.image : base + e.image) : "";
+          const img = art.dataset.image;
+          const crime = (e.story || "").slice(0, 120) + ((e.story || "").length > 120 ? "…" : "");
+          art.innerHTML = `
+            <div class="mug-photo">
+              ${img ? `<img src="${esc(img)}" alt="${esc(e.name)} website" loading="lazy">` : `<span class="mug-mono">${esc(monogram(e.name))}</span>`}
+              <span class="mug-height">6'0"—5'0"—4'0"</span>
+              <span class="mug-stamp">RELEASED</span>
+            </div>
+            <div class="mug-info">
+              <span class="mug-no">PRISONER&nbsp;#${esc(e.prisoner_no)}</span>
+              <h2 class="mug-name">${esc(e.name)}</h2>
+              <p class="mug-crime">${crime ? "“" + esc(crime) + "”" : "Broke free from WordPress."}</p>
+              <div class="mug-meta">
+                <span class="mug-served">◦ Served: Time on WordPress</span>
+                <span class="mug-link">View record ↗</span>
+              </div>
+            </div>`;
+          grid.appendChild(art);
+          wireCard(art);
+        }
+      } catch (_) { /* ignore — seed escapees already shown */ }
+    })();
+
+    // --- SUBMIT FORM ---
+    const form = document.getElementById("escapee-form");
+    const statusEl = document.getElementById("form-status");
+    const submitBtn = document.getElementById("submit-btn");
+    const isStaging = location.hostname.endsWith("github.io");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      statusEl.className = "form-status";
+      statusEl.textContent = "";
+
+      if (isStaging) {
+        statusEl.className = "form-status err";
+        statusEl.textContent = "Preview mode — submissions only work on the live site.";
+        return;
+      }
+
+      const biz = form.business_name.value.trim();
+      const site = form.website_url.value.trim();
+      if (!biz || !site) {
+        statusEl.className = "form-status err";
+        statusEl.textContent = "Business name and website link are required.";
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Submitting…";
+      try {
+        const fd = new FormData(form);
+        const res = await fetch(`${base}/api/submit-escapee`, { method: "POST", body: fd });
+        const data = await res.json();
+        if (data.ok) {
+          form.reset();
+          statusEl.className = "form-status ok";
+          statusEl.textContent = "Got it — your breakout is in the queue for review. Thanks!";
+        } else {
+          statusEl.className = "form-status err";
+          statusEl.textContent = data.error || "Something went wrong. Try again.";
+        }
+      } catch (_) {
+        statusEl.className = "form-status err";
+        statusEl.textContent = "Network error — please try again.";
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "▸ Submit for review";
+      }
+    });
   </script>
 </Layout>
