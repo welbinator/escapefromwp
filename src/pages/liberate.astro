@@ -77,7 +77,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
       <button type="submit" class="btn btn-primary tool-submit" id="lf-submit">
         ▸ Liberate my content
       </button>
-      <p class="tool-note">Free. Content only — we never touch your live site.</p>
+      <p class="tool-note">Free. We email you a download link (good for 24 hours) and never touch your live site.</p>
     </form>
 
     <!-- STATUS / RESULT -->
@@ -180,6 +180,9 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     .res-table td.n { text-align: right; color: var(--chalk); }
     .res-table tr:last-child td { border-bottom: none; }
     .res-total { font-family: var(--font-mono); font-size: 13px; color: var(--term-green); margin-bottom: 18px; }
+    .res-download { display: inline-flex; width: 100%; justify-content: center; font-size: 16px; padding: 15px 24px; margin-bottom: 14px; }
+    .res-expiry { font-family: var(--font-mono); font-size: 12px; color: var(--slate); line-height: 1.6; }
+    .res-expiry strong { color: var(--chalk); }
     .res-notice { font-family: var(--font-mono); font-size: 12px; color: #f6d08a; border-left: 2px solid #f6d08a; padding-left: 12px; margin-bottom: 18px; }
     .res-again { display: inline-block; margin-top: 14px; font-family: var(--font-mono); font-size: 12px; color: var(--slate); cursor: pointer; background: none; border: none; text-decoration: underline; }
 
@@ -249,6 +252,8 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
       submitBtn.disabled = true;
       const siteLabel = esc(payload.url.replace(/^https?:\/\//, ""));
       statusEl.innerHTML = '<span class="spin">▸ Breaking in…</span> reading ' + siteLabel + "'s content API. Large sites can take 20–40 seconds — hang tight.";
+      // Make sure the user SEES something happen (esp. on mobile).
+      statusEl.scrollIntoView({ behavior: "smooth", block: "center" });
 
       try {
         const res = await fetch((location.pathname.replace(/\/liberate\/?$/, "") || "") + "/api/liberate", {
@@ -257,54 +262,48 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
           body: JSON.stringify(payload),
         });
 
-        const ct = res.headers.get("content-type") || "";
-        if (!res.ok || ct.includes("application/json")) {
-          let msg = "Extraction failed. Please check the URL and try again.";
-          try { const j = await res.json(); if (j.error) msg = j.error; } catch {}
+        let data = null;
+        try { data = await res.json(); } catch {}
+
+        if (!res.ok || !data || !data.ok) {
+          const msg = (data && data.error) || "Extraction failed. Please check the URL and try again.";
           statusEl.className = "tool-status error";
           statusEl.textContent = "✕ " + msg;
+          statusEl.scrollIntoView({ behavior: "smooth", block: "center" });
           submitBtn.disabled = false;
           return;
         }
 
-        // Success — it's a zip. Read summary header, trigger download.
-        let summary = null;
-        const h = res.headers.get("X-Liberation-Summary");
-        if (h) { try { summary = JSON.parse(decodeURIComponent(h)); } catch {} }
-
-        const blob = await res.blob();
-        const dispo = res.headers.get("Content-Disposition") || "";
-        const fnMatch = dispo.match(/filename="([^"]+)"/);
-        const filename = fnMatch ? fnMatch[1] : "content-export.zip";
-
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+        const summary = data.summary || {};
+        const filename = data.filename || "content-export.zip";
 
         statusEl.hidden = true;
         resultEl.hidden = false;
 
         let rows = "";
-        let total = 0;
-        if (summary && summary.collections) {
+        if (summary.collections) {
           for (const c of summary.collections) {
             rows += "<tr><td>" + esc(c.label) + ' <span style="color:var(--slate-dim)">(' + esc(c.type) + ")</span></td><td class='n'>" + c.entries + "</td></tr>";
-            total += c.entries;
           }
         }
-        const notice = summary && summary.notice ? '<p class="res-notice">⚠️ ' + esc(summary.notice) + "</p>" : "";
+        const notice = summary.notice ? '<p class="res-notice">⚠️ ' + esc(summary.notice) + "</p>" : "";
+        const emailLine = data.emailed
+          ? "We've also emailed this link to <strong>" + esc(data.email) + "</strong> so you don't lose it."
+          : "<strong>Heads up:</strong> we couldn't send the email this time, so download it here now.";
+        const ccBase = (location.pathname.replace(/\/liberate\/?$/, "") || "");
+
         resultEl.innerHTML =
           "<h2>✓ Content liberated.</h2>" +
-          '<p class="res-sub">Extracted from ' + esc(summary ? summary.site : siteLabel) + " — your download should be starting now.</p>" +
+          '<p class="res-sub">Extracted from ' + esc(summary.site || siteLabel) + ".</p>" +
           notice +
           (rows ? '<table class="res-table"><tbody>' + rows + "</tbody></table>" : "") +
-          '<p class="res-total">Total: ' + (summary ? summary.total_entries : total) + " entries bundled into <code>" + esc(filename) + "</code></p>" +
-          "<p style='color:var(--slate);font-size:14px;line-height:1.6'>Unzip it and hand the whole folder to your AI coding agent along with the included <code>AGENT_INSTRUCTIONS.md</code> — it'll rebuild your content for you. Want us to do it instead? <a href='" + (location.pathname.replace(/\/liberate\/?$/, "") || "") + "/#breakout' style='color:var(--term-green)'>Plan your escape ↗</a></p>" +
+          '<p class="res-total">Total: ' + (summary.total_entries || 0) + " entries bundled into <code>" + esc(filename) + "</code></p>" +
+          '<a class="btn btn-primary res-download" href="' + esc(data.download_url) + '">⬇ Download your content bundle</a>' +
+          '<p class="res-expiry">' + emailLine + ' This link works for <strong>24 hours</strong>, then the file is deleted.</p>' +
+          "<p style='color:var(--slate);font-size:14px;line-height:1.6;margin-top:16px'>Unzip it and hand the whole folder to your AI coding agent along with the included <code>AGENT_INSTRUCTIONS.md</code> — it'll rebuild your content for you. Want us to do it instead? <a href='" + ccBase + "/#breakout' style='color:var(--term-green)'>Plan your escape ↗</a></p>" +
           '<button type="button" class="res-again" id="lf-again">↻ Liberate another site</button>';
+
+        resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
 
         const again = document.getElementById("lf-again");
         if (again) again.addEventListener("click", () => {

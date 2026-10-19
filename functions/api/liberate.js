@@ -1,18 +1,26 @@
 // Cloudflare Pages Function — POST /api/liberate
-// Extracts a WordPress site's content via the REST API (RSS fallback), logs the
-// request as a lead (D1 + Command Center), builds a target-specific migration
-// bundle, and returns it as a downloadable .zip.
+// Extracts a WordPress site's content, stores the bundle in R2 under a random
+// token (auto-deleted after 24h by the bucket lifecycle rule), emails a download
+// link via Brevo, logs the lead (D1 + Command Center), and returns JSON with the
+// download URL + an extraction summary. The frontend shows a download button and
+// tells the user to check their email.
 
 import { extractSite, normalizeSiteUrl } from "./_lib/wp-extract.js";
 import { buildBundle } from "./_lib/build-bundle.js";
+import { sendDownloadEmail } from "./_lib/send-email.js";
 
 const TARGETS = new Set(["emdash", "generic"]);
 
 function json(obj, status = 200) {
   return new Response(JSON.stringify(obj), {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
   });
+}
+
+function randomToken() {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 async function hmacHex(secret, msg) {
@@ -23,7 +31,6 @@ async function hmacHex(secret, msg) {
   return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-// Log the liberation request to the shared Command Center as a lead.
 async function notifyCommandCenter(env, { email, siteUrl, target, totalEntries }) {
   const secret = env.PUSH_NOTIFY_SECRET;
   if (!secret) return;
@@ -31,26 +38,24 @@ async function notifyCommandCenter(env, { email, siteUrl, target, totalEntries }
   try {
     const ts = Math.floor(Date.now() / 1000);
     const message = `Content liberation: ${siteUrl} → ${target} (${totalEntries} entries extracted)`;
-    const body = JSON.stringify({
-      name: email, email, site: "escapefromwp.com", message, ts,
-    });
+    const body = JSON.stringify({ name: email, email, site: "escapefromwp.com", message, ts });
     const sig = await hmacHex(secret, `v0:${ts}:${body}`);
     await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json", "X-CC-Signature": `t=${ts},v0=${sig}` },
       body,
     });
-  } catch (_) { /* CC down — not fatal */ }
+  } catch (_) { /* non-fatal */ }
 }
 
-async function logLead(env, { email, siteUrl, target, totalEntries, method }) {
+async function logLead(env, { email, siteUrl, target, totalEntries, method, token }) {
   if (!env.DB) return;
   try {
     await env.DB.prepare(
-      `INSERT INTO ec_liberation_leads (email, site_url, target, total_entries, method, created_at)
-       VALUES (?, ?, ?, ?, ?, ?)`
-    ).bind(email, siteUrl, target, totalEntries, method, new Date().toISOString()).run();
-  } catch (_) { /* table may not exist yet / ignore to not block download */ }
+      `INSERT INTO ec_liberation_leads (email, site_url, target, total_entries, method, download_token, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(email, siteUrl, target, totalEntries, method, token, new Date().toISOString()).run();
+  } catch (_) { /* non-fatal */ }
 }
 
 export async function onRequestPost({ request, env }) {
@@ -87,12 +92,6 @@ export async function onRequestPost({ request, env }) {
 
   const totalEntries = extract.collections.reduce((n, c) => n + c.entries.length, 0);
 
-  // Fire-and-forget lead logging (never block the download).
-  await Promise.allSettled([
-    logLead(env, { email, siteUrl: base, target, totalEntries, method: extract.method }),
-    notifyCommandCenter(env, { email, siteUrl: base, target, totalEntries }),
-  ]);
-
   // Build the bundle.
   let bundle;
   try {
@@ -101,7 +100,26 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: false, error: "Could not build the export bundle: " + (err?.message || "unknown") }, 500);
   }
 
-  // Stats summary goes in a header the frontend can read + show.
+  // Store it in R2 under a random token (auto-expires in 24h via lifecycle rule).
+  const token = randomToken();
+  if (!env.EXPORTS) {
+    return json({ ok: false, error: "Export storage is not configured." }, 500);
+  }
+  try {
+    await env.EXPORTS.put(`exports/${token}.zip`, bundle.bytes, {
+      httpMetadata: {
+        contentType: "application/zip",
+        contentDisposition: `attachment; filename="${bundle.filename}"`,
+      },
+      customMetadata: { email, site: base, target, created: new Date().toISOString() },
+    });
+  } catch (err) {
+    return json({ ok: false, error: "Could not store the export: " + (err?.message || "unknown") }, 500);
+  }
+
+  const origin = new URL(request.url).origin;
+  const downloadUrl = `${origin}/api/download/${token}`;
+
   const summary = {
     site: extract.site?.name || base,
     method: extract.method,
@@ -110,14 +128,28 @@ export async function onRequestPost({ request, env }) {
     notice: extract.notice || null,
   };
 
-  return new Response(bundle.bytes, {
-    status: 200,
-    headers: {
-      "Content-Type": "application/zip",
-      "Content-Disposition": `attachment; filename="${bundle.filename}"`,
-      "X-Liberation-Summary": encodeURIComponent(JSON.stringify(summary)),
-      "Access-Control-Expose-Headers": "X-Liberation-Summary, Content-Disposition",
-      "Cache-Control": "no-store",
-    },
+  // Lead logging + email (parallel, non-blocking failures).
+  const [, , emailResult] = await Promise.all([
+    logLead(env, { email, siteUrl: base, target, totalEntries, method: extract.method, token }),
+    notifyCommandCenter(env, { email, siteUrl: base, target, totalEntries }),
+    sendDownloadEmail(env, {
+      to: email,
+      siteName: summary.site,
+      downloadUrl,
+      target,
+      totalEntries,
+      collections: summary.collections,
+      notice: summary.notice,
+    }),
+  ]);
+
+  return json({
+    ok: true,
+    download_url: downloadUrl,
+    filename: bundle.filename,
+    emailed: !!(emailResult && emailResult.ok),
+    email,
+    expires_hours: 24,
+    summary,
   });
 }

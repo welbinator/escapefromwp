@@ -13,6 +13,10 @@
     {
       "binding": "THUMBS",
       "bucket_name": "escapefromwp-escapee-thumbs"
+    },
+    {
+      "binding": "EXPORTS",
+      "bucket_name": "escapefromwp-exports"
     }
   ]
 }
