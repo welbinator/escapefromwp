@@ -18,5 +18,13 @@
       "binding": "EXPORTS",
       "bucket_name": "escapefromwp-exports"
     }
-  ]
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "PREVIEW_QUEUE",
+        "queue": "efw-preview-builds"
+      }
+    ]
+  }
 }

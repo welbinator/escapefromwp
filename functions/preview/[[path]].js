@@ -3,8 +3,7 @@
 // floating modals ("Not for me" / "I like this — let's talk"). The modals POST
 // to /api/preview-feedback. Dead/expired/missing previews show a friendly page.
 
-import { getPreview, getPreviewHtml, putPreviewHtml, acquireBuildLock, releaseBuildLock } from "../api/_lib/preview-store.js";
-import { designVariant } from "../api/_lib/ai-designer.js";
+import { getPreview, getPreviewHtml } from "../api/_lib/preview-store.js";
 
 const VARIANT_KEYS = ["warm", "bold", "editorial"];
 
@@ -140,27 +139,14 @@ export async function onRequestGet({ params, env }) {
     return friendly("You dismissed this design", others);
   }
 
-  // Serve the AI-designed HTML. If not present, lazily generate THIS variant
-  // inside the request (an HTTP request has unlimited wall time while the client
-  // is connected, unlike waitUntil's 30s cap). A short R2 lock prevents two
-  // concurrent viewers from both firing a Claude call for the same variant.
+  // Serve the AI-designed HTML. Generation is done by the background queue
+  // consumer (escapefromwp-preview-builder), NOT here — lazy in-request
+  // generation was killed by client disconnects / the build-page auto-refresh,
+  // leaving infinite spinners. If the HTML isn't in R2 yet, the queue is still
+  // building it; show the self-refreshing build page.
   let page = null;
   try { page = await getPreviewHtml(env, id, variant); } catch (_) {}
-
-  if (!page) {
-    if (!rec.model) return buildingPage(id, variant);
-    let gotLock = false;
-    try { gotLock = await acquireBuildLock(env, id, variant); } catch (_) {}
-    if (!gotLock) return buildingPage(id, variant); // another request is building it
-
-    try {
-      const doc = await designVariant(env, rec.model, variant);
-      if (doc) { await putPreviewHtml(env, id, variant, doc); page = doc; }
-    } catch (_) { /* fall through to building page */ }
-    finally { await releaseBuildLock(env, id, variant); }
-
-    if (!page) return buildingPage(id, variant); // generation failed; retry on refresh
-  }
+  if (!page) return buildingPage(id, variant);
 
   const injected = page.replace(/<\/body>/i, modalsHtml(id, variant) + "</body>");
   return html(injected);

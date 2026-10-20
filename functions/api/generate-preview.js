@@ -136,32 +136,28 @@ export async function onRequestPost({ request, env, waitUntil }) {
     url: `${origin}/preview/${id}/${key}`,
   }));
 
-  // The 3 bespoke sites are designed LAZILY, on first view of each link (one
-  // ~90s Claude call per variant, which fits inside an HTTP request's unlimited
-  // wall time). We do NOT design here: waitUntil is capped at 30s and would be
-  // killed mid-generation. Email the links right away and alert the Command
-  // Center; the preview pages generate-on-open and show a build screen meanwhile.
-  let emailed = false;
-  const notify = (async () => {
-    try {
-      const [, mail] = await Promise.all([
-        notifyCommandCenter(env, { email, siteUrl: base, totalEntries }).catch(() => {}),
-        sendPreviewLinksEmail(env, { to: email, siteName: model.brand.name, variants, totalEntries }).catch(() => null),
-      ]);
-      emailed = !!mail;
-    } catch (_) {}
-  })();
-  // Wait briefly so the response can report emailed status; falls back to
-  // waitUntil if it runs long.
-  if (waitUntil) { waitUntil(notify); } 
-  await Promise.race([notify, new Promise((r) => setTimeout(r, 4000))]);
+  // The 3 bespoke sites are designed by a BACKGROUND QUEUE CONSUMER
+  // (escapefromwp-preview-builder), NOT lazily at view time. Lazy in-request
+  // generation was unreliable on CF Pages: a ~50s Claude call gets killed when
+  // the client disconnects, and the build page's auto-refresh cancelled it every
+  // 12s → infinite spinner. The queue consumer runs with no client attached (up
+  // to 15 min wall time), builds all 3 variants, stores them to R2, and sends
+  // the links email once a design is ready. Here we just enqueue + notify CC.
+  let queued = false;
+  try {
+    if (env.PREVIEW_QUEUE) { await env.PREVIEW_QUEUE.send({ id }); queued = true; }
+  } catch (_) { /* fall back to lazy view-time generation if the queue is down */ }
+
+  // Command Center alert can go in the background.
+  const notify = notifyCommandCenter(env, { email, siteUrl: base, totalEntries }).catch(() => {});
+  if (waitUntil) { waitUntil(notify); } else { await Promise.race([notify, new Promise((r) => setTimeout(r, 2000))]); }
 
   return json({
     ok: true,
     preview_id: id,
     variants,
     building: true,
-    emailed,
+    queued,
     email,
     summary: { site: model.brand.name, total_entries: totalEntries, method: extract.method },
   });

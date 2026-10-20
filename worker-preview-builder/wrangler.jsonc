@@ -1,0 +1,29 @@
+{
+  "name": "escapefromwp-preview-builder",
+  "main": "index.js",
+  "compatibility_date": "2025-01-01",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "escapefromwp-db",
+      "database_id": "795e4fee-fb3e-4f20-8499-6c07faa2b54a"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "EXPORTS",
+      "bucket_name": "escapefromwp-exports"
+    }
+  ],
+  "queues": {
+    "consumers": [
+      {
+        "queue": "efw-preview-builds",
+        "max_batch_size": 1,
+        "max_concurrency": 3,
+        "max_retries": 3,
+        "max_batch_timeout": 5
+      }
+    ]
+  }
+}
