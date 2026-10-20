@@ -33,6 +33,7 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
   <!-- HERO -->
   <section class="wrap tool-hero rise">
     <span class="eyebrow">◦ Preview builder · 01</span>
+    <div class="wip-badge">⚠ Work in progress. This tool is actively being built and the designs keep getting better. Kick the tires and tell us what you think.</div>
     <h1 class="tool-title">See your site, rebuilt.</h1>
     <p class="tool-lead">
       Your content is trapped in WordPress — let's break it out. Paste your site's URL and
@@ -70,7 +71,7 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
       <button type="submit" class="btn btn-primary tool-submit" id="lf-submit">
         ▸ Build my 3 previews
       </button>
-      <p class="tool-note">Free. Takes about a minute. We email you three live preview links and never touch your live site.</p>
+      <p class="tool-note">Free. This can take a few minutes while we design three sites from scratch. We email you three live preview links and never touch your live site.</p>
     </form>
 
     <p class="tool-alt">
@@ -150,6 +151,17 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
 
     .tool-hero { padding-top: 120px; max-width: 760px; }
     .eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--term-green); display: block; margin-bottom: 16px; }
+    .wip-badge { font-family: var(--font-mono); font-size: 12px; line-height: 1.5; color: #f6d08a; border: 1px solid rgba(246,208,138,0.4); background: rgba(246,208,138,0.06); padding: 10px 14px; margin-bottom: 20px; border-radius: 4px; }
+    /* Animated loading indicator (preview build in progress) */
+    .efw-loader { display: flex; align-items: center; gap: 14px; }
+    .efw-spinner { width: 22px; height: 22px; border: 2px solid var(--steel); border-top-color: var(--term-green); border-radius: 50%; flex-shrink: 0; animation: efw-spin 0.8s linear infinite; }
+    .efw-loader-text { display: flex; flex-direction: column; gap: 4px; }
+    .efw-loader-text .lead { color: var(--chalk); }
+    .efw-loader-text .sub { color: var(--slate-dim); font-size: 12px; }
+    .efw-dots::after { content: ""; animation: efw-dots 1.4s steps(4,end) infinite; }
+    @keyframes efw-spin { to { transform: rotate(360deg); } }
+    @keyframes efw-dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+    @media (prefers-reduced-motion: reduce) { .efw-spinner { animation-duration: 2s; } .efw-dots::after { animation: none; content: "…"; } }
     .tool-title { font-size: clamp(34px, 6vw, 60px); line-height: 1.02; margin-bottom: 18px; }
     .tool-lead { color: var(--slate); font-size: 18px; line-height: 1.6; }
     .tool-lead strong { color: var(--chalk); }
@@ -309,8 +321,14 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
 
     // ---- Preview builder (default) --------------------------------------
     async function runPreview(payload, siteLabel) {
-      statusEl.innerHTML = '<span class="spin">▸ Breaking in…</span> reading ' + siteLabel +
-        "'s content and designing three looks. This takes 30–60 seconds — hang tight.";
+      statusEl.innerHTML =
+        '<div class="efw-loader">' +
+          '<div class="efw-spinner"></div>' +
+          '<div class="efw-loader-text">' +
+            '<span class="lead">Designing three sites for ' + siteLabel + '<span class="efw-dots"></span></span>' +
+            '<span class="sub">Reading your content, grabbing your images, and laying out three original designs. This can take a few minutes. You can leave this page, we\'ll email the links.</span>' +
+          "</div>" +
+        "</div>";
       statusEl.scrollIntoView({ behavior: "smooth", block: "center" });
 
       const res = await fetch(apiBase() + "/api/generate-preview", {
