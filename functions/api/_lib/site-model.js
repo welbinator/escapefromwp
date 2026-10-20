@@ -6,7 +6,7 @@
 // this module always produces usable hardcoded copy on its own.
 
 import { htmlToText } from "./html-to-markdown.js";
-import { detectContent } from "./content-detect.js";
+import { detectContent, isJunkText } from "./content-detect.js";
 
 const STOP_SLUGS = new Set(["cart", "checkout", "my-account", "wp-login", "privacy-policy", "terms", "terms-of-service", "sample-page"]);
 
@@ -38,14 +38,17 @@ function leadText(md, max = 180) {
     let s = raw
       .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")         // std images
       .replace(/\[[^\]]*\]\([^)]*\)/g, " ")          // std links (drop entirely)
+      .replace(/\(\/[^)]*\)/g, " ")                  // parenthetical relative links (/class/foo/)
       .replace(/\]?\(https?:[^)]*\)/g, " ")          // orphan (url) + ](url)
       .replace(/\]?\(\/\/[^)]*\)/g, " ")             // protocol-relative (//url)
       .replace(/https?:\/\/\S+/g, " ")               // bare urls
+      .replace(/\/[a-z0-9][a-z0-9\-\/]*\//gi, " ")   // leftover /path/ fragments
       .replace(/[#>*_`~\[\]!]+/g, " ")               // md punctuation incl stray [ ] !
       .replace(/\s+/g, " ")
       .trim();
     if (s.length < 25) continue;                     // too short → not a lead
     if (!/[a-z]{4,}/i.test(s)) continue;             // no real words
+    if (isJunkText(s)) continue;                     // slug / url-path / wordless → skip
     const sentence = (s.match(/^.*?[.!?](\s|$)/) || [s])[0].trim();
     const out = sentence.length > 40 ? sentence : s;
     return out.length > max ? out.slice(0, max - 1).replace(/\s\S*$/, "") + "…" : out;
@@ -106,7 +109,7 @@ export function buildSiteModel(extract, brand) {
     .filter((e) => e.title && !STOP_SLUGS.has((e.slug || "").toLowerCase()) && !isJunkEntry(e))
     .map((e) => ({
       title: e.title, slug: e.slug, parent: e.parent, menu_order: e.menu_order,
-      excerpt: e.excerpt || leadText(e.content_md),
+      excerpt: (!isJunkText(e.excerpt) && e.excerpt) || leadText(e.content_md),
       body_md: e.content_md || "",
       image: e.featured_image || firstInlineImage(e.content_md) || "",
       image_alt: e.featured_image_alt || e.title,
@@ -140,6 +143,7 @@ export function buildSiteModel(extract, brand) {
   // NOT pages that already have a dedicated block (faq/contact/pricing/etc).
   const DEDICATED_FEAT = /faq|frequently|contact|get-in-touch|pricing|plans|packages|our-team|staff|privacy|terms|cart|checkout/i;
   const featurePages = pages.filter((p) => p !== heroPage && (p.excerpt || "").length > 20
+    && !isJunkText(p.excerpt || "")
     && !DEDICATED_FEAT.test((p.slug || "") + " " + (p.title || "")));
   let featureSrc = featurePages;
   if (featureSrc.length < 3) {

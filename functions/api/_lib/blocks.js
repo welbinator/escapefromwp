@@ -48,6 +48,34 @@ export function baseCss(t) {
   .card img{aspect-ratio:16/10;object-fit:cover;width:100%}
   footer.site{background:${t.color.panel};padding:28px 0;color:${t.color.sub};font-size:.85rem;text-align:center;border-top:1px solid ${t.color.line}}
   @media(max-width:720px){nav.links{display:none}section{padding:52px 0}}
+  /* ---- motion: tasteful, fail-open (content visible if JS off) ---- */
+  .btn{transition:transform .18s ease, box-shadow .18s ease}
+  .btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px ${hexA(t.color.accent, .28)}}
+  .card{transition:transform .2s ease, box-shadow .2s ease}
+  .card:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.08)}
+  .rise{transition:opacity .6s ease, transform .6s ease}
+  html.js .rise{opacity:0;transform:translateY(20px)}
+  html.js .rise.in{opacity:1;transform:none}
+  html.js .rise-stagger > *{transition:opacity .55s ease, transform .55s ease}
+  html.js .rise-stagger.in > *{opacity:1;transform:none}
+  html.js .rise-stagger:not(.in) > *{opacity:0;transform:translateY(16px)}
+  html.js .rise-stagger.in > *:nth-child(1){transition-delay:0s}
+  html.js .rise-stagger.in > *:nth-child(2){transition-delay:.07s}
+  html.js .rise-stagger.in > *:nth-child(3){transition-delay:.14s}
+  html.js .rise-stagger.in > *:nth-child(4){transition-delay:.21s}
+  html.js .rise-stagger.in > *:nth-child(5){transition-delay:.28s}
+  html.js .rise-stagger.in > *:nth-child(n+6){transition-delay:.35s}
+  @keyframes efwHeroText{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+  html.js .hero-anim h1{animation:efwHeroText .7s ease .05s both}
+  html.js .hero-anim .hero-sub{animation:efwHeroText .7s ease .18s both}
+  html.js .hero-anim .hero-cta{animation:efwHeroText .7s ease .30s both}
+  html.js .hero-media img{animation:efwKen 16s ease-out both}
+  @keyframes efwKen{from{transform:scale(1.08)}to{transform:scale(1)}}
+  @media(prefers-reduced-motion:reduce){
+    html.js .rise,html.js .rise-stagger>*,.rise{opacity:1!important;transform:none!important;transition:none!important}
+    html.js .hero-anim h1,html.js .hero-anim .hero-sub,html.js .hero-anim .hero-cta,html.js .hero-media img{animation:none!important}
+    .btn:hover,.card:hover{transform:none!important}
+  }
   `;
 }
 function hexA(hex, a) {
@@ -73,24 +101,24 @@ export function footer(m, t) {
 const BLOCKS = {
   hero(d, t, m) {
     const h = m.hero;
-    const copy = `<div class="hero-copy">${label(t, m.brand.name)}<h1>${esc(h.headline)}</h1><p class="muted" style="font-size:1.15rem;max-width:42ch">${esc(h.subheadline)}</p><div>${ctaBtn(t, h.cta, "#contact")}</div></div>`;
+    const copy = `<div class="hero-copy">${label(t, m.brand.name)}<h1>${esc(h.headline)}</h1><p class="hero-sub muted" style="font-size:1.15rem;max-width:42ch">${esc(h.subheadline)}</p><div class="hero-cta">${ctaBtn(t, h.cta, "#contact")}</div></div>`;
     if (t.heroStyle === "overlay") {
-      return `<section class="blk-hero overlay" style="background:${t.color.heroBg || "#0b0f19"}">
+      return `<section class="blk-hero overlay hero-anim" style="background:${t.color.heroBg || "#0b0f19"}">
         <div class="wrap" style="display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;color:${t.color.heroInk || "#fff"}">
           <div><div class="sec-label" style="color:${t.color.accent}">${esc(m.brand.name)}</div>
             <h1 style="color:${t.color.heroInk || "#fff"};font-size:clamp(2.1rem,5vw,3.4rem)">${esc(h.headline)}</h1>
-            <p style="color:${t.color.heroSub || "#cbd5e1"};font-size:1.15rem;max-width:42ch">${esc(h.subheadline)}</p>
-            ${ctaBtn(t, h.cta, "#contact")}</div>
-          ${h.image ? `<div style="border-radius:${t.radius.lg};overflow:hidden">${img(h.image, h.headline)}</div>` : ""}
+            <p class="hero-sub" style="color:${t.color.heroSub || "#cbd5e1"};font-size:1.15rem;max-width:42ch">${esc(h.subheadline)}</p>
+            <div class="hero-cta">${ctaBtn(t, h.cta, "#contact")}</div></div>
+          ${h.image ? `<div class="hero-media" style="border-radius:${t.radius.lg};overflow:hidden">${img(h.image, h.headline)}</div>` : ""}
         </div></section>`;
     }
     if (t.heroStyle === "split") {
-      return `<section class="blk-hero split"><div class="wrap" style="display:grid;grid-template-columns:${h.image ? "1fr 1fr" : "1fr"};gap:48px;align-items:center">
-        ${h.image ? `<div style="border-radius:${t.radius.lg};overflow:hidden">${img(h.image, h.headline)}</div>` : ""}${copy}</div></section>`;
+      return `<section class="blk-hero split hero-anim"><div class="wrap" style="display:grid;grid-template-columns:${h.image ? "1fr 1fr" : "1fr"};gap:48px;align-items:center">
+        ${h.image ? `<div class="hero-media" style="border-radius:${t.radius.lg};overflow:hidden">${img(h.image, h.headline)}</div>` : ""}${copy}</div></section>`;
     }
     // soft
-    return `<section class="blk-hero soft" style="background:${t.color.panel}"><div class="wrap" style="display:grid;grid-template-columns:${h.image ? "1fr 1fr" : "1fr"};gap:44px;align-items:center">
-      ${copy}${h.image ? `<div style="border-radius:${t.radius.lg};overflow:hidden">${img(h.image, h.headline)}</div>` : ""}</div></section>`;
+    return `<section class="blk-hero soft hero-anim" style="background:${t.color.panel}"><div class="wrap" style="display:grid;grid-template-columns:${h.image ? "1fr 1fr" : "1fr"};gap:44px;align-items:center">
+      ${copy}${h.image ? `<div class="hero-media" style="border-radius:${t.radius.lg};overflow:hidden">${img(h.image, h.headline)}</div>` : ""}</div></section>`;
   },
 
   services(d, t) {
@@ -129,7 +157,7 @@ const BLOCKS = {
   testimonials(d, t) {
     const items = d.map((q) => `<figure class="card" style="margin:0"><div class="pad"><div style="color:${t.color.star};font-size:1.1rem">★★★★★</div>
       <blockquote style="margin:10px 0 0;font-family:${t.fonts.display};font-size:1.1rem">“${esc(q.quote)}”</blockquote>
-      ${q.who ? `<figcaption class="muted" style="margin-top:10px;font-weight:600">— ${esc(q.who)}</figcaption>` : ""}</div></figure>`).join("");
+      ${q.who ? `<figcaption class="muted" style="margin-top:10px;font-weight:600">${esc(q.who)}</figcaption>` : ""}</div></figure>`).join("");
     return `<section class="blk-testimonials" style="background:${t.color.panel}"><div class="wrap"><div style="text-align:center;margin-bottom:30px">${label(t, "Testimonials")}<h2>What people say</h2></div>
       <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">${items}</div></div></section>`;
   },
@@ -194,7 +222,7 @@ const BLOCKS = {
   ctaBand(d, t, m) {
     return `<section class="blk-cta" style="background:${t.color.accent}"><div class="wrap" style="text-align:center;color:${t.color.accentText}">
       <h2 style="color:${t.color.accentText}">${esc(d?.headline || "Ready to get started?")}</h2>
-      <p style="color:${t.color.accentText};opacity:.9;max-width:46ch;margin:0 auto 22px">${esc(d?.sub || `Let's bring ${m.brand.name} to life — done right.`)}</p>
+      <p style="color:${t.color.accentText};opacity:.9;max-width:46ch;margin:0 auto 22px">${esc(d?.sub || `Let's bring ${m.brand.name} to life, done right.`)}</p>
       <a class="btn" href="#contact" style="background:${t.color.bg};color:${t.color.ink};border-radius:${t.radius.pill}">${esc(m.hero.cta || "Get in touch")}</a></div></section>`;
   },
 };
@@ -202,6 +230,13 @@ const BLOCKS = {
 export function renderBlock(type, data, theme, model) {
   const fn = BLOCKS[type];
   if (!fn) return "";
-  try { return fn(data, theme, model); } catch (_) { return ""; }
+  let html;
+  try { html = fn(data, theme, model); } catch (_) { return ""; }
+  if (!html || type === "hero") return html || "";
+  // Reveal-on-scroll: fade the section up as it enters. For card grids, turn the
+  // first .grid into a staggered reveal container (its children cascade in).
+  html = html.replace(/^(\s*<section\b[^>]*\bclass=")/, "$1rise ");
+  html = html.replace(/class="grid"/, 'class="grid rise-stagger"');
+  return html;
 }
 export const BLOCK_TYPES = Object.keys(BLOCKS);

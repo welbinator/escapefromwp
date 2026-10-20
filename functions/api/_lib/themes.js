@@ -10,8 +10,8 @@ const THEMES = {
     blurb: "Approachable & friendly",
     fonts: {
       display: `"Fraunces", Georgia, "Times New Roman", serif`,
-      body: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`,
-      googleHref: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap",
+      body: `"Newsreader", Georgia, "Times New Roman", serif`,
+      googleHref: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap",
     },
     color: {
       accent: "#b4532a",       // terracotta
@@ -33,8 +33,8 @@ const THEMES = {
     blurb: "Modern & high-contrast",
     fonts: {
       display: `"Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`,
-      body: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`,
-      googleHref: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap",
+      body: `"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`,
+      googleHref: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap",
     },
     color: {
       accent: "#4f46e5",       // indigo
@@ -59,8 +59,8 @@ const THEMES = {
     blurb: "Refined & magazine-like",
     fonts: {
       display: `"Playfair Display", Georgia, "Times New Roman", serif`,
-      body: `"Georgia", "Times New Roman", serif`,
-      googleHref: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&display=swap",
+      body: `"Source Sans 3", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif`,
+      googleHref: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;1,400&display=swap",
     },
     color: {
       accent: "#8a6d3b",       // muted gold-brown

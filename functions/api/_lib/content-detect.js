@@ -8,10 +8,38 @@ function textOf(md) {
   return String(md || "")
     .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
     .replace(/\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\(\/[^)]*\)/g, " ")
     .replace(/https?:\/\/\S+/g, " ")
+    .replace(/\/[a-z0-9][a-z0-9\-\/]*\//gi, " ")
     .replace(/[#>*_`~\[\]!]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+// Reject strings that are NOT human prose: URL slugs (viking-pfaff-know-how),
+// URL path fragments (/09/west-side), bare filenames, or text with fewer than
+// two real words. Used to keep scraped junk out of card copy + timeline events.
+export function isJunkText(s) {
+  s = String(s || "").trim();
+  if (!s) return true;
+  // strip wrapping bullets / parens / brackets / dashes
+  const core = s.replace(/^[\s\-•*·()\[\]]+/, "").replace(/[\s()\[\]]+$/, "").trim();
+  if (!core) return true;
+  // contains a URL path fragment (has "/" and no spaces) → junk
+  if (core.includes("/") && !/\s/.test(core)) return true;
+  // pure slug: lowercase/number tokens joined only by hyphens, no spaces
+  if (!/\s/.test(core) && /^[a-z0-9]+(?:[-_][a-z0-9]+)+$/i.test(core)) return true;
+  // looks like a bare filename
+  if (!/\s/.test(core) && /\.(jpg|jpeg|png|webp|gif|avif|svg|pdf|html?)$/i.test(core)) return true;
+  // needs at least two word-ish tokens (2+ letters each) to be real prose
+  const words = core.split(/\s+/).filter((w) => /[a-z]{2,}/i.test(w));
+  if (words.length < 2) return true;
+  return false;
+}
+
+// Return cleaned prose, or "" if the string is junk (slug/path/wordless).
+export function proseOrEmpty(s) {
+  return isJunkText(s) ? "" : String(s || "").trim();
 }
 
 // Pull ALL image URLs out of a markdown body (full-size preferred).
@@ -132,8 +160,10 @@ function detectServices(pages, heroSlug) {
   const eligible = pages.filter((p) => p.slug !== heroSlug && !DEDICATED.test((p.slug || "") + " " + (p.title || "")));
   const svc = eligible.filter((p) => /service|what-we|offer|solution|capabilit/i.test((p.slug || "") + " " + (p.title || "")));
   const src = svc.length >= 3 ? svc : eligible.filter((p) => (p.excerpt || "").length > 20);
-  if (src.length < 3) return null;
-  return src.slice(0, 6).map((p) => ({ title: p.title, text: (p.excerpt || "").slice(0, 130), image: p.image || "" }));
+  // Reject cards whose excerpt is a slug/URL-path/wordless junk string.
+  const clean = src.filter((p) => !isJunkText(p.excerpt || ""));
+  if (clean.length < 3) return null;
+  return clean.slice(0, 6).map((p) => ({ title: p.title, text: (p.excerpt || "").slice(0, 130), image: p.image || "" }));
 }
 
 // Timeline = history/about page with years (19xx/20xx) + events.
@@ -144,7 +174,10 @@ function detectTimeline(allEntries) {
     const events = [];
     const re = /\b((?:19|20)\d{2})\b[\s:–-]*([^\n.]{8,120})/g;
     let m;
-    while ((m = re.exec(md))) events.push({ year: m[1], text: textOf(m[2]).slice(0, 110) });
+    while ((m = re.exec(md))) {
+      const text = textOf(m[2]).slice(0, 110);
+      if (!isJunkText(text)) events.push({ year: m[1], text });
+    }
     if (events.length >= 3) return events.slice(0, 6);
   }
   return null;
