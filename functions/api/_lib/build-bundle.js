@@ -127,6 +127,9 @@ export function buildBundle(extract, target) {
       source: { name: siteName, url: extract.site.base, extracted_at: new Date().toISOString(), method: extract.method },
       target,
       stats, total_entries: totalEntries,
+      menus: extract.menus && extract.menus.menus?.length
+        ? { source: extract.menus.source, count: extract.menus.menus.length, file: "menus.json" }
+        : null,
       media: [...mediaUrls],
       collections: extract.collections.map((c) => ({
         type: c.type, label: c.label,
@@ -141,17 +144,49 @@ export function buildBundle(extract, target) {
     }, null, 2),
   });
 
+  // 3b) Navigation menu(s), when we could extract any — the agent replicates
+  //     these as EmDash menus. Best-effort: source + notice flag reliability.
+  const menuData = extract.menus && extract.menus.menus?.length ? extract.menus : null;
+  if (menuData) {
+    files.push({
+      name: "menus.json",
+      data: JSON.stringify({
+        source: menuData.source,
+        notice: menuData.notice || undefined,
+        menus: menuData.menus,
+      }, null, 2),
+    });
+  }
+
   // 4) Agent instructions + human README
-  files.push({ name: "AGENT_INSTRUCTIONS.md", data: agentInstructions(target, extract, stats, totalEntries, mediaUrls.size) });
-  files.push({ name: "README.md", data: humanReadme(target, siteName, extract.site.base, stats, totalEntries, mediaUrls.size, extract.notice) });
+  files.push({ name: "AGENT_INSTRUCTIONS.md", data: agentInstructions(target, extract, stats, totalEntries, mediaUrls.size, menuData) });
+  files.push({ name: "README.md", data: humanReadme(target, siteName, extract.site.base, stats, totalEntries, mediaUrls.size, extract.notice, menuData) });
 
   const bytes = zipSync(files);
   const filename = `${slugify(host)}-content-${target}-${stamp}.zip`;
   return { filename, bytes };
 }
 
-function agentInstructions(target, extract, stats, totalEntries, mediaCount) {
+// Count menu items recursively (for the instruction summary line).
+function countItems(items) {
+  if (!Array.isArray(items)) return 0;
+  return items.reduce((n, it) => n + 1 + countItems(it.children), 0);
+}
+
+function agentInstructions(target, extract, stats, totalEntries, mediaCount, menuData) {
   const list = stats.map((s) => `- \`${s.collection}\` → ${s.entries} entr${s.entries === 1 ? "y" : "ies"}${s.capped ? " (capped at the export limit)" : ""}`).join("\n");
+  const menuCount = menuData ? menuData.menus.length : 0;
+  const menuItemCount = menuData ? menuData.menus.reduce((n, m) => n + countItems(m.items), 0) : 0;
+  const emdashMenuSection = menuData ? `
+## Rebuild the navigation menu(s)
+This bundle includes \`menus.json\` — **${menuCount} menu${menuCount === 1 ? "" : "s"}, ${menuItemCount} item${menuItemCount === 1 ? "" : "s"}** extracted from the WordPress navigation (source: \`${menuData.source}\`).${menuData.notice ? ` ⚠️ ${menuData.notice}` : ""}
+
+Each menu is \`{ name, slug, items[] }\`; each item is \`{ label, url, path, children[] }\` where \`path\` is relative for internal links (e.g. \`/about\`) and absolute for external ones. Recreate these as EmDash menus:
+1. For each menu in \`menus.json\`, create a menu in EmDash (**admin → Navigation**, or seed \`_emdash_menu_items\`).
+2. Preserve item \`label\`, order (array order), and nesting (\`children\`) so dropdowns/submenus match.
+3. For internal \`path\`s, link each item to the EmDash **entry/collection** you created for that URL (match by slug) rather than hardcoding the old URL — that way the nav follows the new routes. Keep external/absolute URLs as custom links.
+4. If a menu item points at a page that wasn't in the content export (e.g. a plugin-generated archive), create a custom-URL item or a stub page so the nav isn't broken.
+` : "";
   if (target === "emdash") {
     return `# Agent Instructions — Rebuild this content in EmDash CMS
 
@@ -160,7 +195,7 @@ You are an AI agent helping migrate a WordPress site's **content** (not design) 
 ## What's in this bundle
 - \`seed.json\` — an EmDash seed file defining one collection per WordPress content type, with fields already chosen (title, excerpt, content, featured_image, categories/tags where present). This is the EmDash content model.
 - \`content/<collection>/<slug>.md\` — one markdown file per entry, with YAML frontmatter (title, slug, status, date, excerpt, featured_image URL, categories, tags, source_url) and the body as markdown.
-- \`content.json\` — a machine-readable manifest of every collection, entry, and media URL.
+- \`content.json\` — a machine-readable manifest of every collection, entry, and media URL.${menuData ? "\n- `menus.json` — the site's navigation menu(s) with labels, order, nesting, and link targets." : ""}
 
 ## Content types found
 ${list}
@@ -172,7 +207,7 @@ Total: **${totalEntries} entries**, **${mediaCount} media URLs**.
 3. **Import the media.** Download each URL in \`content.json\` \`media[]\`, upload it into the EmDash media library, and wire \`featured_image\` + inline images to the resulting media references.
 4. **Create entries.** For each \`.md\` file, create an entry in the matching collection: map frontmatter → fields, the converted Portable Text → the \`content\` field, and set \`slug\` + \`status\` from the frontmatter so URLs and publish state carry over.
 5. **Map taxonomies.** \`categories\`/\`tags\` frontmatter values correspond to the \`multiSelect\` options defined in \`seed.json\`. Preserve them, or convert to EmDash taxonomies if the site prefers true taxonomy terms.
-
+${emdashMenuSection}
 ## Notes
 - \`status: publish\` from WordPress → \`published\` in EmDash.
 - Preserve \`slug\` values exactly to keep existing URLs working (set up redirects for any that change).
@@ -188,7 +223,7 @@ This bundle contains the **content** (not design) of a WordPress site, ready to 
 
 ## What's in this bundle
 - \`content/<collection>/<slug>.md\` — one markdown file per entry with YAML frontmatter + markdown body.
-- \`content.json\` — machine-readable manifest of all collections, entries, and media URLs.
+- \`content.json\` — machine-readable manifest of all collections, entries, and media URLs.${menuData ? "\n- `menus.json` — the site's navigation menu(s): labels, order, nesting, and link targets." : ""}
 
 ## Content types found
 ${list}
@@ -198,15 +233,18 @@ Total: **${totalEntries} entries**, **${mediaCount} media URLs**.
 1. Create one content collection/type per folder under \`content/\`, with fields matching the frontmatter keys (title, excerpt, date, featured_image, categories, tags).
 2. Create an entry per \`.md\` file; map frontmatter → fields and the markdown body → your rich-text/body field.
 3. Download the media URLs from \`content.json\` and re-link featured + inline images.
-4. Preserve \`slug\` values to keep URLs stable; add redirects for any that change.
+4. Preserve \`slug\` values to keep URLs stable; add redirects for any that change.${menuData ? `\n5. **Rebuild the navigation** from \`menus.json\` (source: \`${menuData.source}\`${menuData.notice ? "; ⚠️ " + menuData.notice : ""}): recreate each menu preserving item order and \`children\` nesting, linking internal \`path\`s to the matching new entries and keeping absolute URLs as external links.` : ""}
 
 This export is content only — recreate design/layout separately.
 ${extract.notice ? `\n> ⚠️ ${extract.notice}` : ""}
 `;
 }
 
-function humanReadme(target, siteName, url, stats, totalEntries, mediaCount, notice) {
+function humanReadme(target, siteName, url, stats, totalEntries, mediaCount, notice, menuData) {
   const list = stats.map((s) => `| ${s.label} (\`${s.collection}\`) | ${s.entries}${s.capped ? " ⚠️ capped" : ""} |`).join("\n");
+  const menuLine = menuData
+    ? `\n**Plus your navigation menu${menuData.menus.length === 1 ? "" : "s"}** (${menuData.menus.length}) — saved in \`menus.json\` so your agent can rebuild the nav structure, not just the pages.${menuData.notice ? ` *(${menuData.notice})*` : ""}\n`
+    : "";
   return `# Your content, liberated from WordPress
 
 Extracted from **${siteName || url}** (${url}) by [Escape From WP](https://escapefromwp.com).
@@ -218,7 +256,7 @@ Target CMS: **${target === "emdash" ? "EmDash" : target}**
 ${list}
 
 **Total: ${totalEntries} entries · ${mediaCount} media files referenced.**
-
+${menuLine}
 ## What to do with it
 1. **Unzip this folder** somewhere you can find it.
 2. **Open your AI coding assistant** (Claude Code, Cursor, GitHub Copilot, etc.) inside your new site's project.

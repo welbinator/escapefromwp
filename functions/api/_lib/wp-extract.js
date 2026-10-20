@@ -146,6 +146,133 @@ async function fetchAllEntries(base, restBase, { maxEntries = 500, maxPages = 20
   return { entries, capped: false };
 }
 
+// ---------------------------------------------------------------------------
+// Menu / navigation extraction (best-effort; WP exposes menus inconsistently).
+// Tries, in order:
+//   1. WP-API Menus plugin   → /wp-json/wp-api-menus/v2/menus
+//   2. WP REST Menus (v1)    → /wp-json/menus/v1/menus
+//   3. Core menus endpoint   → /wp-json/wp/v2/menus (usually auth-walled)
+//   4. Block-theme nav       → /wp-json/wp/v2/navigation (HTML-in-post)
+//   5. Homepage <nav> HTML   → derive a flat menu from rendered links
+// Each item is normalized to { label, url, path, parent_index, order, children }.
+// ---------------------------------------------------------------------------
+
+function normItem(label, url, base) {
+  label = htmlToText(label || "").trim();
+  url = (url || "").trim();
+  let path = url;
+  try {
+    const u = new URL(url, base);
+    // Keep internal paths relative so the agent can remap to new routes.
+    path = u.host === new URL(base).host ? (u.pathname.replace(/\/$/, "") || "/") + u.hash : u.href;
+  } catch {}
+  return { label, url, path };
+}
+
+// Build a nested tree from a flat list that carries id + parent refs.
+function nestById(flat) {
+  const byId = new Map();
+  flat.forEach((n) => byId.set(String(n._id), { ...n, children: [] }));
+  const roots = [];
+  for (const n of byId.values()) {
+    const pid = n._parent != null ? String(n._parent) : "0";
+    if (pid !== "0" && byId.has(pid)) byId.get(pid).children.push(n);
+    else roots.push(n);
+  }
+  const strip = (nodes) =>
+    nodes
+      .sort((a, b) => (a._order || 0) - (b._order || 0))
+      .map(({ _id, _parent, _order, ...rest }) => ({ ...rest, children: strip(rest.children) }));
+  return strip(roots);
+}
+
+export async function extractMenus(base) {
+  // 1) WP-API Menus plugin (richest: full items with parent + order)
+  const listPlugin = await fetchJson(`${base}/wp-json/wp-api-menus/v2/menus`);
+  if (listPlugin.ok && Array.isArray(listPlugin.data) && listPlugin.data.length) {
+    const menus = [];
+    for (const m of listPlugin.data.slice(0, 10)) {
+      const detail = await fetchJson(`${base}/wp-json/wp-api-menus/v2/menus/${m.ID || m.term_id || m.id}`);
+      const items = detail.ok && Array.isArray(detail.data?.items) ? detail.data.items : [];
+      const flat = items.map((it) => ({
+        ...normItem(it.title, it.url, base),
+        _id: it.ID || it.id,
+        _parent: it.parent || it.menu_item_parent || 0,
+        _order: it.order || it.menu_order || 0,
+      }));
+      menus.push({ name: htmlToText(m.name || m.slug || "Menu"), slug: m.slug || "", items: nestById(flat) });
+    }
+    if (menus.some((x) => x.items.length)) return { source: "wp-api-menus", menus };
+  }
+
+  // 2) WP REST Menus v1
+  const listV1 = await fetchJson(`${base}/wp-json/menus/v1/menus`);
+  if (listV1.ok && Array.isArray(listV1.data) && listV1.data.length) {
+    const menus = [];
+    for (const m of listV1.data.slice(0, 10)) {
+      const detail = await fetchJson(`${base}/wp-json/menus/v1/menus/${m.slug || m.term_id || m.id}`);
+      const items = detail.ok && Array.isArray(detail.data?.items) ? detail.data.items : [];
+      const flat = items.map((it) => ({
+        ...normItem(it.title, it.url, base),
+        _id: it.ID || it.id,
+        _parent: it.menu_item_parent || it.parent || 0,
+        _order: it.order || it.menu_order || 0,
+      }));
+      menus.push({ name: htmlToText(m.name || m.slug || "Menu"), slug: m.slug || "", items: nestById(flat) });
+    }
+    if (menus.some((x) => x.items.length)) return { source: "wp-rest-menus-v1", menus };
+  }
+
+  // 3) Block-theme navigation (HTML content inside a wp_navigation post)
+  const nav = await fetchJson(`${base}/wp-json/wp/v2/navigation?per_page=10`);
+  if (nav.ok && Array.isArray(nav.data) && nav.data.length) {
+    const menus = [];
+    for (const n of nav.data) {
+      const html = n.content?.rendered || n.content?.raw || "";
+      const items = linksFromHtml(html, base);
+      if (items.length) menus.push({ name: htmlToText(n.title?.rendered || "Navigation"), slug: n.slug || "", items });
+    }
+    if (menus.length) return { source: "block-navigation", menus, notice: "Menu derived from block-theme navigation markup — hierarchy is best-effort." };
+  }
+
+  // 4) Last resort: scrape the homepage <nav> links.
+  const home = await fetchText(base);
+  if (home) {
+    const navBlock = (home.match(/<nav\b[\s\S]*?<\/nav>/i) || [])[0] || home;
+    const items = linksFromHtml(navBlock, base).slice(0, 40);
+    if (items.length) {
+      return {
+        source: "homepage-html",
+        menus: [{ name: "Primary (inferred)", slug: "primary", items }],
+        notice: "No menu API was publicly available — this menu was inferred from the homepage navigation links and may be incomplete or include non-menu links.",
+      };
+    }
+  }
+
+  return null;
+}
+
+// Pull a flat list of {label,url,path} from anchor tags in an HTML blob.
+function linksFromHtml(html, base) {
+  if (!html) return [];
+  const out = [];
+  const seen = new Set();
+  const aRe = /<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  let m;
+  while ((m = aRe.exec(html)) && out.length < 60) {
+    const href = m[1];
+    if (/^(#|javascript:|mailto:|tel:)/i.test(href)) continue;
+    const label = htmlToText(m[2]).trim();
+    if (!label) continue;
+    const item = normItem(label, href, base);
+    const key = item.label + "|" + item.path;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ ...item, children: [] });
+  }
+  return out;
+}
+
 // RSS fallback — when REST is disabled. Lower fidelity: recent items only.
 export async function fetchViaRss(base) {
   const xml = await fetchText(`${base}/feed/`);
@@ -215,5 +342,6 @@ export async function extractSite(base, { maxEntriesPerType = 500 } = {}) {
     method: "rest",
     site: { name: probe.name, description: probe.description, base },
     collections,
+    menus: await extractMenus(base).catch(() => null),
   };
 }
