@@ -6,7 +6,7 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
 ---
 <Layout
   title="See Your Site Rebuilt — Escape From WP"
-  description="Paste your WordPress URL and we'll build you three live preview designs on a modern stack — your real content, your logo and colors, in about a minute. Pick your favorite; we build the real thing."
+  description="Paste your WordPress URL and we'll rebuild your site as a fast, self-contained exact copy on a modern stack — same look, your images and fonts, no WordPress. We email you the link in about a minute."
 >
   <!-- NAV -->
   <header class="nav">
@@ -32,15 +32,14 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
 
   <!-- HERO -->
   <section class="wrap tool-hero rise">
-    <span class="eyebrow">◦ Preview builder · 01</span>
-    <div class="wip-badge">⚠ Work in progress. This tool is actively being built and the designs keep getting better. Kick the tires and tell us what you think.</div>
-    <h1 class="tool-title">See your site, rebuilt.</h1>
+    <span class="eyebrow">◦ Site mirror · 01</span>
+    <h1 class="tool-title">Get an exact copy of your site — off WordPress.</h1>
     <p class="tool-lead">
-      Your content is trapped in WordPress — let's break it out. Paste your site's URL and
-      we'll pull your real content, grab your logo and colors, and build you
-      <strong>three live preview designs</strong> on a modern stack — in about a minute.
-      No login, no plugins, we never touch your live site. We email you three links;
-      pick the one you like.
+      Paste your site's URL and we'll rebuild it as a fast, self-contained copy on a modern
+      stack — <strong>the same look, the same content, no WordPress</strong>. We render every
+      page, download your images and fonts, and host them on fast infrastructure that doesn't
+      phone home to your old site. No login, no plugins, we never touch your live site.
+      We email you a link when it's ready, usually in a minute or two.
     </p>
   </section>
 
@@ -69,13 +68,14 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
       )}
 
       <button type="submit" class="btn btn-primary tool-submit" id="lf-submit">
-        ▸ Build my 3 previews
+        ▸ Build my copy
       </button>
-      <p class="tool-note">Free. This can take a few minutes while we design three sites from scratch. We email you three live preview links and never touch your live site.</p>
+      <p class="tool-note">Free. This usually takes a minute or two while we rebuild your site. We email you the link when it's ready and never touch your live site.</p>
     </form>
 
     <p class="tool-alt">
-      Just want the raw content instead? <button type="button" id="lf-zip-toggle" class="linklike">Download an AI-ready export (.zip) ↗</button>
+      Want three fresh design concepts instead of an exact copy? <button type="button" id="lf-preview-toggle" class="linklike">Build 3 redesign previews ↗</button><br/>
+      Just want the raw content? <button type="button" id="lf-zip-toggle" class="linklike">Download an AI-ready export (.zip) ↗</button>
     </p>
 
     <!-- STATUS / RESULT -->
@@ -90,22 +90,22 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
       <li>
         <span class="how-no">01</span>
         <div>
-          <h3>We read your public content</h3>
-          <p>Every standard WordPress site exposes its published content at a built-in address. We walk it — posts, pages, galleries, FAQs, team, testimonials, whatever you've got — no login, no plugin, no access to your server.</p>
+          <h3>We render your real site</h3>
+          <p>We open your site in a real browser — just like a visitor — so every image, font, and piece of content loads exactly the way you see it. No login, no plugin, no access to your server.</p>
         </div>
       </li>
       <li>
         <span class="how-no">02</span>
         <div>
-          <h3>We design around your content</h3>
-          <p>We grab your logo and brand colors, then lay your real content into a clean, modern design — your gallery becomes a slider, your questions become an FAQ, your history becomes a timeline. Three different looks, built automatically.</p>
+          <h3>We rebuild it off WordPress</h3>
+          <p>We capture the fully-rendered page, download your images and fonts, and rehost everything on fast infrastructure. The result is a self-contained copy that looks the same but no longer depends on WordPress or your old host.</p>
         </div>
       </li>
       <li>
         <span class="how-no">03</span>
         <div>
-          <h3>You pick your favorite</h3>
-          <p>We email you three live links — one per design. Open each on your phone or desktop, see your actual site reborn, and tap <em>"I like this one"</em> on the one you want. That's it — we take it from there and build you the real thing.</p>
+          <h3>You get a live link</h3>
+          <p>We email you a link to your rebuilt site — open it on your phone or desktop and see your site, running without WordPress. Like it? Reply and we'll put it on your own domain and take care of any changes.</p>
         </div>
       </li>
     </ol>
@@ -250,30 +250,37 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
     const resultEl = document.getElementById("lf-result");
     const submitBtn = document.getElementById("lf-submit");
     const zipToggle = document.getElementById("lf-zip-toggle");
+    const previewToggle = document.getElementById("lf-preview-toggle");
     const isPreview = /github\.io$/.test(location.hostname);
 
-    // mode: "preview" (default, build 3 designs) or "zip" (raw content export)
-    let mode = "preview";
+    // mode: "replica" (default, exact copy) | "preview" (3 redesigns) | "zip" (raw content)
+    let mode = "replica";
 
     function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
     function apiBase() { return (location.pathname.replace(/\/liberate\/?$/, "") || ""); }
 
-    // Toggle between the preview builder and the legacy zip export.
-    if (zipToggle) {
-      zipToggle.addEventListener("click", () => {
-        mode = mode === "preview" ? "zip" : "preview";
-        if (mode === "zip") {
-          submitBtn.textContent = "▸ Download my content (.zip)";
-          zipToggle.textContent = "← Back to building 3 preview designs";
-          document.querySelector(".tool-note").textContent = "Free. We email you a download link (good for 24 hours) and never touch your live site.";
-        } else {
-          submitBtn.textContent = "▸ Build my 3 previews";
-          zipToggle.textContent = "Download an AI-ready export (.zip) ↗";
-          document.querySelector(".tool-note").textContent = "Free. Takes about a minute. We email you three live preview links and never touch your live site.";
-        }
-        resultEl.hidden = true; statusEl.hidden = true;
-      });
+    const noteEl = () => document.querySelector(".tool-note");
+    function setMode(next) {
+      mode = next;
+      if (mode === "replica") {
+        submitBtn.textContent = "▸ Build my copy";
+        noteEl().textContent = "Free. This usually takes a minute or two while we rebuild your site. We email you the link when it's ready and never touch your live site.";
+        if (previewToggle) previewToggle.textContent = "Build 3 redesign previews ↗";
+        if (zipToggle) zipToggle.textContent = "Download an AI-ready export (.zip) ↗";
+      } else if (mode === "preview") {
+        submitBtn.textContent = "▸ Build my 3 previews";
+        noteEl().textContent = "Free. This can take a few minutes while we design three sites from scratch. We email you three live preview links.";
+        if (previewToggle) previewToggle.textContent = "← Back to an exact copy of my site";
+      } else {
+        submitBtn.textContent = "▸ Download my content (.zip)";
+        noteEl().textContent = "Free. We email you a download link (good for 24 hours) and never touch your live site.";
+        if (zipToggle) zipToggle.textContent = "← Back to an exact copy of my site";
+      }
+      resultEl.hidden = true; statusEl.hidden = true;
     }
+
+    if (previewToggle) previewToggle.addEventListener("click", () => setMode(mode === "preview" ? "replica" : "preview"));
+    if (zipToggle) zipToggle.addEventListener("click", () => setMode(mode === "zip" ? "replica" : "zip"));
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -309,8 +316,10 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
       try {
         if (mode === "zip") {
           await runZip(payload, siteLabel);
-        } else {
+        } else if (mode === "preview") {
           await runPreview(payload, siteLabel);
+        } else {
+          await runReplica(payload, siteLabel);
         }
       } catch (err) {
         statusEl.className = "tool-status error";
@@ -319,7 +328,73 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
       }
     });
 
-    // ---- Preview builder (default) --------------------------------------
+    // ---- Exact-copy mirror (default) ------------------------------------
+    async function runReplica(payload, siteLabel) {
+      statusEl.innerHTML =
+        '<div class="efw-loader">' +
+          '<div class="efw-spinner"></div>' +
+          '<div class="efw-loader-text">' +
+            '<span class="lead">Rebuilding ' + siteLabel + ' off WordPress<span class="efw-dots"></span></span>' +
+            '<span class="sub">We\'re rendering your site, downloading your images and fonts, and rehosting everything. This usually takes a minute or two — hang tight, or we\'ll email you the link when it\'s ready.</span>' +
+          "</div>" +
+        "</div>";
+      statusEl.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      const res = await fetch(apiBase() + "/api/replicate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      let data = null; try { data = await res.json(); } catch {}
+
+      if (!res.ok || !data || !data.ok) {
+        const msg = (data && data.error) || "We couldn't rebuild that URL. Please check it and try again.";
+        statusEl.className = "tool-status error";
+        statusEl.textContent = "✕ " + msg;
+        statusEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        resetTurnstile();
+        submitBtn.disabled = false;
+        return;
+      }
+
+      // Poll the replica URL until it's built (or give up and lean on the email).
+      const replicaUrl = data.url;
+      const siteName = (data.site || siteLabel);
+      let built = false;
+      for (let i = 0; i < 40; i++) {
+        await new Promise((r) => setTimeout(r, 6000));
+        try {
+          const probe = await fetch(replicaUrl, { method: "GET", cache: "no-store" });
+          const txt = await probe.text();
+          if (!/Rebuilding your site/i.test(txt)) { built = true; break; }
+        } catch (_) {}
+      }
+
+      statusEl.hidden = true;
+      resultEl.hidden = false;
+
+      const emailLine = "We've emailed the link to <strong>" + esc(data.email) + "</strong> so you don't lose it.";
+      if (built) {
+        resultEl.innerHTML =
+          "<h2>✓ Your site has been rebuilt.</h2>" +
+          '<p class="res-sub">Here\'s ' + esc(siteName) + ", running without WordPress — same look, your images and fonts, hosted on fast infrastructure.</p>" +
+          '<a class="btn btn-primary res-download" href="' + esc(replicaUrl) + '" target="_blank" rel="noopener">View my rebuilt site ↗</a>' +
+          '<p class="res-expiry">' + emailLine + " Like it? Reply to that email and we'll put it on your own domain and handle any changes you want.</p>" +
+          '<button type="button" class="res-again" id="lf-again">↻ Rebuild another site</button>';
+      } else {
+        resultEl.innerHTML =
+          "<h2>✓ We're rebuilding your site.</h2>" +
+          '<p class="res-sub">' + esc(siteName) + " is taking a little longer than usual to finish. Your link is ready to open — if you see a build screen, it refreshes itself.</p>" +
+          '<a class="btn btn-primary res-download" href="' + esc(replicaUrl) + '" target="_blank" rel="noopener">Open my rebuilt site ↗</a>' +
+          '<p class="res-expiry">' + emailLine + " When it's done you'll see your site, off WordPress.</p>" +
+          '<button type="button" class="res-again" id="lf-again">↻ Rebuild another site</button>';
+      }
+
+      resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      wireAgain();
+    }
+
+    // ---- Preview builder (3 redesigns) ----------------------------------
     async function runPreview(payload, siteLabel) {
       statusEl.innerHTML =
         '<div class="efw-loader">' +
