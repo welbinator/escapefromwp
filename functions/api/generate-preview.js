@@ -83,7 +83,9 @@ export async function onRequestPost({ request, env }) {
   // Allowlisted IPs (comma-separated in ALLOWLIST_IPS) bypass the daily caps —
   // for James's own testing. Everyone else still hits the limits.
   const allowlist = (env.ALLOWLIST_IPS || "").split(",").map((s) => s.trim()).filter(Boolean);
-  const bypassLimit = ip && allowlist.includes(ip);
+  // LIMITS_OFF=on disables the daily caps entirely (pre-launch testing). Re-enable
+  // at launch by removing the env var. Allowlist still works independently.
+  const bypassLimit = env.LIMITS_OFF === "on" || (ip && allowlist.includes(ip));
   if (env.DB && !bypassLimit) {
     const use = await usageToday(env, { email, ipHash });
     if (use.global >= GLOBAL_DAILY)
