@@ -6,6 +6,7 @@
 // this module always produces usable hardcoded copy on its own.
 
 import { htmlToText } from "./html-to-markdown.js";
+import { detectContent } from "./content-detect.js";
 
 const STOP_SLUGS = new Set(["cart", "checkout", "my-account", "wp-login", "privacy-policy", "terms", "terms-of-service", "sample-page"]);
 
@@ -135,9 +136,11 @@ export function buildSiteModel(extract, brand) {
     cta: "Get in touch",
   };
 
-  // "Feature" cards: non-hero pages that have REAL text (no empty cards). If too
-  // few qualify, pad with posts that have copy. Never show a title-only card.
-  const featurePages = pages.filter((p) => p !== heroPage && (p.excerpt || "").length > 20);
+  // "Feature" cards: non-hero pages that have REAL text (no empty cards), and
+  // NOT pages that already have a dedicated block (faq/contact/pricing/etc).
+  const DEDICATED_FEAT = /faq|frequently|contact|get-in-touch|pricing|plans|packages|our-team|staff|privacy|terms|cart|checkout/i;
+  const featurePages = pages.filter((p) => p !== heroPage && (p.excerpt || "").length > 20
+    && !DEDICATED_FEAT.test((p.slug || "") + " " + (p.title || "")));
   let featureSrc = featurePages;
   if (featureSrc.length < 3) {
     const extra = posts.filter((p) => (p.excerpt || "").length > 20).map((p) => ({ title: p.title, excerpt: p.excerpt, image: p.image }));
@@ -151,6 +154,11 @@ export function buildSiteModel(extract, brand) {
 
   // Contact signal — did we find a contact page? (for the nav CTA target)
   const contactPage = pages.find((p) => /contact|get-in-touch|reach/.test((p.slug || "").toLowerCase()));
+
+  // Content-type detections for the composer (galleries, faqs, testimonials,
+  // team, pricing, services, timeline, videos, contact). Scan ALL entries.
+  const allEntries = collections.flatMap((c) => (c.entries || []).filter((e) => !isJunkEntry(e)));
+  const detections = detectContent({ allEntries, pages, heroSlug: heroPage?.slug });
 
   return {
     brand: {
@@ -170,5 +178,6 @@ export function buildSiteModel(extract, brand) {
     has_contact_page: !!contactPage,
     source_url: extract.site?.base || "",
     tagline,
+    detections,
   };
 }

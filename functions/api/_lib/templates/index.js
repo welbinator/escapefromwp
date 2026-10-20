@@ -1,18 +1,17 @@
-// Template registry — maps a template key to its renderer + display metadata.
-// Add a new look by dropping a renderer in ./templates and registering it here.
-import { renderWarm } from "./warm.js";
-import { renderBold } from "./bold.js";
-import { renderEditorial } from "./editorial.js";
+// Template/theme registry — now a thin adapter over the component system.
+// A "template" = a visual THEME (themes.js); the LAYOUT is composed per-content
+// by the composer. Public API is unchanged so routes/endpoints keep working:
+//   TEMPLATES, TEMPLATE_KEYS, renderTemplate(key, model)
 
-export const TEMPLATES = {
-  warm: { label: "Warm", blurb: "Approachable & friendly", render: renderWarm },
-  bold: { label: "Bold", blurb: "Modern & high-contrast", render: renderBold },
-  editorial: { label: "Editorial", blurb: "Refined & magazine-like", render: renderEditorial },
-};
+import { renderPage } from "../page-render.js";
+import { THEMES, THEME_KEYS } from "../themes.js";
 
-export const TEMPLATE_KEYS = Object.keys(TEMPLATES);
+export const TEMPLATES = Object.fromEntries(
+  THEME_KEYS.map((k) => [k, { key: k, label: THEMES[k].label, blurb: THEMES[k].blurb }])
+);
+export const TEMPLATE_KEYS = THEME_KEYS;
 
 export function renderTemplate(key, model) {
-  const t = TEMPLATES[key] || TEMPLATES.warm;
-  return t.render(model);
+  const k = TEMPLATE_KEYS.includes(key) ? key : TEMPLATE_KEYS[0];
+  return renderPage(k, model);
 }
