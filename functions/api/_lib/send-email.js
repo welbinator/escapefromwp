@@ -164,6 +164,46 @@ export async function sendPreviewLinksEmail(env, { to, siteName, variants, total
   }
 }
 
+// -------- Exact-replica mode: email the single replica link ------------------
+
+export async function sendReplicaLinkEmail(env, { to, siteName, url, sourceUrl }) {
+  const apiKey = env.BREVO_API_KEY;
+  if (!apiKey) return { ok: false, error: "email not configured" };
+  const html = `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#faf9f8;margin:0;padding:24px">
+  <table role="presentation" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #eee">
+    <tr><td style="background:#0b0405;padding:22px 28px">
+      <span style="color:#fff;font-weight:700;font-size:18px;letter-spacing:.5px">ESCAPE FROM <span style="color:#e32735">WP</span></span>
+    </td></tr>
+    <tr><td style="padding:28px">
+      <h2 style="margin:0 0 10px;color:#111">Your site, rebuilt off WordPress.</h2>
+      <p style="color:#555;line-height:1.6;margin:0 0 20px">We rebuilt <strong>${escapeHtml(siteName)}</strong> as a fast, self-contained site — same look, no WordPress, nothing phoning home to your old host. Take a look:</p>
+      <p style="margin:0 0 22px"><a href="${url}" style="background:#4ee36b;color:#06230f;padding:13px 26px;border-radius:4px;text-decoration:none;font-weight:700;font-size:15px">View your rebuilt site →</a></p>
+      <p style="color:#888;font-size:13px;line-height:1.6;margin:0 0 6px">This is a faithful visual copy of ${escapeHtml(sourceUrl || "your site")}. Want changes, extra pages, or to put it live on your own domain? Just reply to this email.</p>
+    </td></tr>
+    <tr><td style="background:#faf9f8;padding:16px 28px;color:#999;font-size:11px;font-family:'Courier New',monospace">
+      Escape From WP · WordPress migration &amp; rescue · escapefromwp.com
+    </td></tr>
+  </table>
+</body></html>`;
+  const payload = {
+    sender: { name: "James @ Escape From WP", email: "james@apexbranding.design" },
+    to: [{ email: to }],
+    replyTo: { name: "James Welbes", email: "james@apexbranding.design" },
+    subject: `✅ ${siteName} — rebuilt off WordPress`,
+    htmlContent: html,
+  };
+  try {
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: { "api-key": apiKey, "content-type": "application/json", accept: "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) { const txt = await res.text().catch(() => ""); return { ok: false, error: `brevo ${res.status}: ${txt.slice(0, 160)}` }; }
+    const data = await res.json().catch(() => ({}));
+    return { ok: true, messageId: data.messageId || null };
+  } catch (e) { return { ok: false, error: String(e?.message || e) }; }
+}
+
 // -------- Preview-builder: notify James when a lead likes a variant ----------
 
 export async function sendLeadLikedEmail(env, { siteName, variantLabel, variantUrl, leadName, leadEmail, leadMessage }) {

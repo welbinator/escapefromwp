@@ -2,6 +2,7 @@
   "name": "escapefromwp-preview-builder",
   "main": "index.js",
   "compatibility_date": "2025-01-01",
+  "compatibility_flags": ["nodejs_compat"],
   "d1_databases": [
     {
       "binding": "DB",
@@ -15,12 +16,15 @@
       "bucket_name": "escapefromwp-exports"
     }
   ],
+  "browser": {
+    "binding": "BROWSER"
+  },
   "queues": {
     "consumers": [
       {
         "queue": "efw-preview-builds",
         "max_batch_size": 1,
-        "max_concurrency": 3,
+        "max_concurrency": 2,
         "max_retries": 3,
         "max_batch_timeout": 5
       }
