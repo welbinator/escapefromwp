@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS ec_previews (
   total_entries   INTEGER DEFAULT 0,
   -- lifecycle
   status          TEXT NOT NULL DEFAULT 'live',  -- live | liked | dead
+  dead_variants   TEXT DEFAULT '',           -- comma-joined variants rejected via "Not for me"; preview flips to 'dead' only when ALL are rejected
   liked_variant   TEXT,                      -- warm|bold|editorial they chose
   lead_name       TEXT,
   lead_message    TEXT,

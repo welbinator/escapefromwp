@@ -47,8 +47,8 @@ export async function onRequestPost({ request, env }) {
   if (!rec) return json({ ok: false, error: "not found" }, 404);
 
   if (action === "reject") {
-    await markVariantDead(env, id);
-    return json({ ok: true, status: "dead" });
+    const { allDead } = await markVariantDead(env, id, variant, TEMPLATE_KEYS);
+    return json({ ok: true, status: allDead ? "dead" : "live", variant_dead: variant, all_dead: allDead });
   }
 
   if (action === "like") {

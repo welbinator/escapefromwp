@@ -72,8 +72,14 @@ function modalsHtml(id, variant) {
       body:JSON.stringify(Object.assign({id:ID,variant:VAR,action:action},extra||{}))});
   }
   document.getElementById('efw-no').onclick=function(){
-    post('reject'); document.getElementById('efw-bar').style.display='none';
-    toast('Thanks for the feedback — no hard feelings.');
+    post('reject').then(function(r){return r.json()}).then(function(res){
+      document.getElementById('efw-bar').style.display='none';
+      if(res && res.all_dead){ toast('Thanks for the feedback — no hard feelings.'); }
+      else { toast('Got it — check your other two designs in the email. 👍'); }
+    }).catch(function(){
+      document.getElementById('efw-bar').style.display='none';
+      toast('Thanks for the feedback — no hard feelings.');
+    });
   };
   document.getElementById('efw-yes').onclick=function(){
     document.getElementById('efw-modal').classList.add('open');
@@ -101,6 +107,17 @@ export async function onRequestGet({ params, env }) {
   const rec = await getPreview(env, id);
   if (!rec || !rec.model) return friendly("Preview not found", "This preview may have expired — previews are kept for 7 days.");
   if (rec.row.status === "dead") return friendly("Preview closed", "This preview was dismissed. Want to build a fresh one?");
+
+  // Per-variant rejection: if THIS look was marked "not for me", close just it —
+  // the other looks for this preview stay live.
+  const deadSet = new Set((rec.row.dead_variants || "").split(",").map((s) => s.trim()).filter(Boolean));
+  if (deadSet.has(variant)) {
+    const alive = TEMPLATE_KEYS.filter((k) => !deadSet.has(k));
+    const others = alive.length
+      ? `Your other designs are still here: ${alive.map((k) => `<a href="/preview/${id}/${k}">${k}</a>`).join(" · ")}`
+      : "You've dismissed all three designs for this preview.";
+    return friendly("You dismissed this design", others);
+  }
 
   let page;
   try { page = renderTemplate(variant, rec.model); }

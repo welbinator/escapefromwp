@@ -63,8 +63,21 @@ export async function markLiked(env, id, variant, { name, message } = {}) {
   ).bind(variant || "", name || "", message || "", new Date().toISOString(), id).run();
 }
 
-export async function markVariantDead(env, id) {
-  // "Not for me" on the last live variant flips the whole preview to dead so the
-  // cleanup cron reaps it early. (We don't track per-variant dead state yet.)
-  await env.DB.prepare(`UPDATE ec_previews SET status='dead' WHERE id=? AND status='live'`).bind(id).run();
+// "Not for me" rejects ONE variant (warm/bold/editorial), not the whole set.
+// We track rejected variants in dead_variants (comma-joined). Only when ALL
+// `allVariants` are rejected does the whole preview flip to 'dead' (so the
+// cleanup cron reaps it early). Returns {deadVariants, allDead}.
+export async function markVariantDead(env, id, variant, allVariants) {
+  const row = await env.DB.prepare(`SELECT dead_variants, status FROM ec_previews WHERE id=?`).bind(id).first();
+  if (!row) return { deadVariants: [], allDead: false };
+  const dead = new Set((row.dead_variants || "").split(",").map((s) => s.trim()).filter(Boolean));
+  if (variant) dead.add(variant);
+  const deadVariants = [...dead];
+  const total = (allVariants && allVariants.length) || 3;
+  const allDead = deadVariants.length >= total;
+  // Never downgrade a 'liked' preview; only live previews can go dead.
+  const newStatus = allDead && row.status === "live" ? "dead" : row.status;
+  await env.DB.prepare(`UPDATE ec_previews SET dead_variants=?, status=? WHERE id=?`)
+    .bind(deadVariants.join(","), newStatus, id).run();
+  return { deadVariants, allDead };
 }
