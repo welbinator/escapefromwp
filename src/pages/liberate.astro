@@ -106,8 +106,8 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
       <li>
         <span class="how-no">03</span>
         <div>
-          <h3>You get an AI-ready bundle</h3>
-          <p>A <code>.zip</code> with your content as markdown, a content model for your target CMS, and an <code>AGENT_INSTRUCTIONS.md</code> file. Hand the folder to your AI coding agent and it rebuilds your site's content for you.</p>
+          <h3>You hand it to your AI agent</h3>
+          <p>You get a <code>.zip</code> with your content as markdown, a content model for your target CMS, and an <code>AGENT_INSTRUCTIONS.md</code> file. Unzip it, open your AI coding assistant (Claude Code, Cursor, Copilot, etc.) in your new site's project, and say <em>"here's my old site's content — follow AGENT_INSTRUCTIONS.md and rebuild it."</em> The agent does the rest.</p>
         </div>
       </li>
     </ol>
@@ -303,7 +303,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
           '<p class="res-total">Total: ' + (summary.total_entries || 0) + " entries bundled into <code>" + esc(filename) + "</code></p>" +
           '<a class="btn btn-primary res-download" href="' + esc(data.download_url) + '">Download</a>' +
           '<p class="res-expiry">' + emailLine + ' This link works for <strong>24 hours</strong>, then the file is deleted.</p>' +
-          "<p style='color:var(--slate);font-size:14px;line-height:1.6;margin-top:16px'>Unzip it and hand the whole folder to your AI coding agent along with the included <code>AGENT_INSTRUCTIONS.md</code> — it'll rebuild your content for you. Want us to do it instead? <a href='" + ccBase + "/#breakout' style='color:var(--term-green)'>Plan your escape ↗</a></p>" +
+          "<p style='color:var(--slate);font-size:14px;line-height:1.6;margin-top:16px'><strong style='color:var(--chalk)'>Next:</strong> unzip it, open your AI coding assistant in your new site's project folder, and tell it to follow the included <code>AGENT_INSTRUCTIONS.md</code> — it'll rebuild your content for you. Rather we do the whole migration? <a href='" + ccBase + "/#breakout' style='color:var(--term-green)'>Plan your escape ↗</a></p>" +
           '<button type="button" class="res-again" id="lf-again">↻ Liberate another site</button>';
 
         resultEl.scrollIntoView({ behavior: "smooth", block: "start" });

@@ -220,7 +220,13 @@ ${list}
 **Total: ${totalEntries} entries · ${mediaCount} media files referenced.**
 
 ## What to do with it
-Hand this entire folder (unzipped) to your AI coding agent along with the prompt in **AGENT_INSTRUCTIONS.md**. The agent will rebuild your content in ${target === "emdash" ? "EmDash" : "your chosen CMS"} from the included \`${target === "emdash" ? "seed.json" : "content.json"}\` and the markdown files.
+1. **Unzip this folder** somewhere you can find it.
+2. **Open your AI coding assistant** (Claude Code, Cursor, GitHub Copilot, etc.) inside your new site's project.
+3. **Point it at this folder** and say something like: *"Here's my old WordPress site's content. Follow AGENT_INSTRUCTIONS.md and rebuild it in ${target === "emdash" ? "EmDash" : "my CMS"}."*
+
+The agent reads **AGENT_INSTRUCTIONS.md**, builds the content model from \`${target === "emdash" ? "seed.json" : "content.json"}\`, converts each markdown file, and creates your entries. You review the result before going live.
+
+${target === "emdash" ? `> **Prefer a straight import instead of an agent?** EmDash also has a built-in WordPress importer (admin → **Import from WordPress**) that takes a WordPress WXR export (**Tools → Export** in wp-admin) or the EmDash Exporter plugin. That path imports content directly without an AI agent — use it if you'd rather not rebuild via an assistant. This bundle is the agent-driven alternative for when you can't (or don't want to) touch the WordPress admin.\n` : ""}
 
 ## Important
 - This is **content only** — your posts, pages, and custom content. It does **not** include your theme, design, or layout (those are rebuilt fresh, which is the whole point of escaping WordPress).
