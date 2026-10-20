@@ -80,7 +80,11 @@ export async function onRequestPost({ request, env }) {
 
   // Rate / spend gate.
   const ipHash = ip ? await sha256Hex(ip + (env.IP_SALT || "efw")) : "";
-  if (env.DB) {
+  // Allowlisted IPs (comma-separated in ALLOWLIST_IPS) bypass the daily caps —
+  // for James's own testing. Everyone else still hits the limits.
+  const allowlist = (env.ALLOWLIST_IPS || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const bypassLimit = ip && allowlist.includes(ip);
+  if (env.DB && !bypassLimit) {
     const use = await usageToday(env, { email, ipHash });
     if (use.global >= GLOBAL_DAILY)
       return json({ ok: false, error: "We're at today's preview limit — please try again tomorrow." }, 429);
