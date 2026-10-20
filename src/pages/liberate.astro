@@ -1,10 +1,12 @@
 ---
 import Layout from "../layouts/Layout.astro";
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+// Turnstile only renders when a public site key is provided at build time.
+const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
 ---
 <Layout
-  title="Liberate Your Content — Escape From WP"
-  description="Paste your WordPress URL and get your content out — posts, pages, and custom content exported as a clean, AI-ready bundle you can hand to your coding agent to rebuild in a modern CMS."
+  title="See Your Site Rebuilt — Escape From WP"
+  description="Paste your WordPress URL and we'll build you three live preview designs on a modern stack — your real content, your logo and colors, in about a minute. Pick your favorite; we build the real thing."
 >
   <!-- NAV -->
   <header class="nav">
@@ -30,13 +32,14 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
   <!-- HERO -->
   <section class="wrap tool-hero rise">
-    <span class="eyebrow">◦ Extraction tool · 01</span>
-    <h1 class="tool-title">Get your content out.</h1>
+    <span class="eyebrow">◦ Preview builder · 01</span>
+    <h1 class="tool-title">See your site, rebuilt.</h1>
     <p class="tool-lead">
-      Your words aren't the hostage — WordPress is just the cell. Paste your site's URL,
-      pick where you're headed, and we'll pull your posts, pages, and custom content into a
-      clean, <strong>AI-ready bundle</strong> you can hand straight to a coding agent to
-      rebuild on a modern stack. Content only — no plugins, no bloat, no lock-in.
+      Your words aren't the hostage — WordPress is just the cell. Paste your site's URL and
+      we'll pull your real content, grab your logo and colors, and build you
+      <strong>three live preview designs</strong> on a modern stack — in about a minute.
+      No login, no plugins, we never touch your live site. We email you three links;
+      pick the one you like.
     </p>
   </section>
 
@@ -50,35 +53,29 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
       </div>
 
       <div class="field">
-        <label for="lf-target">Where are you moving to?</label>
-        <div class="select-wrap">
-          <select id="lf-target" name="target" required>
-            <option value="emdash">EmDash CMS (recommended)</option>
-            <option value="generic">Generic / other CMS — portable markdown</option>
-          </select>
-        </div>
-        <p class="field-hint">
-          EmDash gets a ready-to-use <code>seed.json</code> content model. Generic gives you
-          portable markdown + a manifest any agent can read.
-        </p>
-      </div>
-
-      <div class="field">
         <label for="lf-email">Your email</label>
         <input id="lf-email" name="email" type="email" autocomplete="email"
                placeholder="you@example.com" required />
-        <p class="field-hint">We send your download here and may follow up about your migration. No spam.</p>
+        <p class="field-hint">We send your three preview links here and may follow up about your migration. No spam.</p>
       </div>
 
       <!-- honeypot -->
       <input type="text" name="website_hp" tabindex="-1" autocomplete="off"
              style="position:absolute;left:-9999px;opacity:0;" aria-hidden="true" />
 
+      {turnstileKey && (
+        <div id="lf-turnstile" class="cf-turnstile" data-sitekey={turnstileKey} data-size="flexible"></div>
+      )}
+
       <button type="submit" class="btn btn-primary tool-submit" id="lf-submit">
-        ▸ Liberate my content
+        ▸ Build my 3 previews
       </button>
-      <p class="tool-note">Free. We email you a download link (good for 24 hours) and never touch your live site.</p>
+      <p class="tool-note">Free. Takes about a minute. We email you three live preview links and never touch your live site.</p>
     </form>
+
+    <p class="tool-alt">
+      Just want the raw content instead? <button type="button" id="lf-zip-toggle" class="linklike">Download an AI-ready export (.zip) ↗</button>
+    </p>
 
     <!-- STATUS / RESULT -->
     <div id="lf-status" class="tool-status" hidden></div>
@@ -92,22 +89,22 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
       <li>
         <span class="how-no">01</span>
         <div>
-          <h3>We read the public content API</h3>
-          <p>Every standard WordPress site exposes its published content at a built-in address. We walk it — posts, pages, and any custom content types your site defines — no login, no plugin, no access to your server.</p>
+          <h3>We read your public content</h3>
+          <p>Every standard WordPress site exposes its published content at a built-in address. We walk it — posts, pages, galleries, FAQs, team, testimonials, whatever you've got — no login, no plugin, no access to your server.</p>
         </div>
       </li>
       <li>
         <span class="how-no">02</span>
         <div>
-          <h3>We clean and convert it</h3>
-          <p>Page-builder junk, shortcodes, and tracking markup get stripped out. What's left is clean markdown with your titles, dates, excerpts, categories, tags, and image links intact.</p>
+          <h3>We design around your content</h3>
+          <p>We grab your logo and brand colors, then lay your real content into a clean, modern design — your gallery becomes a slider, your questions become an FAQ, your history becomes a timeline. Three different looks, built automatically.</p>
         </div>
       </li>
       <li>
         <span class="how-no">03</span>
         <div>
-          <h3>You hand it to your AI agent</h3>
-          <p>You get a <code>.zip</code> with your content as markdown, a content model for your target CMS, and an <code>AGENT_INSTRUCTIONS.md</code> file. Unzip it, open your AI coding assistant (Claude Code, Cursor, Copilot, etc.) in your new site's project, and say <em>"here's my old site's content — follow AGENT_INSTRUCTIONS.md and rebuild it."</em> The agent does the rest.</p>
+          <h3>You pick your favorite</h3>
+          <p>We email you three live links — one per design. Open each on your phone or desktop, see your actual site reborn, and tap <em>"I like this one"</em> on the one you want. That's it — we take it from there and build you the real thing.</p>
         </div>
       </li>
     </ol>
@@ -124,6 +121,10 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
       <span class="footer-mono dim">© {new Date().getFullYear()} — All units accounted for.</span>
     </div>
   </footer>
+
+  {turnstileKey && (
+    <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  )}
 
   <style>
     .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(11, 4, 5, 0.72); backdrop-filter: blur(10px); border-bottom: 1px solid var(--steel); }
@@ -167,6 +168,18 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     .field-hint code, .how-steps code, .tool-result code { font-family: var(--font-mono); color: var(--term-green); font-size: 0.92em; }
     .tool-submit { margin-top: 4px; width: 100%; justify-content: center; }
     .tool-note { font-family: var(--font-mono); font-size: 11px; color: var(--slate-dim); text-align: center; }
+    .cf-turnstile { margin: 2px 0; }
+    .tool-alt { max-width: 640px; margin: 14px auto 0; text-align: center; font-family: var(--font-mono); font-size: 12px; color: var(--slate-dim); }
+    .linklike { background: none; border: none; color: var(--term-green); font-family: var(--font-mono); font-size: 12px; cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 3px; }
+    .linklike:hover { color: var(--chalk); }
+
+    .tool-result :global(.prev-grid) { display: flex; flex-direction: column; gap: 12px; margin: 18px 0; }
+    .tool-result :global(.prev-card) { display: flex; align-items: center; justify-content: space-between; gap: 14px; border: 1px solid var(--steel); padding: 16px 18px; background: rgba(255,255,255,0.015); transition: border-color .15s; text-decoration: none; }
+    .tool-result :global(.prev-card:hover) { border-color: var(--term-green); }
+    .tool-result :global(.prev-meta) { display: flex; flex-direction: column; gap: 3px; }
+    .tool-result :global(.prev-name) { font-family: var(--font-sans); font-size: 16px; color: var(--chalk); font-weight: 600; }
+    .tool-result :global(.prev-blurb) { font-family: var(--font-mono); font-size: 11px; color: var(--slate); }
+    .tool-result :global(.prev-go) { font-family: var(--font-mono); font-size: 12px; color: var(--term-green); white-space: nowrap; }
 
     .tool-status { margin-top: 24px; border: 1px solid var(--steel); padding: 20px 22px; font-family: var(--font-mono); font-size: 13px; color: var(--slate); scroll-margin-top: 90px; }
     .tool-status .spin { color: var(--term-green); }
@@ -224,9 +237,31 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     const statusEl = document.getElementById("lf-status");
     const resultEl = document.getElementById("lf-result");
     const submitBtn = document.getElementById("lf-submit");
+    const zipToggle = document.getElementById("lf-zip-toggle");
     const isPreview = /github\.io$/.test(location.hostname);
 
+    // mode: "preview" (default, build 3 designs) or "zip" (raw content export)
+    let mode = "preview";
+
     function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+    function apiBase() { return (location.pathname.replace(/\/liberate\/?$/, "") || ""); }
+
+    // Toggle between the preview builder and the legacy zip export.
+    if (zipToggle) {
+      zipToggle.addEventListener("click", () => {
+        mode = mode === "preview" ? "zip" : "preview";
+        if (mode === "zip") {
+          submitBtn.textContent = "▸ Download my content (.zip)";
+          zipToggle.textContent = "← Back to building 3 preview designs";
+          document.querySelector(".tool-note").textContent = "Free. We email you a download link (good for 24 hours) and never touch your live site.";
+        } else {
+          submitBtn.textContent = "▸ Build my 3 previews";
+          zipToggle.textContent = "Download an AI-ready export (.zip) ↗";
+          document.querySelector(".tool-note").textContent = "Free. Takes about a minute. We email you three live preview links and never touch your live site.";
+        }
+        resultEl.hidden = true; statusEl.hidden = true;
+      });
+    }
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -236,15 +271,19 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
       if (isPreview) {
         statusEl.className = "tool-status error";
-        statusEl.textContent = "This is the staging preview — the extraction tool only runs on the live site (escapefromwp.com).";
+        statusEl.textContent = "This is the staging preview — the tool only runs on the live site (escapefromwp.com).";
         return;
       }
 
+      const tsToken = (window.turnstile && document.querySelector(".cf-turnstile"))
+        ? (form.querySelector('[name="cf-turnstile-response"]') || {}).value || ""
+        : "";
+
       const payload = {
         url: form.url.value.trim(),
-        target: form.target.value,
         email: form.email.value.trim(),
         website_hp: form.website_hp.value,
+        turnstile_token: tsToken,
       };
       if (!payload.url || !payload.email) {
         statusEl.className = "tool-status error";
@@ -254,72 +293,138 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
       submitBtn.disabled = true;
       const siteLabel = esc(payload.url.replace(/^https?:\/\//, ""));
-      statusEl.innerHTML = '<span class="spin">▸ Breaking in…</span> reading ' + siteLabel + "'s content API. Large sites can take 20–40 seconds — hang tight.";
-      // Make sure the user SEES something happen (esp. on mobile).
-      statusEl.scrollIntoView({ behavior: "smooth", block: "center" });
 
       try {
-        const res = await fetch((location.pathname.replace(/\/liberate\/?$/, "") || "") + "/api/liberate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        let data = null;
-        try { data = await res.json(); } catch {}
-
-        if (!res.ok || !data || !data.ok) {
-          const msg = (data && data.error) || "Extraction failed. Please check the URL and try again.";
-          statusEl.className = "tool-status error";
-          statusEl.textContent = "✕ " + msg;
-          statusEl.scrollIntoView({ behavior: "smooth", block: "center" });
-          submitBtn.disabled = false;
-          return;
+        if (mode === "zip") {
+          await runZip(payload, siteLabel);
+        } else {
+          await runPreview(payload, siteLabel);
         }
-
-        const summary = data.summary || {};
-        const filename = data.filename || "content-export.zip";
-
-        statusEl.hidden = true;
-        resultEl.hidden = false;
-
-        let rows = "";
-        if (summary.collections) {
-          for (const c of summary.collections) {
-            rows += '<tr><td>' + esc(c.label) + ' <span class="res-type">(' + esc(c.type) + ")</span></td><td class='n'>" + c.entries + "</td></tr>";
-          }
-        }
-        const notice = summary.notice ? '<p class="res-notice">⚠️ ' + esc(summary.notice) + "</p>" : "";
-        const emailLine = data.emailed
-          ? "We've also emailed this link to <strong>" + esc(data.email) + "</strong> so you don't lose it."
-          : "<strong>Heads up:</strong> we couldn't send the email this time, so download it here now.";
-        const ccBase = (location.pathname.replace(/\/liberate\/?$/, "") || "");
-
-        resultEl.innerHTML =
-          "<h2>✓ Content liberated.</h2>" +
-          '<p class="res-sub">Extracted from ' + esc(summary.site || siteLabel) + ".</p>" +
-          notice +
-          (rows ? '<table class="res-table"><tbody>' + rows + "</tbody></table>" : "") +
-          '<p class="res-total">Total: ' + (summary.total_entries || 0) + " entries bundled into <code>" + esc(filename) + "</code></p>" +
-          '<a class="btn btn-primary res-download" href="' + esc(data.download_url) + '">Download</a>' +
-          '<p class="res-expiry">' + emailLine + ' This link works for <strong>24 hours</strong>, then the file is deleted.</p>' +
-          "<p style='color:var(--slate);font-size:14px;line-height:1.6;margin-top:16px'><strong style='color:var(--chalk)'>Next:</strong> unzip it, open your AI coding assistant in your new site's project folder, and tell it to follow the included <code>AGENT_INSTRUCTIONS.md</code> — it'll rebuild your content for you. Rather we do the whole migration? <a href='" + ccBase + "/#breakout' style='color:var(--term-green)'>Plan your escape ↗</a></p>" +
-          '<button type="button" class="res-again" id="lf-again">↻ Liberate another site</button>';
-
-        resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
-
-        const again = document.getElementById("lf-again");
-        if (again) again.addEventListener("click", () => {
-          resultEl.hidden = true;
-          form.reset();
-          submitBtn.disabled = false;
-          window.scrollTo({ top: form.offsetTop - 120, behavior: "smooth" });
-        });
       } catch (err) {
         statusEl.className = "tool-status error";
-        statusEl.textContent = "✕ Something went wrong reaching the extraction service. Please try again.";
+        statusEl.textContent = "✕ Something went wrong reaching the service. Please try again.";
         submitBtn.disabled = false;
       }
     });
+
+    // ---- Preview builder (default) --------------------------------------
+    async function runPreview(payload, siteLabel) {
+      statusEl.innerHTML = '<span class="spin">▸ Breaking in…</span> reading ' + siteLabel +
+        "'s content and designing three looks. This takes 30–60 seconds — hang tight.";
+      statusEl.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      const res = await fetch(apiBase() + "/api/generate-preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      let data = null; try { data = await res.json(); } catch {}
+
+      if (!res.ok || !data || !data.ok) {
+        const msg = (data && data.error) || "We couldn't build a preview from that URL. Please check it and try again.";
+        statusEl.className = "tool-status error";
+        statusEl.textContent = "✕ " + msg;
+        statusEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        resetTurnstile();
+        submitBtn.disabled = false;
+        return;
+      }
+
+      statusEl.hidden = true;
+      resultEl.hidden = false;
+
+      const variants = Array.isArray(data.variants) ? data.variants : [];
+      let cards = "";
+      for (const v of variants) {
+        cards +=
+          '<a class="prev-card" href="' + esc(v.url) + '" target="_blank" rel="noopener">' +
+            '<span class="prev-meta">' +
+              '<span class="prev-name">' + esc(v.label || v.key) + "</span>" +
+              '<span class="prev-blurb">' + esc(v.blurb || "") + "</span>" +
+            "</span>" +
+            '<span class="prev-go">Open ↗</span>' +
+          "</a>";
+      }
+
+      const emailLine = data.emailed
+        ? "We've also emailed these three links to <strong>" + esc(data.email) + "</strong> so you don't lose them."
+        : "<strong>Heads up:</strong> we couldn't send the email this time — open your previews here now.";
+
+      resultEl.innerHTML =
+        "<h2>✓ Your previews are ready.</h2>" +
+        '<p class="res-sub">Built from ' + esc((data.summary && data.summary.site) || siteLabel) + " — three designs, your real content.</p>" +
+        '<div class="prev-grid">' + cards + "</div>" +
+        '<p class="res-expiry">' + emailLine + " Open each, then tap <strong>“I like this one”</strong> on your favorite and we'll build the real thing.</p>" +
+        '<button type="button" class="res-again" id="lf-again">↻ Try another site</button>';
+
+      resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      wireAgain();
+    }
+
+    // ---- Legacy zip export (advanced) -----------------------------------
+    async function runZip(payload, siteLabel) {
+      const zipPayload = { url: payload.url, email: payload.email, website_hp: payload.website_hp, target: "emdash" };
+      statusEl.innerHTML = '<span class="spin">▸ Breaking in…</span> reading ' + siteLabel +
+        "'s content API. Large sites can take 20–40 seconds — hang tight.";
+      statusEl.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      const res = await fetch(apiBase() + "/api/liberate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(zipPayload),
+      });
+      let data = null; try { data = await res.json(); } catch {}
+
+      if (!res.ok || !data || !data.ok) {
+        const msg = (data && data.error) || "Extraction failed. Please check the URL and try again.";
+        statusEl.className = "tool-status error";
+        statusEl.textContent = "✕ " + msg;
+        statusEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        submitBtn.disabled = false;
+        return;
+      }
+
+      const summary = data.summary || {};
+      const filename = data.filename || "content-export.zip";
+      statusEl.hidden = true;
+      resultEl.hidden = false;
+
+      let rows = "";
+      if (summary.collections) {
+        for (const c of summary.collections) {
+          rows += '<tr><td>' + esc(c.label) + ' <span class="res-type">(' + esc(c.type) + ")</span></td><td class='n'>" + c.entries + "</td></tr>";
+        }
+      }
+      const notice = summary.notice ? '<p class="res-notice">⚠️ ' + esc(summary.notice) + "</p>" : "";
+      const emailLine = data.emailed
+        ? "We've also emailed this link to <strong>" + esc(data.email) + "</strong> so you don't lose it."
+        : "<strong>Heads up:</strong> we couldn't send the email this time, so download it here now.";
+
+      resultEl.innerHTML =
+        "<h2>✓ Content liberated.</h2>" +
+        '<p class="res-sub">Extracted from ' + esc(summary.site || siteLabel) + ".</p>" +
+        notice +
+        (rows ? '<table class="res-table"><tbody>' + rows + "</tbody></table>" : "") +
+        '<p class="res-total">Total: ' + (summary.total_entries || 0) + " entries bundled into <code>" + esc(filename) + "</code></p>" +
+        '<a class="btn btn-primary res-download" href="' + esc(data.download_url) + '">Download</a>' +
+        '<p class="res-expiry">' + emailLine + " This link works for <strong>24 hours</strong>, then the file is deleted.</p>" +
+        "<p style='color:var(--slate);font-size:14px;line-height:1.6;margin-top:16px'><strong style='color:var(--chalk)'>Next:</strong> unzip it, open your AI coding assistant in your new site's project folder, and tell it to follow the included <code>AGENT_INSTRUCTIONS.md</code>. Rather we do the whole migration? <a href='" + apiBase() + "/#breakout' style='color:var(--term-green)'>Plan your escape ↗</a></p>" +
+        '<button type="button" class="res-again" id="lf-again">↻ Liberate another site</button>';
+
+      resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      wireAgain();
+    }
+
+    function resetTurnstile() { try { if (window.turnstile) window.turnstile.reset(); } catch (_) {} }
+    function wireAgain() {
+      const again = document.getElementById("lf-again");
+      if (again) again.addEventListener("click", () => {
+        resultEl.hidden = true;
+        form.reset();
+        resetTurnstile();
+        submitBtn.disabled = false;
+        window.scrollTo({ top: form.offsetTop - 120, behavior: "smooth" });
+      });
+    }
   </script>
 </Layout>
