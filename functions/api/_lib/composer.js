@@ -7,6 +7,13 @@
 
 export function composePlan(model, detections) {
   const d = detections || {};
+  // If the AI baked an explicit block order into the model at generate-time,
+  // honor it (data still comes from real detections/model — AI only chose the
+  // ORDER). Falls through to the deterministic rules below if absent/thin.
+  if (Array.isArray(model.ai_plan) && model.ai_plan.length >= 3) {
+    const built = planFromOrder(model.ai_plan, model, d);
+    if (built.length >= 3) return built;
+  }
   const plan = [];
   const push = (type, data) => plan.push({ type, data });
 
@@ -78,4 +85,50 @@ function realStats(model, d) {
   if (d.gallery?.images?.length) out.push({ value: String(d.gallery.images.length) + "+", label: "Projects shown" });
   if (model.page_count >= 5) out.push({ value: String(model.page_count), label: "Pages of content" });
   return out.slice(0, 4);
+}
+
+// Build a plan from an explicit AI-chosen block order, pulling each block's data
+// from the real model/detections. Unknown or data-less blocks are skipped so a
+// bad AI choice can never render an empty section.
+function planFromOrder(order, model, d) {
+  const dataFor = {
+    hero: () => ({ ok: true, data: null }),
+    services: () => {
+      const s = d.services || (model.features?.length >= 3 ? model.features : null);
+      return s && s.length >= 3 ? { ok: true, data: s.slice(0, 6) } : { ok: false };
+    },
+    featureSplit: () => {
+      const s = d.services || (model.features?.length >= 3 ? model.features : null);
+      return s && s.length >= 2 ? { ok: true, data: s.slice(0, 4) } : { ok: false };
+    },
+    cardGrid: () => (model.features?.length ? { ok: true, data: model.features.slice(0, 6) } : { ok: false }),
+    gallery: () => (d.gallery?.images?.length >= 4 ? { ok: true, data: d.gallery } : { ok: false }),
+    carousel: () => (d.gallery?.images?.length >= 6 ? { ok: true, data: d.gallery } : { ok: false }),
+    timeline: () => (d.timeline ? { ok: true, data: d.timeline } : { ok: false }),
+    statBand: () => { const s = realStats(model, d); return s.length >= 3 ? { ok: true, data: s } : { ok: false }; },
+    team: () => (d.team ? { ok: true, data: d.team } : { ok: false }),
+    testimonials: () => (d.testimonials ? { ok: true, data: d.testimonials } : { ok: false }),
+    video: () => (d.videos ? { ok: true, data: d.videos } : { ok: false }),
+    pricing: () => (d.pricing ? { ok: true, data: d.pricing } : { ok: false }),
+    postList: () => (model.posts?.length >= 3 ? { ok: true, data: model.posts } : { ok: false }),
+    faqs: () => (d.faqs ? { ok: true, data: d.faqs } : { ok: false }),
+    contact: () => ({ ok: true, data: d.contact || {} }),
+    ctaBand: () => ({ ok: true, data: null }),
+  };
+  const seen = new Set();
+  const plan = [];
+  for (const type of order) {
+    if (seen.has(type)) continue;
+    const fn = dataFor[type];
+    if (!fn) continue;
+    const r = fn();
+    if (!r.ok) continue;
+    seen.add(type);
+    plan.push({ type, data: r.data });
+  }
+  // Guarantee hero first, contact + ctaBand present at the end.
+  if (!seen.has("hero")) plan.unshift({ type: "hero", data: null });
+  if (!seen.has("contact")) plan.push({ type: "contact", data: d.contact || {} });
+  if (!seen.has("ctaBand")) plan.push({ type: "ctaBand", data: null });
+  return plan;
 }

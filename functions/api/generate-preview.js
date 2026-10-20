@@ -7,6 +7,7 @@
 import { extractSite, normalizeSiteUrl } from "./_lib/wp-extract.js";
 import { findLogo, extractBrandColors } from "./_lib/brand-grab.js";
 import { buildSiteModel } from "./_lib/site-model.js";
+import { enhanceModelWithAI, stripJunkImages } from "./_lib/ai-composer.js";
 import { TEMPLATE_KEYS, TEMPLATES } from "./_lib/templates/index.js";
 import { createPreview, usageToday, sha256Hex } from "./_lib/preview-store.js";
 import { sendPreviewLinksEmail } from "./_lib/send-email.js";
@@ -107,6 +108,17 @@ export async function onRequestPost({ request, env }) {
   let model;
   try { model = buildSiteModel(extract, brand); }
   catch (err) { return json({ ok: false, error: "Could not build the preview: " + (err?.message || "unknown") }, 500); }
+
+  // Optional ONE-TIME AI pass: smarter block order + hero copy + junk-image
+  // rejection, baked into the stored model so every view stays token-free.
+  // Gated: only when a key is present AND not explicitly disabled. Never throws
+  // (enhanceModelWithAI returns the model unchanged on any failure).
+  if (env.GOOGLE_AI_API && env.AI_COMPOSER !== "off") {
+    model = await enhanceModelWithAI(env, model);
+  } else {
+    // AI off/unavailable: still run the deterministic junk-image strip.
+    model = stripJunkImages(model);
+  }
 
   if (!env.EXPORTS || !env.DB) return json({ ok: false, error: "Preview storage is not configured." }, 500);
 
