@@ -366,13 +366,13 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
 
       const emailLine = data.emailed
         ? "We've also emailed these three links to <strong>" + esc(data.email) + "</strong> so you don't lose them."
-        : "<strong>Heads up:</strong> we couldn't send the email this time — open your previews here now.";
+        : "We're emailing these three links to <strong>" + esc(data.email) + "</strong> the moment they finish building.";
 
       resultEl.innerHTML =
-        "<h2>✓ Your previews are ready.</h2>" +
-        '<p class="res-sub">Built from ' + esc((data.summary && data.summary.site) || siteLabel) + " — three designs, your real content.</p>" +
+        "<h2>✓ Your three designs are being built.</h2>" +
+        '<p class="res-sub">Built from ' + esc((data.summary && data.summary.site) || siteLabel) + ". Each design is a complete site made from scratch, so give it a few minutes.</p>" +
         '<div class="prev-grid">' + cards + "</div>" +
-        '<p class="res-expiry">' + emailLine + " Open each, then tap <strong>“I like this one”</strong> on your favorite and we'll build the real thing.</p>" +
+        '<p class="res-expiry">Open any link now. If a design is still cooking you\'ll see a build screen that refreshes itself. ' + emailLine + " When you find the one you like, tap <strong>“I like this one”</strong> and we'll build the real thing.</p>" +
         '<button type="button" class="res-again" id="lf-again">↻ Try another site</button>';
 
       resultEl.scrollIntoView({ behavior: "smooth", block: "start" });

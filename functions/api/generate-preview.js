@@ -8,8 +8,8 @@ import { extractSite, normalizeSiteUrl } from "./_lib/wp-extract.js";
 import { findLogo, extractBrandColors } from "./_lib/brand-grab.js";
 import { buildSiteModel } from "./_lib/site-model.js";
 import { enhanceModelWithAI, stripJunkImages } from "./_lib/ai-composer.js";
-import { TEMPLATE_KEYS, TEMPLATES } from "./_lib/templates/index.js";
-import { createPreview, usageToday, sha256Hex } from "./_lib/preview-store.js";
+import { DESIGN_KEYS, DESIGNS } from "./_lib/ai-designer.js";
+import { createPreview, usageToday, sha256Hex, putPreviewHtml } from "./_lib/preview-store.js";
 import { sendPreviewLinksEmail } from "./_lib/send-email.js";
 
 // Free builds per email/IP per rolling 24h, and a global daily ceiling (abuse
@@ -58,7 +58,7 @@ async function notifyCommandCenter(env, { email, siteUrl, totalEntries }) {
   } catch (_) { /* non-fatal */ }
 }
 
-export async function onRequestPost({ request, env }) {
+export async function onRequestPost({ request, env, waitUntil }) {
   let data;
   try { data = await request.json(); } catch { return json({ ok: false, error: "Invalid request" }, 400); }
 
@@ -110,25 +110,19 @@ export async function onRequestPost({ request, env }) {
     brand = { business_name: extract.site?.name, logo_url: logo?.url || null, ...extractBrandColors(home) };
   } catch (_) { /* wordmark fallback */ }
 
-  // Build the normalized site model (zero AI).
+  // Build the normalized site model (zero AI) — this is the real content we
+  // hand to the AI designer.
   let model;
   try { model = buildSiteModel(extract, brand); }
   catch (err) { return json({ ok: false, error: "Could not build the preview: " + (err?.message || "unknown") }, 500); }
 
-  // Optional ONE-TIME AI pass: smarter block order + hero copy + junk-image
-  // rejection, baked into the stored model so every view stays token-free.
-  // Gated: only when a key is present AND not explicitly disabled. Never throws
-  // (enhanceModelWithAI returns the model unchanged on any failure).
-  if (env.GOOGLE_AI_API && env.AI_COMPOSER !== "off") {
-    model = await enhanceModelWithAI(env, model);
-  } else {
-    // AI off/unavailable: still run the deterministic junk-image strip.
-    model = stripJunkImages(model);
-  }
+  // Deterministic junk-image strip always runs (cheap, reliable).
+  model = stripJunkImages(model);
 
   if (!env.EXPORTS || !env.DB) return json({ ok: false, error: "Preview storage is not configured." }, 500);
 
-  // Persist (one row + content.json in R2).
+  // Persist the content model (one row + content.json in R2). The AI-designed
+  // HTML for each variant is written separately, in the background, as it lands.
   let id;
   try {
     id = await createPreview(env, { model, email, sourceUrl: base, inputMethod: "rest", totalEntries, ipHash });
@@ -137,22 +131,37 @@ export async function onRequestPost({ request, env }) {
   }
 
   const origin = new URL(request.url).origin;
-  const variants = TEMPLATE_KEYS.map((key) => ({
-    key, label: TEMPLATES[key].label, blurb: TEMPLATES[key].blurb,
+  const variants = DESIGN_KEYS.map((key) => ({
+    key, label: DESIGNS[key].label, blurb: DESIGNS[key].blurb,
     url: `${origin}/preview/${id}/${key}`,
   }));
 
-  // Email the 3 links + notify Command Center (non-blocking failures).
-  const [, emailResult] = await Promise.all([
-    notifyCommandCenter(env, { email, siteUrl: base, totalEntries }),
-    sendPreviewLinksEmail(env, { to: email, siteName: model.brand.name, variants, totalEntries }),
-  ]);
+  // The 3 bespoke sites are designed LAZILY, on first view of each link (one
+  // ~90s Claude call per variant, which fits inside an HTTP request's unlimited
+  // wall time). We do NOT design here: waitUntil is capped at 30s and would be
+  // killed mid-generation. Email the links right away and alert the Command
+  // Center; the preview pages generate-on-open and show a build screen meanwhile.
+  let emailed = false;
+  const notify = (async () => {
+    try {
+      const [, mail] = await Promise.all([
+        notifyCommandCenter(env, { email, siteUrl: base, totalEntries }).catch(() => {}),
+        sendPreviewLinksEmail(env, { to: email, siteName: model.brand.name, variants, totalEntries }).catch(() => null),
+      ]);
+      emailed = !!mail;
+    } catch (_) {}
+  })();
+  // Wait briefly so the response can report emailed status; falls back to
+  // waitUntil if it runs long.
+  if (waitUntil) { waitUntil(notify); } 
+  await Promise.race([notify, new Promise((r) => setTimeout(r, 4000))]);
 
   return json({
     ok: true,
     preview_id: id,
     variants,
-    emailed: !!(emailResult && emailResult.ok),
+    building: true,
+    emailed,
     email,
     summary: { site: model.brand.name, total_entries: totalEntries, method: extract.method },
   });

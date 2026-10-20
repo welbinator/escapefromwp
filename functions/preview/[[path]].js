@@ -3,8 +3,10 @@
 // floating modals ("Not for me" / "I like this — let's talk"). The modals POST
 // to /api/preview-feedback. Dead/expired/missing previews show a friendly page.
 
-import { getPreview } from "../api/_lib/preview-store.js";
-import { renderTemplate, TEMPLATE_KEYS } from "../api/_lib/templates/index.js";
+import { getPreview, getPreviewHtml, putPreviewHtml, acquireBuildLock, releaseBuildLock } from "../api/_lib/preview-store.js";
+import { designVariant } from "../api/_lib/ai-designer.js";
+
+const VARIANT_KEYS = ["warm", "bold", "editorial"];
 
 function html(body, status = 200) {
   return new Response(body, { status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
@@ -97,32 +99,69 @@ function modalsHtml(id, variant) {
 </script>`;
 }
 
+function buildingPage(id, variant) {
+  return html(`<!doctype html><html lang="en"><head><meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="refresh" content="12">
+  <title>Building your preview…</title>
+  <style>
+    body{font-family:system-ui,-apple-system,sans-serif;background:#0b0405;color:#fff;display:grid;place-items:center;min-height:100vh;margin:0;text-align:center;padding:24px}
+    .spin{width:40px;height:40px;border:3px solid #2b2b2b;border-top-color:#4ee36b;border-radius:50%;animation:s .8s linear infinite;margin:0 auto 22px}
+    @keyframes s{to{transform:rotate(360deg)}}
+    h1{font-size:1.5rem;margin:0 0 10px}p{color:#bbb;max-width:44ch;line-height:1.6;margin:0 auto}
+    .sub{color:#777;font-size:13px;margin-top:18px}
+    @media (prefers-reduced-motion:reduce){.spin{animation-duration:2.5s}}
+  </style></head><body><div>
+  <div class="spin"></div>
+  <h1>We're designing this site now.</h1>
+  <p>Our designer is building this look from scratch using your real content. This can take a few minutes. This page refreshes itself, so you can just leave it open, or check the email we're sending you.</p>
+  <p class="sub">Design: ${variant} · we'll email all three links when they're ready.</p>
+  </div></body></html>`, 200);
+}
+
 export async function onRequestGet({ params, env }) {
   const parts = params.path || [];
   const id = (parts[0] || "").toLowerCase();
-  const variant = TEMPLATE_KEYS.includes(parts[1]) ? parts[1] : "warm";
+  const variant = VARIANT_KEYS.includes(parts[1]) ? parts[1] : "warm";
 
   if (!env.DB || !env.EXPORTS) return friendly("Preview unavailable", "Preview storage isn't configured right now.");
 
   const rec = await getPreview(env, id);
-  if (!rec || !rec.model) return friendly("Preview not found", "This preview may have expired — previews are kept for 7 days.");
+  if (!rec) return friendly("Preview not found", "This preview may have expired — previews are kept for 7 days.");
   if (rec.row.status === "dead") return friendly("Preview closed", "This preview was dismissed. Want to build a fresh one?");
 
-  // Per-variant rejection: if THIS look was marked "not for me", close just it —
-  // the other looks for this preview stay live.
+  // Per-variant rejection: if THIS look was marked "not for me", close just it.
   const deadSet = new Set((rec.row.dead_variants || "").split(",").map((s) => s.trim()).filter(Boolean));
   if (deadSet.has(variant)) {
-    const alive = TEMPLATE_KEYS.filter((k) => !deadSet.has(k));
+    const alive = VARIANT_KEYS.filter((k) => !deadSet.has(k));
     const others = alive.length
       ? `Your other designs are still here: ${alive.map((k) => `<a href="/preview/${id}/${k}">${k}</a>`).join(" · ")}`
       : "You've dismissed all three designs for this preview.";
     return friendly("You dismissed this design", others);
   }
 
-  let page;
-  try { page = renderTemplate(variant, rec.model); }
-  catch (e) { return friendly("Preview error", "We couldn't render this preview."); }
+  // Serve the AI-designed HTML. If not present, lazily generate THIS variant
+  // inside the request (an HTTP request has unlimited wall time while the client
+  // is connected, unlike waitUntil's 30s cap). A short R2 lock prevents two
+  // concurrent viewers from both firing a Claude call for the same variant.
+  let page = null;
+  try { page = await getPreviewHtml(env, id, variant); } catch (_) {}
 
-  const injected = page.replace("</body>", modalsHtml(id, variant) + "</body>");
+  if (!page) {
+    if (!rec.model) return buildingPage(id, variant);
+    let gotLock = false;
+    try { gotLock = await acquireBuildLock(env, id, variant); } catch (_) {}
+    if (!gotLock) return buildingPage(id, variant); // another request is building it
+
+    try {
+      const doc = await designVariant(env, rec.model, variant);
+      if (doc) { await putPreviewHtml(env, id, variant, doc); page = doc; }
+    } catch (_) { /* fall through to building page */ }
+    finally { await releaseBuildLock(env, id, variant); }
+
+    if (!page) return buildingPage(id, variant); // generation failed; retry on refresh
+  }
+
+  const injected = page.replace(/<\/body>/i, modalsHtml(id, variant) + "</body>");
   return html(injected);
 }

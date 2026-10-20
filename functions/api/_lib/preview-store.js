@@ -45,6 +45,40 @@ export async function getPreview(env, id) {
   return { row, model };
 }
 
+// Store an AI-designed HTML document for one variant (previews/<id>/<variant>.html).
+export async function putPreviewHtml(env, id, variant, html) {
+  const key = `previews/${id}/${variant}.html`;
+  await env.EXPORTS.put(key, html, { httpMetadata: { contentType: "text/html; charset=utf-8" } });
+  return key;
+}
+
+// Fetch a stored AI-designed HTML document (or null if not present).
+export async function getPreviewHtml(env, id, variant) {
+  if (!/^[0-9a-f]{32}$/.test(id || "")) return null;
+  if (!/^[a-z]+$/.test(variant || "")) return null;
+  const obj = await env.EXPORTS.get(`previews/${id}/${variant}.html`);
+  return obj ? await obj.text() : null;
+}
+
+// Lazy-generation lock: a short-lived R2 marker so two concurrent viewers of the
+// same not-yet-built variant don't both fire a Claude call. Returns true if we
+// acquired the lock (caller should generate), false if someone else holds a
+// fresh lock (caller should show the building page and let them finish).
+export async function acquireBuildLock(env, id, variant, ttlMs = 180000) {
+  const key = `previews/${id}/${variant}.lock`;
+  const existing = await env.EXPORTS.get(key);
+  if (existing) {
+    const ts = parseInt(await existing.text(), 10) || 0;
+    if (Date.now() - ts < ttlMs) return false; // fresh lock held by another request
+  }
+  await env.EXPORTS.put(key, String(Date.now()), { httpMetadata: { contentType: "text/plain" } });
+  return true;
+}
+
+export async function releaseBuildLock(env, id, variant) {
+  try { await env.EXPORTS.delete(`previews/${id}/${variant}.lock`); } catch (_) {}
+}
+
 // Count builds today for an email + ip (free-tier gate) and globally (spend cap).
 export async function usageToday(env, { email, ipHash }) {
   const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
