@@ -227,16 +227,88 @@ function scaffoldPackageJson(siteSlug) {
   }, null, 2);
 }
 
-function agentInstructions(siteName, host, stats, totalEntries, menuData) {
+// Pull the exact-copy replica HTML apart and rebundle it so the downloaded site
+// renders IDENTICALLY offline, with no dependency on escapefromwp.com:
+//   - every rehosted asset (/replica-asset/<id>/<file> on our origin) is fetched
+//     and written into the zip under public/_site/<file>
+//   - the HTML's references are rewritten to the local /_site/<file> path
+// Returns { html, assets: [{name,data(Uint8Array)}] } or null if nothing usable.
+async function localizeReplica(replicaHtml) {
+  if (!replicaHtml || replicaHtml.length < 500) return null;
+  // Find every absolute reference to one of our rehosted assets.
+  const re = /https?:\/\/[^"')\s]+\/replica-asset\/[0-9a-f]{32}\/[A-Za-z0-9._-]+/g;
+  const urls = [...new Set(replicaHtml.match(re) || [])];
+  const assets = [];
+  let html = replicaHtml;
+  const UA = {
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "accept": "*/*",
+  };
+  for (const u of urls) {
+    const file = u.split("/").pop();
+    try {
+      const res = await fetch(u, { headers: UA, cf: { cacheTtl: 0 } });
+      if (!res.ok) continue;
+      const buf = new Uint8Array(await res.arrayBuffer());
+      if (!buf.byteLength) continue;
+      assets.push({ name: `public/_site/${file}`, data: buf });
+      html = html.split(u).join(`/_site/${file}`);
+    } catch (_) { /* skip a failed asset, keep going */ }
+  }
+  // Any stray references to our origin that we couldn't bundle: leave them absolute
+  // (still load online) rather than break them.
+  return { html, assets };
+}
+
+// Build a static Astro homepage that renders the exact-copy HTML verbatim, plus an
+// Astro config set up for a plain static build. This means the DOWNLOADED site looks
+// exactly like the original the moment it runs — the bot's job becomes wiring the
+// seeded content into the other routes, not recreating the design from scratch.
+function staticHomepageFiles(localizedHtml) {
+  const files = [];
+  // Serve the exact copy as the root route via a passthrough Astro page. We emit the
+  // full original document untouched (doctype/head/body) so styling is pixel-identical.
+  // Astro's own wrapper is avoided by writing it as a static file in public/.
+  files.push({ name: "public/index.html", data: localizedHtml });
+  // Minimal Astro config so `npm run dev`/`build` works for the rest of the site.
+  files.push({
+    name: "astro.config.mjs",
+    data: `import { defineConfig } from "astro/config";\n\n// The exact-copy homepage ships as public/index.html (pixel-identical to your old\n// site, assets bundled locally under public/_site/). Build the EmDash-driven routes\n// in src/pages/ for your other collections; see AGENT_INSTRUCTIONS.md.\nexport default defineConfig({\n  // output: "static" by default — fine for a content site.\n});\n`,
+  });
+  return files;
+}
+
+function agentInstructions(siteName, host, stats, totalEntries, menuData, prebuiltHome) {
   const list = (stats || []).map((s) => `- \`${s.collection}\` — ${s.entries} entr${s.entries === 1 ? "y" : "ies"}`).join("\n") || "- (see seed/seed.json)";
   const menuNote = menuData
     ? `\nThis package also includes \`menus.json\` (${menuData.menus.length} menu${menuData.menus.length === 1 ? "" : "s"}, source: \`${menuData.source}\`). The seed does NOT pre-create menus — build them in the admin (or add a \`menus\` block to the seed) so the nav links to the entries you just seeded.`
     : "";
+  const designSection = prebuiltHome
+    ? `## The design is ALREADY BUILT — do not recreate it
+This package ships your homepage **pre-built and pixel-identical** to the original at
+\`public/index.html\`, with every image/font/stylesheet bundled locally under
+\`public/_site/\`. The moment you run the project it looks exactly like your old site —
+you do **not** rebuild the design from scratch.
+
+**Your job on the design is to PRESERVE it, then extend it:**
+- Leave \`public/index.html\` as the faithful homepage, OR port it into
+  \`src/layouts/Base.astro\` + \`src/pages/index.astro\` **verbatim** (same markup, same
+  inline CSS, same \`/_site/...\` asset paths) if you want it EmDash-driven. Either way
+  the visual result must stay identical — same fonts, colors, spacing, header, footer.
+- **Never** replace it with a generic/starter theme. If your result doesn't look like
+  \`public/index.html\`, you did it wrong — diff against it.
+- Reuse the exact header/footer markup + styles from \`public/index.html\` for every
+  other route so the whole site is visually consistent with the original.`
+    : `## Match the exact design
+\`reference/your-exact-site.html\` is a pixel-faithful, self-contained copy of your old
+homepage (CSS inlined, assets rehosted). **It is your design brief — reproduce it
+exactly.** Extract its fonts, colors, spacing, header, and footer and build your Astro
+layout + homepage to match. Do NOT ship a generic/starter theme.`;
   return `# Rebuild ${siteName} in EmDash — instructions for your AI coding assistant
 
 You have an **EmDash content package** extracted from **${host}**: a spec-correct
-EmDash **seed** (with every page/post baked in), plus an **exact HTML copy** of the
-original homepage to match the look.
+EmDash **seed** (with every page/post baked in)${prebuiltHome ? ", a **pre-built exact-copy homepage**," : ", an **exact HTML copy** of the original homepage,"}
+so your content AND your look are already done — you just assemble them.
 
 > ⚠️ **Read this first — ordering matters.** In EmDash a seed is applied **once, on
 > first setup, to an empty database** (see docs.emdashcms.com/themes/overview
@@ -250,14 +322,17 @@ original homepage to match the look.
   content type AND contains every entry (as Portable Text) plus site settings.
   EmDash ingests this on first setup. This is the file that makes your content appear.
 - \`package.json\` — already points EmDash at the seed (\`emdash.seed\`).
+${prebuiltHome ? `- \`public/index.html\` + \`public/_site/\` — your **pre-built, pixel-identical homepage**
+  and its locally-bundled assets. This IS the design, already done.
+- \`astro.config.mjs\` — minimal config so the project runs.` : `- \`reference/your-exact-site.html\` — the pixel-faithful visual copy. **Your design brief.**`}
 - \`content/<collection>/*.md\`, \`content.json\`, \`menus.json\` — human/agent-readable
   REFERENCE copies of the same content + the navigation. Not read by EmDash directly.
-- \`reference/your-exact-site.html\` — the pixel-faithful visual copy (self-contained:
-  CSS inlined, images/fonts rehosted). **This is your design brief.**
 
 ## Content model
 ${list}
 Total: **${totalEntries} entries.**
+
+${designSection}
 
 ## Step-by-step (follow in order — do NOT seed before scaffolding)
 1. **Scaffold a real EmDash project** from the official template (this gives you the
@@ -267,9 +342,9 @@ Total: **${totalEntries} entries.**
    cd my-site
    \`\`\`
    (Use \`@emdash-cms/template-starter\` for a non-Cloudflare/Node target.)
-2. **Drop in the content.** Copy this package's \`seed/seed.json\` over the template's
-   \`seed/seed.json\` (the template already points \`package.json#emdash.seed\` at it; if
-   yours differs, set it). Also copy \`reference/\` and \`content/\` in for reference.
+2. **Drop in the content + design.** Copy this package's \`seed/seed.json\` over the
+   template's \`seed/seed.json\` (the template already points \`package.json#emdash.seed\`
+   at it; if yours differs, set it). ${prebuiltHome ? "Copy \`public/\` (the pre-built homepage + \`_site/\` assets) in too, plus \`reference/\` and \`content/\` for reference." : "Also copy \`reference/\` and \`content/\` in for reference."}
 3. **Install:** \`npm install\`.
 4. **Run first setup — this is where the content imports.** \`npm run dev\`, then open
    \`http://localhost:4321/_emdash/admin\`. The first visit launches the **setup wizard**.
@@ -277,20 +352,29 @@ Total: **${totalEntries} entries.**
    asked — that is what applies the seed's entries. Finish the wizard. Your collections
    and all entries are now in the database. (If you skip "include content", the entries
    won't load — re-run against a fresh DB.)
-5. **Verify:** the EmDash admin should now list every collection with its entries.
-6. **Study the exact look:** open \`reference/your-exact-site.html\`. Extract design
+5. **Verify content:** the EmDash admin should now list every collection with its entries.
+${prebuiltHome
+  ? `6. **Verify the look:** open the site root — it should already render your exact
+   homepage from \`public/index.html\`. If it doesn't, make sure \`public/\` was copied in.
+7. **Make it EmDash-driven (optional but recommended):** port \`public/index.html\` into
+   \`src/layouts/Base.astro\` + \`src/pages/index.astro\` **verbatim**, then swap the
+   hardcoded text/images for the seeded collection data via EmDash's content API +
+   \`<PortableText />\`. The rendered page must stay visually identical to the original.
+8. **Other routes:** add one route per collection (e.g. \`src/pages/[slug].astro\`),
+   reusing the SAME header/footer/styles from \`public/index.html\` so every page matches.`
+  : `6. **Study the exact look:** open \`reference/your-exact-site.html\`. Extract design
    tokens — fonts, colors, spacing, header/footer, section layouts.
 7. **Build the layout + homepage:** create \`src/layouts/Base.astro\` and rebuild
    \`src/pages/index.astro\` to match the reference, pulling text/images from the seeded
    collections via EmDash's content API + \`<PortableText />\`.
 8. **Templates:** add one route per collection (e.g. \`src/pages/[slug].astro\`) styled
-   to match the reference.${menuNote}
+   to match the reference.`}${menuNote}
 9. **Redirects:** add old→new 301s to \`public/_redirects\` before going live. No 404s.
 10. **Deploy:** Cloudflare Pages + D1 + R2 (EmDash's standard target), or your host.
 
 ## Rules
 - The content is already structured — do NOT retype it. It's in \`seed/seed.json\`.
-- Match the reference design faithfully — it IS the brief. Preserve copy exactly.
+- ${prebuiltHome ? "The design is already built in \`public/index.html\` — PRESERVE it; never swap in a generic theme. Diff your result against it." : "Match \`reference/your-exact-site.html\` faithfully — it IS the brief."} Preserve copy exactly.
 - Seed applies once on first setup; never rely on re-seeding a live site to add content.
 - No live 404s — set redirects before changing URLs.
 
@@ -332,13 +416,25 @@ export async function buildEmdashZip(env, { id, sourceUrl, businessName, replica
     files.push({ name: f.name.startsWith("content/") || f.name.endsWith(".json") ? `reference/${f.name}` : f.name, data: f.data });
   }
 
-  // 4) Exact-look reference HTML.
+  // 4) Exact-look reference HTML + PRE-BUILT, pixel-identical homepage.
+  //    The whole point: the downloaded site must LOOK like the original out of the
+  //    box, so we ship the exact copy as the live homepage (public/index.html) with
+  //    its assets bundled locally — instead of asking the bot to recreate the design.
+  let prebuiltHome = false;
   if (replicaHtml && replicaHtml.length > 500) {
     files.push({ name: "reference/your-exact-site.html", data: replicaHtml });
+    try {
+      const local = await localizeReplica(replicaHtml);
+      if (local && local.html) {
+        for (const f of staticHomepageFiles(local.html)) files.push(f);
+        for (const a of local.assets) files.push(a);
+        prebuiltHome = true;
+      }
+    } catch (_) { /* fall back to reference-only if localization fails */ }
   }
 
   // 5) Instructions + README.
-  files.push({ name: "AGENT_INSTRUCTIONS.md", data: agentInstructions(siteName, host, stats, totalEntries, menuData) });
+  files.push({ name: "AGENT_INSTRUCTIONS.md", data: agentInstructions(siteName, host, stats, totalEntries, menuData, prebuiltHome) });
   files.push({ name: "README.md", data:
 `# ${siteName} — your EmDash content package
 
