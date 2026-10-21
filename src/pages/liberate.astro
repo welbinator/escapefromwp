@@ -314,12 +314,26 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
 
     // ---- Exact-copy mirror (default) ------------------------------------
     async function runReplica(payload, siteLabel) {
+      // Self-styling loader: inline styles + injected keyframes so it renders correctly
+      // even if the external stylesheet is cached/stale/stripped (don't rely on .efw-* CSS).
+      if (!document.getElementById('efw-loader-kf')) {
+        const kf = document.createElement('style');
+        kf.id = 'efw-loader-kf';
+        kf.textContent =
+          '@keyframes efw-spin{to{transform:rotate(360deg)}}' +
+          '@keyframes efw-pulse{0%,100%{box-shadow:0 0 0 1px rgba(74,222,128,.15),0 10px 40px rgba(0,0,0,.3)}50%{box-shadow:0 0 0 1px rgba(74,222,128,.4),0 10px 40px rgba(0,0,0,.3)}}' +
+          '@keyframes efw-dots{0%{content:""}25%{content:"."}50%{content:".."}75%{content:"..."}}' +
+          '.efw-dots::after{content:"";animation:efw-dots 1.4s steps(4,end) infinite}';
+        document.head.appendChild(kf);
+      }
+      var SP = 'width:42px;height:42px;border:4px solid #382e30;border-top-color:#4ee36b;border-radius:50%;flex-shrink:0;animation:efw-spin .8s linear infinite';
+      var LD = 'display:flex;align-items:center;gap:18px;padding:22px 20px;border:1px solid #4ee36b;border-radius:8px;background:rgba(74,222,128,.06);box-shadow:0 0 0 1px rgba(74,222,128,.15),0 10px 40px rgba(0,0,0,.3);animation:efw-pulse 2.4s ease-in-out infinite';
       statusEl.innerHTML =
-        '<div class="efw-loader">' +
-          '<div class="efw-spinner"></div>' +
-          '<div class="efw-loader-text">' +
-            '<span class="lead">Rebuilding ' + siteLabel + ' off WordPress<span class="efw-dots"></span></span>' +
-            '<span class="sub">We\'re rendering your site, downloading your images and fonts, and rehosting everything. This usually takes a minute or two — hang tight, or we\'ll email you the link when it\'s ready.</span>' +
+        '<div class="efw-loader" style="' + LD + '">' +
+          '<div class="efw-spinner" style="' + SP + '"></div>' +
+          '<div class="efw-loader-text" style="display:flex;flex-direction:column;gap:5px">' +
+            '<span class="lead" style="color:#f3efe9;font-weight:600;font-size:16px">Rebuilding ' + siteLabel + ' off WordPress<span class="efw-dots"></span></span>' +
+            '<span class="sub" style="color:#6f686a;font-size:12px;line-height:1.5">We\'re rendering your site, downloading your images and fonts, and rehosting everything. This usually takes a minute or two — hang tight, or we\'ll email you the link when it\'s ready.</span>' +
           "</div>" +
         "</div>";
       // Firmly bring the loader into view near the top so it's unmistakable that
