@@ -137,10 +137,19 @@ export const RECORDER_FN = function (opts) {
       var after = snapshot(els);
       var changes = diff(before, after, els);
 
-      // A useful toggle = at least one element changed AND something became
-      // visible (a real reveal), not just an aria flag flip with no visual effect.
-      var realReveal = changes.some(function (c) { return c.becameVisible; });
-      if (changes.length && realReveal) {
+      // A useful toggle = at least one element changed an attribute AND something
+      // on the page became visible. CRITICAL: the element that CHANGES (e.g. a
+      // <header> gaining a "menu-open" class) is often NOT the element that becomes
+      // VISIBLE (e.g. a descendant <nav> revealed by a `.header.menu-open .nav{...}`
+      // CSS rule). So we check visibility ACROSS THE WHOLE DOCUMENT, not just on the
+      // changed elements — otherwise ancestor-attr/descendant-reveal menus (very
+      // common) look like no-ops and get skipped. Replaying the recorded attribute
+      // change re-triggers the same CSS cascade, re-revealing the descendant.
+      var anyBecameVisible = false;
+      for (var vi = 0; vi < els.length; vi++) {
+        if (!before._vis[vi] && visible(els[vi])) { anyBecameVisible = true; break; }
+      }
+      if (changes.length && anyBecameVisible) {
         // Stamp the toggle + each changed element with stable replay ids. The PASS
         // prefix keeps ids unique across multi-pass (mobile+desktop) recording.
         if (!btn.getAttribute("data-efw-tgl")) btn.setAttribute("data-efw-tgl", PASS + String(t));
