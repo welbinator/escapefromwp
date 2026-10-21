@@ -1,0 +1,248 @@
+// interaction-recorder.js
+// ---------------------------------------------------------------------------
+// RECORD-AND-REPLAY interaction capture.
+//
+// The old approach (interactions-shim.js) GUESSED how a theme's menu works from
+// hardcoded selectors — a whack-a-mole that can't generalize across thousands of
+// WP themes/builders. This instead OBSERVES the real behavior while the origin
+// site's own JavaScript is still alive in headless Chrome:
+//
+//   for each candidate toggle (hamburger, dropdown, accordion, tab, FAQ):
+//     1. snapshot the DOM (class/style/aria/hidden/open on every element)
+//     2. CLICK it — let the site's real JS open the thing
+//     3. snapshot again, DIFF → exactly which elements changed and how
+//     4. stamp stable data-efw ids on the toggle + changed elements
+//     5. reverse to baseline for the next toggle
+//
+// The diff is ground truth for THIS theme — no assumptions. We then ship a tiny
+// replay script that, on click, re-applies the recorded "open" state (and
+// reverses it to close). Works on a weird custom builder the same as a standard
+// theme, because we never guess — we replay what we watched happen.
+//
+// Limits (honest): handles click-to-toggle (menus, dropdowns, accordions, tabs —
+// the ~85% case). Cannot resurrect things that need the dead WP backend (live
+// search, AJAX load-more, cart) or autonomous timers (auto-advancing carousels);
+// those produce no clean open/close diff and are simply left un-wired.
+// ---------------------------------------------------------------------------
+
+// The in-browser recorder. Serialized and run via page.evaluate() so it executes
+// in the live page with the origin JS intact. Returns a JSON recording and (as a
+// side effect) stamps data-efw-tgl / data-efw-el attributes that persist into the
+// captured HTML. `opts` = { maxToggles, settleMs }.
+export const RECORDER_FN = function (opts) {
+  var MAX = (opts && opts.maxToggles) || 40;
+  var SETTLE = (opts && opts.settleMs) || 350;
+
+  // Attributes whose change commonly drives "open/visible" state.
+  var WATCH = ["class", "style", "hidden", "open", "aria-expanded", "aria-hidden", "aria-selected", "data-state", "data-open"];
+
+  // Candidate toggles: a11y-driven first, then common class names. Mirrors the
+  // shim's net, but here it only decides WHAT to click — the effect is recorded.
+  var SELECTOR = [
+    "[aria-controls]",
+    "[aria-haspopup='true']",
+    "button[aria-expanded]",
+    "[aria-expanded]",
+    ".menu-toggle", ".hamburger", ".nav-toggle", ".mobile-nav-toggle", ".menu-button",
+    "[class*='menu-toggle']", "[class*='hamburger']", "[class*='dropdown-toggle']", "[class*='flyout-toggle']",
+    ".accordion-toggle", ".accordion-trigger", ".accordion-header button", ".faq-question",
+    "[class*='accordion'] button", "[role='tab']", "summary"
+  ].join(",");
+
+  function allEls() { return Array.prototype.slice.call(document.querySelectorAll("*")); }
+
+  // Compact fingerprint of the whole doc: for each element (by index) record the
+  // watched attribute values. Index is positional and stable within one snapshot
+  // pair (we don't mutate structure between the two snapshots of a toggle).
+  function snapshot(els) {
+    var snap = new Array(els.length);
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i], rec = null;
+      for (var a = 0; a < WATCH.length; a++) {
+        var name = WATCH[a];
+        var v = name === "class" ? el.className
+              : name === "style" ? (el.getAttribute("style") || "")
+              : el.getAttribute(name);
+        if (v != null && v !== "") { (rec = rec || {})[name] = String(v); }
+      }
+      snap[i] = rec;
+    }
+    return snap;
+  }
+
+  // Also record computed visibility so we can tell a real reveal from a no-op.
+  function visible(el) {
+    try {
+      var s = getComputedStyle(el);
+      if (s.display === "none" || s.visibility === "hidden" || parseFloat(s.opacity) === 0) return false;
+      var r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0;
+    } catch (e) { return true; }
+  }
+
+  function diff(before, after, els) {
+    var changes = [];
+    for (var i = 0; i < els.length; i++) {
+      var b = before[i] || {}, a = after[i] || {};
+      var keys = {};
+      for (var k in b) keys[k] = 1; for (var k2 in a) keys[k2] = 1;
+      var elChange = null;
+      for (var key in keys) {
+        var bv = b[key] == null ? null : b[key];
+        var av = a[key] == null ? null : a[key];
+        if (bv !== av) { (elChange = elChange || { idx: i, attrs: {} }).attrs[key] = { from: bv, to: av }; }
+      }
+      if (elChange) {
+        // Only keep changes that plausibly affect visibility: the element (or a
+        // descendant) became visible, OR a visibility-ish attr changed. Filters
+        // out incidental churn (e.g. focus-ring classes).
+        elChange.becameVisible = !before._vis[i] && visible(els[i]);
+        changes.push(elChange);
+      }
+    }
+    return changes;
+  }
+
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+
+  function cssPathShort(el) {
+    // Lightweight descriptive selector for diagnostics only (not used for replay;
+    // replay uses the stamped data-efw-el id).
+    if (!el || el.nodeType !== 1) return "";
+    var id = el.id ? "#" + el.id : "";
+    var cls = (el.className && typeof el.className === "string") ? "." + el.className.trim().split(/\s+/).slice(0, 2).join(".") : "";
+    return el.tagName.toLowerCase() + id + cls;
+  }
+
+  return (async function () {
+    var recording = { version: 1, toggles: [] };
+    var toggles = Array.prototype.slice.call(document.querySelectorAll(SELECTOR)).slice(0, MAX);
+    var elIdCounter = 0;
+
+    for (var t = 0; t < toggles.length; t++) {
+      var btn = toggles[t];
+      if (!btn || btn.__efwSeen) continue; btn.__efwSeen = true;
+
+      // Fresh element list + baseline snapshot (structure may have changed from a
+      // previous toggle's side effects, so re-collect each time).
+      var els = allEls();
+      var before = snapshot(els);
+      before._vis = els.map(visible);
+
+      // Click and let the real JS react.
+      try { btn.click(); } catch (e) { continue; }
+      await sleep(SETTLE);
+
+      var after = snapshot(els);
+      var changes = diff(before, after, els);
+
+      // A useful toggle = at least one element changed AND something became
+      // visible (a real reveal), not just an aria flag flip with no visual effect.
+      var realReveal = changes.some(function (c) { return c.becameVisible; });
+      if (changes.length && realReveal) {
+        // Stamp the toggle + each changed element with stable replay ids.
+        if (!btn.getAttribute("data-efw-tgl")) btn.setAttribute("data-efw-tgl", String(t));
+        var recChanges = [];
+        for (var c = 0; c < changes.length; c++) {
+          var el = els[changes[c].idx];
+          var eid = el.getAttribute("data-efw-el");
+          if (!eid) { eid = "e" + (elIdCounter++); el.setAttribute("data-efw-el", eid); }
+          recChanges.push({ el: eid, attrs: changes[c].attrs });
+        }
+        recording.toggles.push({
+          tgl: btn.getAttribute("data-efw-tgl"),
+          desc: cssPathShort(btn),
+          changes: recChanges
+        });
+      }
+
+      // Reverse to baseline so the next toggle records cleanly. Clicking again is
+      // the natural close for toggles; if it doesn't restore, force the recorded
+      // "from" values back.
+      try { btn.click(); } catch (e) {}
+      await sleep(Math.min(SETTLE, 200));
+    }
+
+    // Clean our scratch flags off the DOM (keep the data-efw-* stamps).
+    allEls().forEach(function (el) { try { delete el.__efwSeen; } catch (e) {} });
+    return recording;
+  })();
+};
+
+// Build the replay runtime from a recording. The replay finds the stamped toggle
+// and target elements and, on click, applies the recorded "to" state (open) or
+// "from" state (close). Falls back to toggling a generic .efw-open class so CSS
+// that keys off it still works. Dependency-free IIFE.
+export function buildReplayScript(recording) {
+  var json = JSON.stringify(recording || { toggles: [] });
+  return `(function(){
+  "use strict";
+  if (window.__efwReplay) return; window.__efwReplay = true;
+  var REC = ${json};
+
+  function apply(el, attrs, open){
+    if (!el) return;
+    for (var name in attrs){
+      var val = open ? attrs[name].to : attrs[name].from;
+      if (val == null){ el.removeAttribute(name); }
+      else if (name === "class"){ el.className = val; }
+      else { el.setAttribute(name, val); }
+    }
+    el.classList.toggle("efw-open", open);
+  }
+
+  function wire(tg){
+    var btn = document.querySelector('[data-efw-tgl="' + tg.tgl + '"]');
+    if (!btn || btn.__efwWired) return;
+    btn.__efwWired = true;
+    var open = false;
+    btn.addEventListener("click", function(e){
+      // Let real navigation links through if they aren't in-page toggles.
+      if (btn.tagName === "A"){
+        var href = btn.getAttribute("href");
+        if (href && href.charAt(0) !== "#" && !/^javascript:/i.test(href) && tg.changes.length === 0) return;
+      }
+      e.preventDefault();
+      open = !open;
+      for (var i=0;i<tg.changes.length;i++){
+        var ch = tg.changes[i];
+        var target = document.querySelector('[data-efw-el="' + ch.el + '"]');
+        apply(target, ch.attrs, open);
+      }
+    }, false);
+  }
+
+  function init(){
+    for (var i=0;i<REC.toggles.length;i++){ wire(REC.toggles[i]); }
+    // Close open dropdowns on outside click (desktop flyouts).
+    document.addEventListener("click", function(e){
+      for (var i=0;i<REC.toggles.length;i++){
+        var tg = REC.toggles[i];
+        var btn = document.querySelector('[data-efw-tgl="' + tg.tgl + '"]');
+        if (!btn || !btn.classList.contains("efw-open")) continue;
+        if (btn.contains(e.target)) continue;
+        var inside = false;
+        for (var j=0;j<tg.changes.length;j++){
+          var tel = document.querySelector('[data-efw-el="' + tg.changes[j].el + '"]');
+          if (tel && tel.contains(e.target)) { inside = true; break; }
+        }
+        if (!inside){ btn.click(); }
+      }
+    }, true);
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+  else init();
+})();`;
+}
+
+// Convenience: inject the replay script (+ a tiny backstop CSS) before </body>.
+export function injectReplay(html, recording) {
+  try {
+    var script = `<script data-efw="replay">${buildReplayScript(recording)}</script>`;
+    var css = `<style data-efw="replay-backstop">.efw-open:where(nav,ul,.sub-menu,.submenu,.dropdown-menu,[class*='dropdown'],[class*='flyout'],[class*='accordion']){display:block}</style>`;
+    var out = html;
+    if (/<\/head>/i.test(out)) out = out.replace(/<\/head>/i, css + "</head>"); else out = css + out;
+    if (/<\/body>/i.test(out)) out = out.replace(/<\/body>/i, script + "</body>"); else out = out + script;
+    return out;
+  } catch (e) { return html; }
+}

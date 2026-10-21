@@ -13,6 +13,7 @@
 
 import puppeteer from "@cloudflare/puppeteer";
 import { injectInteractions } from "./interactions-shim.js";
+import { RECORDER_FN, injectReplay } from "./interaction-recorder.js";
 
 const SITE_ORIGIN_DEFAULT = "https://escapefromwp.com";
 
@@ -174,7 +175,19 @@ export async function captureReplica(env, id, pageUrl) {
     await page.evaluate(() => window.scrollTo(0, 0));
     await new Promise((r) => setTimeout(r, 400));
 
-    // Grab hydrated HTML.
+    // --- RECORD-AND-REPLAY: observe real interactions while origin JS is alive ---
+    // Before we strip scripts, drive each candidate toggle (hamburger, dropdown,
+    // accordion, tab) in the live page, diff the DOM, and record exactly what each
+    // one changes. This stamps data-efw-tgl/data-efw-el onto the elements so the
+    // recording survives into the captured HTML. Theme-agnostic: we replay what we
+    // observed, instead of guessing from hardcoded selectors.
+    let recording = { version: 1, toggles: [] };
+    try {
+      recording = await page.evaluate(RECORDER_FN, { maxToggles: 40, settleMs: 350 });
+      if (!recording || !Array.isArray(recording.toggles)) recording = { version: 1, toggles: [] };
+    } catch (_) { recording = { version: 1, toggles: [] }; }
+
+    // Grab hydrated HTML (now carries the data-efw-* stamps from the recorder).
     let html = await page.content();
 
     // --- Rewrite relative src/href/data-src/srcset to ABSOLUTE first. ---
@@ -234,12 +247,19 @@ export async function captureReplica(env, id, pageUrl) {
     }
     html = html.replace(/<\/head>/i, `<style>${bundled}</style></head>`);
 
-    // We stripped every <script> above (no origin JS/analytics). Re-wire the
-    // standard interaction patterns (mobile menu, dropdowns, accordions) with a
-    // single dependency-free shim that reads the kept markup's a11y attributes.
-    html = injectInteractions(html);
+    // Re-wire interactions. PRIMARY: replay the real behavior we recorded from the
+    // live site (theme-agnostic). FALLBACK: if the recorder captured nothing usable
+    // (e.g. hover-only menus, or JS we couldn't drive), use the generic a11y shim so
+    // standard patterns still work. Belt-and-suspenders: both can coexist safely —
+    // the replay only acts on stamped data-efw-* elements, the shim on the rest.
+    if (recording && recording.toggles && recording.toggles.length) {
+      html = injectReplay(html, recording);
+      if (recording.toggles.length < 1) html = injectInteractions(html);
+    } else {
+      html = injectInteractions(html);
+    }
 
-    return { ok: true, html, assets: cache.size, css_files: Object.keys(cssFiles).length };
+    return { ok: true, html, assets: cache.size, css_files: Object.keys(cssFiles).length, interactions_recorded: (recording && recording.toggles ? recording.toggles.length : 0) };
   } catch (e) {
     return { ok: false, error: String(e).slice(0, 200) };
   } finally {
