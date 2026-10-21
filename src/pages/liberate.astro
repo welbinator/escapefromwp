@@ -56,7 +56,7 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
         <label for="lf-email">Your email</label>
         <input id="lf-email" name="email" type="email" autocomplete="email"
                placeholder="you@example.com" required />
-        <p class="field-hint">We send your three preview links here and may follow up about your migration. No spam.</p>
+        <p class="field-hint">We send your rebuilt-site link here and may follow up about your migration. No spam.</p>
       </div>
 
       <!-- honeypot -->
@@ -74,8 +74,7 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
     </form>
 
     <p class="tool-alt">
-      Want three fresh design concepts instead of an exact copy? <button type="button" id="lf-preview-toggle" class="linklike">Build 3 redesign previews ↗</button><br/>
-      Just want the raw content? <button type="button" id="lf-zip-toggle" class="linklike">Download an AI-ready export (.zip) ↗</button>
+      Just want the raw content? <button type="button" id="lf-zip-toggle" class="linklike">Download a content export (.zip) ↗</button>
     </p>
 
     <!-- STATUS / RESULT -->
@@ -250,10 +249,9 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
     const resultEl = document.getElementById("lf-result");
     const submitBtn = document.getElementById("lf-submit");
     const zipToggle = document.getElementById("lf-zip-toggle");
-    const previewToggle = document.getElementById("lf-preview-toggle");
     const isPreview = /github\.io$/.test(location.hostname);
 
-    // mode: "replica" (default, exact copy) | "preview" (3 redesigns) | "zip" (raw content)
+    // mode: "replica" (default, exact copy) | "zip" (raw content export)
     let mode = "replica";
 
     function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
@@ -265,12 +263,7 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
       if (mode === "replica") {
         submitBtn.textContent = "▸ Build my copy";
         noteEl().textContent = "Free. This usually takes a minute or two while we rebuild your site. We email you the link when it's ready and never touch your live site.";
-        if (previewToggle) previewToggle.textContent = "Build 3 redesign previews ↗";
-        if (zipToggle) zipToggle.textContent = "Download an AI-ready export (.zip) ↗";
-      } else if (mode === "preview") {
-        submitBtn.textContent = "▸ Build my 3 previews";
-        noteEl().textContent = "Free. This can take a few minutes while we design three sites from scratch. We email you three live preview links.";
-        if (previewToggle) previewToggle.textContent = "← Back to an exact copy of my site";
+        if (zipToggle) zipToggle.textContent = "Download a content export (.zip) ↗";
       } else {
         submitBtn.textContent = "▸ Download my content (.zip)";
         noteEl().textContent = "Free. We email you a download link (good for 24 hours) and never touch your live site.";
@@ -279,7 +272,6 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
       resultEl.hidden = true; statusEl.hidden = true;
     }
 
-    if (previewToggle) previewToggle.addEventListener("click", () => setMode(mode === "preview" ? "replica" : "preview"));
     if (zipToggle) zipToggle.addEventListener("click", () => setMode(mode === "zip" ? "replica" : "zip"));
 
     form.addEventListener("submit", async (e) => {
@@ -316,8 +308,6 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
       try {
         if (mode === "zip") {
           await runZip(payload, siteLabel);
-        } else if (mode === "preview") {
-          await runPreview(payload, siteLabel);
         } else {
           await runReplica(payload, siteLabel);
         }
@@ -394,67 +384,7 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
       wireAgain();
     }
 
-    // ---- Preview builder (3 redesigns) ----------------------------------
-    async function runPreview(payload, siteLabel) {
-      statusEl.innerHTML =
-        '<div class="efw-loader">' +
-          '<div class="efw-spinner"></div>' +
-          '<div class="efw-loader-text">' +
-            '<span class="lead">Designing three sites for ' + siteLabel + '<span class="efw-dots"></span></span>' +
-            '<span class="sub">This might take a few minutes. You\'re welcome to stick around if you\'d like, but we\'ll go ahead and email you the links when we\'re done.</span>' +
-          "</div>" +
-        "</div>";
-      statusEl.scrollIntoView({ behavior: "smooth", block: "center" });
-
-      const res = await fetch(apiBase() + "/api/generate-preview", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      let data = null; try { data = await res.json(); } catch {}
-
-      if (!res.ok || !data || !data.ok) {
-        const msg = (data && data.error) || "We couldn't build a preview from that URL. Please check it and try again.";
-        statusEl.className = "tool-status error";
-        statusEl.textContent = "✕ " + msg;
-        statusEl.scrollIntoView({ behavior: "smooth", block: "center" });
-        resetTurnstile();
-        submitBtn.disabled = false;
-        return;
-      }
-
-      statusEl.hidden = true;
-      resultEl.hidden = false;
-
-      const variants = Array.isArray(data.variants) ? data.variants : [];
-      let cards = "";
-      for (const v of variants) {
-        cards +=
-          '<a class="prev-card" href="' + esc(v.url) + '" target="_blank" rel="noopener">' +
-            '<span class="prev-meta">' +
-              '<span class="prev-name">' + esc(v.label || v.key) + "</span>" +
-              '<span class="prev-blurb">' + esc(v.blurb || "") + "</span>" +
-            "</span>" +
-            '<span class="prev-go">Open ↗</span>' +
-          "</a>";
-      }
-
-      const emailLine = data.emailed
-        ? "We've also emailed these three links to <strong>" + esc(data.email) + "</strong> so you don't lose them."
-        : "We're emailing these three links to <strong>" + esc(data.email) + "</strong> the moment they finish building.";
-
-      resultEl.innerHTML =
-        "<h2>✓ Your three designs are being built.</h2>" +
-        '<p class="res-sub">Built from ' + esc((data.summary && data.summary.site) || siteLabel) + ". Each design is a complete site made from scratch, so give it a few minutes.</p>" +
-        '<div class="prev-grid">' + cards + "</div>" +
-        '<p class="res-expiry">Open any link now. If a design is still cooking you\'ll see a build screen that refreshes itself. ' + emailLine + " When you find the one you like, tap <strong>“I like this one”</strong> and we'll build the real thing.</p>" +
-        '<button type="button" class="res-again" id="lf-again">↻ Try another site</button>';
-
-      resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
-      wireAgain();
-    }
-
-    // ---- Legacy zip export (advanced) -----------------------------------
+    // ---- Content export (.zip) ------------------------------------------
     async function runZip(payload, siteLabel) {
       const zipPayload = { url: payload.url, email: payload.email, website_hp: payload.website_hp, target: "emdash" };
       statusEl.innerHTML = '<span class="spin">▸ Breaking in…</span> reading ' + siteLabel +
