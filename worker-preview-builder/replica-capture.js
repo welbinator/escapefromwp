@@ -42,16 +42,69 @@ function extFromUrl(u, contentType) {
   return "bin";
 }
 
+// True if the bytes look like an actual image/font/media file (not an HTML
+// challenge/error page a CDN handed us in place of the asset).
+function looksBinaryAsset(buf, ct) {
+  const b = new Uint8Array(buf);
+  if (b.byteLength < 8) return false;
+  const ctl = (ct || "").toLowerCase();
+  if (ctl.includes("text/html") || ctl.startsWith("text/plain")) return false;
+  // Sniff leading bytes for an HTML document regardless of content-type.
+  const head = new TextDecoder("latin1").decode(b.subarray(0, 64)).trim().toLowerCase();
+  if (head.startsWith("<!doctype") || head.startsWith("<html") || head.startsWith("<head")) return false;
+  return true;
+}
+
+// Fetch one URL with realistic browser headers. Returns {ok, ct, buf} or null.
+async function fetchAssetOnce(url, referer) {
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+        "accept-language": "en-US,en;q=0.9",
+        ...(referer ? { referer } : {}),
+      },
+      cf: { cacheTtl: 0 },
+    });
+    if (!res.ok) return null;
+    const ct = res.headers.get("content-type") || "";
+    const buf = await res.arrayBuffer();
+    return { ok: true, ct, buf };
+  } catch (_) { return null; }
+}
+
 // Download one asset and rehost to R2. Returns the public replica path, or null.
 // Cached by URL within a single capture so we don't fetch the same file twice.
-async function rehostAsset(env, id, url, cache, selfOrigin) {
+// pageOrigin: the site's own origin — used as a fallback host when a third-party
+// CDN serves a bot-challenge/HTML page instead of the real file (common with
+// edge CDNs like nxedge that reject non-browser user-agents or hotlinking).
+async function rehostAsset(env, id, url, cache, selfOrigin, pageOrigin) {
   if (!url) return null;
   if (cache.has(url)) return cache.get(url);
   try {
-    const res = await fetch(url, { headers: { "user-agent": "Mozilla/5.0 (EscapeFromWP replica)" }, cf: { cacheTtl: 0 } });
-    if (!res.ok) { cache.set(url, null); return null; }
-    const ct = res.headers.get("content-type") || "";
-    const buf = await res.arrayBuffer();
+    const referer = pageOrigin || (() => { try { return new URL(url).origin; } catch { return ""; } })();
+    let r = await fetchAssetOnce(url, referer);
+
+    // If the response is missing or looks like an HTML challenge page, retry the
+    // same path on the site's own origin (WP serves the file there directly).
+    if (!r || !looksBinaryAsset(r.buf, r.ct)) {
+      let fallbackUrl = null;
+      try {
+        const u = new URL(url);
+        if (pageOrigin && new URL(pageOrigin).host !== u.host) {
+          fallbackUrl = new URL(u.pathname + u.search, pageOrigin).toString();
+        }
+      } catch (_) {}
+      if (fallbackUrl) {
+        const r2 = await fetchAssetOnce(fallbackUrl, pageOrigin);
+        if (r2 && looksBinaryAsset(r2.buf, r2.ct)) r = r2;
+        else { cache.set(url, null); return null; }
+      } else { cache.set(url, null); return null; }
+    }
+
+    const ct = r.ct;
+    const buf = r.buf;
     if (buf.byteLength === 0 || buf.byteLength > 12 * 1024 * 1024) { cache.set(url, null); return null; }
     const hash = (await sha1Hex(url)).slice(0, 16);
     const ext = extFromUrl(url, ct);
@@ -66,7 +119,7 @@ async function rehostAsset(env, id, url, cache, selfOrigin) {
 
 // Rewrite url(...) inside a CSS string: resolve against the stylesheet URL, then
 // rehost each referenced file (fonts, background images) to R2.
-async function rewriteCssUrls(env, id, css, cssBaseUrl, cache, selfOrigin) {
+async function rewriteCssUrls(env, id, css, cssBaseUrl, cache, selfOrigin, pageOrigin) {
   const urls = [];
   css.replace(/url\(\s*["']?([^"')]+)["']?\s*\)/gi, (m, u) => { urls.push(u); return m; });
   const map = {};
@@ -75,7 +128,7 @@ async function rewriteCssUrls(env, id, css, cssBaseUrl, cache, selfOrigin) {
     const abs = absUrl(u, cssBaseUrl);
     if (!abs) continue;
     if (map[u] !== undefined) continue;
-    map[u] = await rehostAsset(env, id, abs, cache, selfOrigin);
+    map[u] = await rehostAsset(env, id, abs, cache, selfOrigin, pageOrigin);
   }
   return css.replace(/url\(\s*["']?([^"')]+)["']?\s*\)/gi, (m, u) => {
     if (/^(data:)/i.test(u)) return m;
@@ -88,6 +141,7 @@ async function rewriteCssUrls(env, id, css, cssBaseUrl, cache, selfOrigin) {
 export async function captureReplica(env, id, pageUrl) {
   const base = pageUrl;
   const selfOrigin = (env.SITE_ORIGIN || "https://escapefromwp.com").replace(/\/$/, "");
+  let pageOrigin = ""; try { pageOrigin = new URL(base).origin; } catch (_) {}
   const browser = await puppeteer.launch(env.BROWSER);
   const cache = new Map();
   try {
@@ -150,7 +204,7 @@ export async function captureReplica(env, id, pageUrl) {
       (m, u) => { imgUrls.add(u); return m; });
 
     const urlMap = {};
-    for (const u of imgUrls) urlMap[u] = await rehostAsset(env, id, u, cache, selfOrigin);
+    for (const u of imgUrls) urlMap[u] = await rehostAsset(env, id, u, cache, selfOrigin, pageOrigin);
     // Replace every rehosted URL throughout the HTML.
     for (const [u, rep] of Object.entries(urlMap)) {
       if (!rep) continue;
@@ -160,12 +214,12 @@ export async function captureReplica(env, id, pageUrl) {
     // --- Inline CSS (with url() rehosting), drop <link> + <script>. ---
     let bundled = "";
     for (const [url, css] of Object.entries(cssFiles)) {
-      bundled += `\n/* ${url} */\n` + await rewriteCssUrls(env, id, css, url, cache, selfOrigin) + "\n";
+      bundled += `\n/* ${url} */\n` + await rewriteCssUrls(env, id, css, url, cache, selfOrigin, pageOrigin) + "\n";
     }
     // Rehost url()s inside inline <style> blocks too (fonts often declared there).
     const styleBlocks = [...html.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi)];
     for (const sb of styleBlocks) {
-      const fixed = await rewriteCssUrls(env, id, sb[1], base, cache, selfOrigin);
+      const fixed = await rewriteCssUrls(env, id, sb[1], base, cache, selfOrigin, pageOrigin);
       if (fixed !== sb[1]) html = html.replace(sb[0], `<style>${fixed}</style>`);
     }
     html = html.replace(/<link[^>]+rel=["']stylesheet["'][^>]*>/gi, "");
@@ -174,7 +228,7 @@ export async function captureReplica(env, id, pageUrl) {
     // Keep <link rel=preload as=font> working by rehosting those hrefs.
     const preloads = [...html.matchAll(/<link\b[^>]*\bhref=["'](https?:\/\/[^"']+\.(?:woff2?|ttf|otf))["'][^>]*>/gi)];
     for (const pl of preloads) {
-      const rep = await rehostAsset(env, id, pl[1], cache, selfOrigin);
+      const rep = await rehostAsset(env, id, pl[1], cache, selfOrigin, pageOrigin);
       if (rep) html = html.replace(pl[1], rep);
     }
     html = html.replace(/<\/head>/i, `<style>${bundled}</style></head>`);
