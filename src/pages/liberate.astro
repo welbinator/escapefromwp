@@ -73,10 +73,6 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
       <p class="tool-note">Free. This usually takes a minute or two while we rebuild your site. We email you the link when it's ready and never touch your live site.</p>
     </form>
 
-    <p class="tool-alt">
-      Just want the raw content? <button type="button" id="lf-zip-toggle" class="linklike">Download a content export (.zip) ↗</button>
-    </p>
-
     <!-- STATUS / RESULT -->
     <div id="lf-status" class="tool-status" hidden></div>
     <div id="lf-result" class="tool-result" hidden></div>
@@ -206,6 +202,18 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
     .tool-result :global(.res-table tr:last-child td) { border-bottom: none; }
     .tool-result :global(.res-total) { font-family: var(--font-mono); font-size: 13px; color: var(--term-green); margin-bottom: 18px; word-break: break-word; }
     .tool-result :global(.res-download) { display: flex; width: 100%; justify-content: center; text-align: center; font-size: 15px; padding: 15px 20px; margin-bottom: 14px; box-sizing: border-box; }
+    .tool-result :global(.res-actions) { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
+    .tool-result :global(.res-actions .res-download) { margin-bottom: 0; }
+    .tool-result :global(.btn-ghost) { display: flex; width: 100%; justify-content: center; align-items: center; gap: 9px; text-align: center; font-size: 15px; padding: 15px 20px; box-sizing: border-box; background: transparent; color: var(--chalk); border: 1px solid var(--term-green); cursor: pointer; font-family: inherit; font-weight: 600; transition: background .15s, color .15s; }
+    .tool-result :global(.btn-ghost:hover) { background: rgba(78,227,107,.12); }
+    .tool-result :global(.btn-ghost:disabled) { cursor: default; opacity: .9; }
+    .tool-result :global(.btn-ghost.building) { border-color: var(--steel); color: var(--slate); }
+    .tool-result :global(.btn-ghost.ready) { background: var(--term-green); color: #06230f; border-color: var(--term-green); }
+    .tool-result :global(.efw-btn-spin) { width: 15px; height: 15px; border: 2px solid var(--steel); border-top-color: var(--term-green); border-radius: 50%; display: inline-block; animation: efw-spin 0.8s linear infinite; flex-shrink: 0; }
+    .tool-result :global(.res-zip-hint) { font-size: 13px; color: var(--slate); line-height: 1.6; margin: 0 0 16px; }
+    .tool-result :global(.res-zip-hint strong) { color: var(--chalk); }
+    .tool-result :global(.res-zip-hint code) { font-family: var(--font-mono); color: var(--term-green); font-size: 0.9em; }
+    @media (prefers-reduced-motion: reduce) { .tool-result :global(.efw-btn-spin) { animation-duration: 2s; } }
     .tool-result :global(.res-expiry) { font-family: var(--font-mono); font-size: 12px; color: var(--slate); line-height: 1.6; }
     .tool-result :global(.res-expiry strong) { color: var(--chalk); }
     .tool-result :global(.res-notice) { font-family: var(--font-mono); font-size: 12px; color: #f6d08a; border-left: 2px solid #f6d08a; padding-left: 12px; margin-bottom: 18px; }
@@ -248,31 +256,11 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
     const statusEl = document.getElementById("lf-status");
     const resultEl = document.getElementById("lf-result");
     const submitBtn = document.getElementById("lf-submit");
-    const zipToggle = document.getElementById("lf-zip-toggle");
     const isPreview = /github\.io$/.test(location.hostname);
 
     // mode: "replica" (default, exact copy) | "zip" (raw content export)
-    let mode = "replica";
-
     function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
     function apiBase() { return (location.pathname.replace(/\/liberate\/?$/, "") || ""); }
-
-    const noteEl = () => document.querySelector(".tool-note");
-    function setMode(next) {
-      mode = next;
-      if (mode === "replica") {
-        submitBtn.textContent = "▸ Build my copy";
-        noteEl().textContent = "Free. This usually takes a minute or two while we rebuild your site. We email you the link when it's ready and never touch your live site.";
-        if (zipToggle) zipToggle.textContent = "Download a content export (.zip) ↗";
-      } else {
-        submitBtn.textContent = "▸ Download my content (.zip)";
-        noteEl().textContent = "Free. We email you a download link (good for 24 hours) and never touch your live site.";
-        if (zipToggle) zipToggle.textContent = "← Back to an exact copy of my site";
-      }
-      resultEl.hidden = true; statusEl.hidden = true;
-    }
-
-    if (zipToggle) zipToggle.addEventListener("click", () => setMode(mode === "zip" ? "replica" : "zip"));
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -306,11 +294,7 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
       const siteLabel = esc(payload.url.replace(/^https?:\/\//, ""));
 
       try {
-        if (mode === "zip") {
-          await runZip(payload, siteLabel);
-        } else {
-          await runReplica(payload, siteLabel);
-        }
+        await runReplica(payload, siteLabel);
       } catch (err) {
         statusEl.className = "tool-status error";
         statusEl.textContent = "✕ Something went wrong reaching the service. Please try again.";
@@ -363,79 +347,94 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
       statusEl.hidden = true;
       resultEl.hidden = false;
 
+      const previewId = data.preview_id;
       const emailLine = "We've emailed the link to <strong>" + esc(data.email) + "</strong> so you don't lose it.";
-      if (built) {
-        resultEl.innerHTML =
-          "<h2>✓ Your site has been rebuilt.</h2>" +
-          '<p class="res-sub">Here\'s ' + esc(siteName) + ", running without WordPress — same look, your images and fonts, hosted on fast infrastructure.</p>" +
-          '<a class="btn btn-primary res-download" href="' + esc(replicaUrl) + '" target="_blank" rel="noopener">View my rebuilt site ↗</a>' +
-          '<p class="res-expiry">' + emailLine + " Like it? Reply to that email and we'll put it on your own domain and handle any changes you want.</p>" +
-          '<button type="button" class="res-again" id="lf-again">↻ Rebuild another site</button>';
-      } else {
-        resultEl.innerHTML =
-          "<h2>✓ We're rebuilding your site.</h2>" +
-          '<p class="res-sub">' + esc(siteName) + " is taking a little longer than usual to finish. Your link is ready to open — if you see a build screen, it refreshes itself.</p>" +
-          '<a class="btn btn-primary res-download" href="' + esc(replicaUrl) + '" target="_blank" rel="noopener">Open my rebuilt site ↗</a>' +
-          '<p class="res-expiry">' + emailLine + " When it's done you'll see your site, off WordPress.</p>" +
-          '<button type="button" class="res-again" id="lf-again">↻ Rebuild another site</button>';
-      }
+      const headline = built ? "✓ Your site has been rebuilt." : "✓ We're rebuilding your site.";
+      const subline = built
+        ? "Here's " + esc(siteName) + ", running without WordPress — same look, your images and fonts, hosted on fast infrastructure."
+        : esc(siteName) + " is taking a little longer than usual to finish. Your link is ready to open — if you see a build screen, it refreshes itself.";
+      const viewLabel = built ? "View my rebuilt site ↗" : "Open my rebuilt site ↗";
+
+      resultEl.innerHTML =
+        "<h2>" + headline + "</h2>" +
+        '<p class="res-sub">' + subline + "</p>" +
+        '<div class="res-actions">' +
+          '<a class="btn btn-primary res-download" href="' + esc(replicaUrl) + '" target="_blank" rel="noopener">' + viewLabel + "</a>" +
+          '<button type="button" class="btn btn-ghost res-zip-btn" id="lf-zip-btn">⬇ Generate the full EmDash site (.zip)</button>' +
+        "</div>" +
+        '<p class="res-zip-hint" id="lf-zip-hint">Prefer to build it yourself? Generate a ready-to-run EmDash project — your content baked in, plus an exact copy of your site to match the design.</p>' +
+        '<p class="res-expiry">' + emailLine + " Like it? Reply to that email and we'll put it on your own domain and handle any changes you want.</p>" +
+        '<button type="button" class="res-again" id="lf-again">↻ Rebuild another site</button>';
 
       resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
+      wireZipButton(previewId, siteName);
       wireAgain();
     }
 
-    // ---- Content export (.zip) ------------------------------------------
-    async function runZip(payload, siteLabel) {
-      const zipPayload = { url: payload.url, email: payload.email, website_hp: payload.website_hp, target: "emdash" };
-      statusEl.innerHTML = '<span class="spin">▸ Breaking in…</span> reading ' + siteLabel +
-        "'s content API. Large sites can take 20–40 seconds — hang tight.";
-      statusEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    // ---- Full EmDash site (.zip) — triggered from the result card -----------
+    // Reuses the already-created preview row: /api/replica-offer {choice:'no'}
+    // enqueues the 'emdash-zip' worker job, then /api/zip-status is polled until
+    // the zip + download token are ready.
+    function wireZipButton(previewId, siteName) {
+      const btn = document.getElementById("lf-zip-btn");
+      const hint = document.getElementById("lf-zip-hint");
+      if (!btn || !previewId) return;
 
-      const res = await fetch(apiBase() + "/api/liberate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(zipPayload),
-      });
-      let data = null; try { data = await res.json(); } catch {}
+      btn.addEventListener("click", async function () {
+        btn.disabled = true;
+        btn.classList.add("building");
+        btn.innerHTML = '<span class="efw-btn-spin"></span> Building your EmDash site now…';
+        if (hint) hint.textContent = "Packaging your content and an exact copy of your site into a ready-to-run EmDash project. This usually takes a minute or two — keep this page open.";
 
-      if (!res.ok || !data || !data.ok) {
-        const msg = (data && data.error) || "Extraction failed. Please check the URL and try again.";
-        statusEl.className = "tool-status error";
-        statusEl.textContent = "✕ " + msg;
-        statusEl.scrollIntoView({ behavior: "smooth", block: "center" });
-        submitBtn.disabled = false;
-        return;
-      }
-
-      const summary = data.summary || {};
-      const filename = data.filename || "content-export.zip";
-      statusEl.hidden = true;
-      resultEl.hidden = false;
-
-      let rows = "";
-      if (summary.collections) {
-        for (const c of summary.collections) {
-          rows += '<tr><td>' + esc(c.label) + ' <span class="res-type">(' + esc(c.type) + ")</span></td><td class='n'>" + c.entries + "</td></tr>";
+        // 1) Kick off the build (idempotent on the server).
+        try {
+          const kick = await fetch(apiBase() + "/api/replica-offer", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: previewId, choice: "no" }),
+          });
+          const kd = await kick.json().catch(() => ({}));
+          if (!kick.ok || !kd.ok) {
+            return zipError(btn, hint, (kd && kd.error) || "Couldn't start the export. Please try again.");
+          }
+        } catch (_) {
+          return zipError(btn, hint, "Network error starting the export. Please try again.");
         }
-      }
-      const notice = summary.notice ? '<p class="res-notice">⚠️ ' + esc(summary.notice) + "</p>" : "";
-      const emailLine = data.emailed
-        ? "We've also emailed this link to <strong>" + esc(data.email) + "</strong> so you don't lose it."
-        : "<strong>Heads up:</strong> we couldn't send the email this time, so download it here now.";
 
-      resultEl.innerHTML =
-        "<h2>✓ Content liberated.</h2>" +
-        '<p class="res-sub">Extracted from ' + esc(summary.site || siteLabel) + ".</p>" +
-        notice +
-        (rows ? '<table class="res-table"><tbody>' + rows + "</tbody></table>" : "") +
-        '<p class="res-total">Total: ' + (summary.total_entries || 0) + " entries bundled into <code>" + esc(filename) + "</code></p>" +
-        '<a class="btn btn-primary res-download" href="' + esc(data.download_url) + '">Download</a>' +
-        '<p class="res-expiry">' + emailLine + " This link works for <strong>24 hours</strong>, then the file is deleted.</p>" +
-        "<p style='color:var(--slate);font-size:14px;line-height:1.6;margin-top:16px'><strong style='color:var(--chalk)'>Next:</strong> unzip it, open your AI coding assistant in your new site's project folder, and tell it to follow the included <code>AGENT_INSTRUCTIONS.md</code>. Rather we do the whole migration? <a href='" + apiBase() + "/#breakout' style='color:var(--term-green)'>Plan your escape ↗</a></p>" +
-        '<button type="button" class="res-again" id="lf-again">↻ Liberate another site</button>';
+        // 2) Poll for the finished zip (~up to 5 min).
+        let downloadUrl = null;
+        for (let i = 0; i < 50; i++) {
+          await new Promise((r) => setTimeout(r, 6000));
+          try {
+            const s = await fetch(apiBase() + "/api/zip-status?id=" + encodeURIComponent(previewId), { cache: "no-store" });
+            const sd = await s.json().catch(() => ({}));
+            if (sd && sd.ok && sd.ready && sd.download_url) { downloadUrl = sd.download_url; break; }
+          } catch (_) {}
+        }
 
-      resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
-      wireAgain();
+        if (!downloadUrl) {
+          // Build is still running — the email will carry the link.
+          btn.classList.remove("building");
+          btn.innerHTML = "⬇ Still building — check your email";
+          if (hint) hint.innerHTML = "Your EmDash site is taking a little longer. We'll <strong>email you the download link</strong> the moment it's ready (good for 24 hours).";
+          return;
+        }
+
+        // 3) Done — swap the button into a real download.
+        btn.classList.remove("building");
+        btn.disabled = false;
+        btn.classList.add("ready");
+        btn.innerHTML = "⬇ Download your EmDash site (.zip)";
+        btn.onclick = function () { window.location.href = downloadUrl; };
+        if (hint) hint.innerHTML = "✓ Ready! We've also <strong>emailed you this link</strong> so you don't lose it. It works for <strong>24 hours</strong>. Unzip it, open <code>README.md</code>, and follow the steps — or hand the folder to your AI coding assistant.";
+      });
+    }
+
+    function zipError(btn, hint, msg) {
+      btn.classList.remove("building");
+      btn.disabled = false;
+      btn.innerHTML = "⬇ Generate the full EmDash site (.zip)";
+      if (hint) { hint.innerHTML = '<span style="color:#ff6b6b">✕ ' + esc(msg) + "</span>"; }
     }
 
     function resetTurnstile() { try { if (window.turnstile) window.turnstile.reset(); } catch (_) {} }

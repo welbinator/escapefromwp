@@ -78,6 +78,8 @@ async function buildEmdashZipJob(env, id) {
   await env.EXPORTS.put(`exports/${token}.zip`, zip, {
     httpMetadata: { contentType: "application/zip", contentDisposition: `attachment; filename="${filename}"` },
   });
+  // Persist the token on the row so /api/zip-status can hand the browser the link.
+  try { await env.DB.prepare(`UPDATE ec_previews SET spam_reason=? WHERE id=?`).bind(token, id).run(); } catch (_) {}
   const origin = env.SITE_ORIGIN || "https://escapefromwp.com";
   const downloadUrl = `${origin}/api/download/${token}`;
   console.log(`[${id}] emdash-zip built ${zip.length}b in ${((Date.now() - t) / 1000).toFixed(0)}s`);
