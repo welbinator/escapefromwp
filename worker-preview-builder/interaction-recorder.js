@@ -32,6 +32,7 @@
 export const RECORDER_FN = function (opts) {
   var MAX = (opts && opts.maxToggles) || 40;
   var SETTLE = (opts && opts.settleMs) || 350;
+  var PASS = (opts && opts.pass) || "";  // id prefix to keep multi-pass ids unique
 
   // Attributes whose change commonly drives "open/visible" state.
   var WATCH = ["class", "style", "hidden", "open", "aria-expanded", "aria-hidden", "aria-selected", "data-state", "data-open"];
@@ -140,13 +141,14 @@ export const RECORDER_FN = function (opts) {
       // visible (a real reveal), not just an aria flag flip with no visual effect.
       var realReveal = changes.some(function (c) { return c.becameVisible; });
       if (changes.length && realReveal) {
-        // Stamp the toggle + each changed element with stable replay ids.
-        if (!btn.getAttribute("data-efw-tgl")) btn.setAttribute("data-efw-tgl", String(t));
+        // Stamp the toggle + each changed element with stable replay ids. The PASS
+        // prefix keeps ids unique across multi-pass (mobile+desktop) recording.
+        if (!btn.getAttribute("data-efw-tgl")) btn.setAttribute("data-efw-tgl", PASS + String(t));
         var recChanges = [];
         for (var c = 0; c < changes.length; c++) {
           var el = els[changes[c].idx];
           var eid = el.getAttribute("data-efw-el");
-          if (!eid) { eid = "e" + (elIdCounter++); el.setAttribute("data-efw-el", eid); }
+          if (!eid) { eid = PASS + "e" + (elIdCounter++); el.setAttribute("data-efw-el", eid); }
           recChanges.push({ el: eid, attrs: changes[c].attrs });
         }
         recording.toggles.push({

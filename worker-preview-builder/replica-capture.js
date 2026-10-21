@@ -181,10 +181,36 @@ export async function captureReplica(env, id, pageUrl) {
     // one changes. This stamps data-efw-tgl/data-efw-el onto the elements so the
     // recording survives into the captured HTML. Theme-agnostic: we replay what we
     // observed, instead of guessing from hardcoded selectors.
+    //
+    // CRITICAL: the hamburger/mobile menu only EXISTS at a mobile viewport (at the
+    // 1440px desktop width it's display:none and the nav is already shown, so there
+    // is nothing to click). So we record in TWO passes — a mobile pass (for the
+    // hamburger + mobile nav) and a desktop pass (for desktop dropdowns/flyouts) —
+    // then restore the desktop viewport before capturing HTML. The data-efw-* stamps
+    // persist on the elements across the resize.
     let recording = { version: 1, toggles: [] };
     try {
-      recording = await page.evaluate(RECORDER_FN, { maxToggles: 40, settleMs: 350 });
-      if (!recording || !Array.isArray(recording.toggles)) recording = { version: 1, toggles: [] };
+      // Pass 1 — mobile viewport: hamburger + mobile nav.
+      await page.setViewport({ width: 390, height: 850, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+      await new Promise((r) => setTimeout(r, 500));
+      const mobileRec = await page.evaluate(RECORDER_FN, { maxToggles: 40, settleMs: 350, pass: "m" });
+
+      // Pass 2 — back to desktop: dropdowns/flyouts/accordions that only show wide.
+      await page.setViewport({ width: 1440, height: 1800, deviceScaleFactor: 1 });
+      await new Promise((r) => setTimeout(r, 400));
+      const desktopRec = await page.evaluate(RECORDER_FN, { maxToggles: 40, settleMs: 350, pass: "d" });
+
+      // Merge, de-duping by toggle id (a toggle already recorded on mobile wins).
+      const seen = new Set();
+      const merged = [];
+      for (const rec of [mobileRec, desktopRec]) {
+        if (!rec || !Array.isArray(rec.toggles)) continue;
+        for (const tg of rec.toggles) {
+          if (seen.has(tg.tgl)) continue;
+          seen.add(tg.tgl); merged.push(tg);
+        }
+      }
+      recording = { version: 1, toggles: merged };
     } catch (_) { recording = { version: 1, toggles: [] }; }
 
     // Grab hydrated HTML (now carries the data-efw-* stamps from the recorder).
