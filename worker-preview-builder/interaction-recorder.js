@@ -52,6 +52,36 @@ export const RECORDER_FN = function (opts) {
 
   function allEls() { return Array.prototype.slice.call(document.querySelectorAll("*")); }
 
+  // Build a STABLE, document-unique CSS selector for an element — one that will
+  // still match AFTER our data-efw stamps are gone. This is the key to surviving
+  // themes that re-render nodes on viewport resize (e.g. "etch"): the data-efw-*
+  // attributes get wiped when the theme rebuilds its header, but the theme's own
+  // id/classes/tag/structure persist. Replay re-finds elements by this selector
+  // when the stamp is missing. Prefers #id, then a nth-of-type path up to <body>.
+  function buildSelector(el) {
+    if (!el || el.nodeType !== 1) return "";
+    if (el.id && /^[A-Za-z][\w-]*$/.test(el.id)) return "#" + el.id;
+    var parts = [];
+    var node = el;
+    while (node && node.nodeType === 1 && node.tagName !== "HTML") {
+      var tag = node.tagName.toLowerCase();
+      if (node.id && /^[A-Za-z][\w-]*$/.test(node.id)) { parts.unshift("#" + node.id); break; }
+      var seg = tag;
+      var parent = node.parentNode;
+      if (parent) {
+        var sibs = Array.prototype.filter.call(parent.children, function (c) { return c.tagName === node.tagName; });
+        if (sibs.length > 1) { seg += ":nth-of-type(" + (sibs.indexOf(node) + 1) + ")"; }
+      }
+      parts.unshift(seg);
+      if (tag === "body") break;
+      node = parent;
+    }
+    var sel = parts.join(" > ");
+    // Verify uniqueness; if not unique, it's still a best-effort first match.
+    try { if (document.querySelectorAll(sel).length === 1) return sel; } catch (e) {}
+    return sel;
+  }
+
   // Compact fingerprint of the whole doc: for each element (by index) record the
   // watched attribute values. Index is positional and stable within one snapshot
   // pair (we don't mutate structure between the two snapshots of a toggle).
@@ -158,10 +188,11 @@ export const RECORDER_FN = function (opts) {
           var el = els[changes[c].idx];
           var eid = el.getAttribute("data-efw-el");
           if (!eid) { eid = PASS + "e" + (elIdCounter++); el.setAttribute("data-efw-el", eid); }
-          recChanges.push({ el: eid, attrs: changes[c].attrs });
+          recChanges.push({ el: eid, sel: buildSelector(el), attrs: changes[c].attrs });
         }
         recording.toggles.push({
           tgl: btn.getAttribute("data-efw-tgl"),
+          sel: buildSelector(btn),
           desc: cssPathShort(btn),
           changes: recChanges
         });
@@ -202,8 +233,24 @@ export function buildReplayScript(recording) {
     el.classList.toggle("efw-open", open);
   }
 
+  // Resolve a recorded element. Prefer the data-efw stamp, but fall back to the
+  // recorded stable selector — CRITICAL because some themes (e.g. "etch") re-render
+  // nodes on resize and WIPE our stamps before capture, so the stamp is often gone
+  // from the shipped HTML while the theme's own id/class/structure selector still
+  // matches. We re-stamp on first resolve so later lookups are fast.
+  function resolve(stampAttr, stampVal, sel){
+    var el = stampVal ? document.querySelector('[' + stampAttr + '="' + stampVal + '"]') : null;
+    if (el) return el;
+    if (sel){ try { el = document.querySelector(sel); } catch(e){ el = null; }
+      if (el && stampVal){ try { el.setAttribute(stampAttr, stampVal); } catch(e){} } }
+    return el;
+  }
+
+  function findBtn(tg){ return resolve("data-efw-tgl", tg.tgl, tg.sel); }
+  function findEl(ch){ return resolve("data-efw-el", ch.el, ch.sel); }
+
   function wire(tg){
-    var btn = document.querySelector('[data-efw-tgl="' + tg.tgl + '"]');
+    var btn = findBtn(tg);
     if (!btn || btn.__efwWired) return;
     btn.__efwWired = true;
     var open = false;
@@ -217,24 +264,32 @@ export function buildReplayScript(recording) {
       open = !open;
       for (var i=0;i<tg.changes.length;i++){
         var ch = tg.changes[i];
-        var target = document.querySelector('[data-efw-el="' + ch.el + '"]');
+        var target = findEl(ch);
         apply(target, ch.attrs, open);
       }
     }, false);
   }
 
   function init(){
+    // Eagerly re-resolve every recorded toggle + element FIRST. When stamps were
+    // wiped (theme re-render), resolve() re-applies them from the stable selector.
+    // This restores the data-efw-tgl marker the shim uses to know which elements
+    // replay owns — preventing the shim from double-wiring the same control.
+    for (var r=0;r<REC.toggles.length;r++){
+      var rt = REC.toggles[r]; findBtn(rt);
+      for (var rc=0; rc<rt.changes.length; rc++){ findEl(rt.changes[rc]); }
+    }
     for (var i=0;i<REC.toggles.length;i++){ wire(REC.toggles[i]); }
     // Close open dropdowns on outside click (desktop flyouts).
     document.addEventListener("click", function(e){
       for (var i=0;i<REC.toggles.length;i++){
         var tg = REC.toggles[i];
-        var btn = document.querySelector('[data-efw-tgl="' + tg.tgl + '"]');
+        var btn = findBtn(tg);
         if (!btn || !btn.classList.contains("efw-open")) continue;
         if (btn.contains(e.target)) continue;
         var inside = false;
         for (var j=0;j<tg.changes.length;j++){
-          var tel = document.querySelector('[data-efw-el="' + tg.changes[j].el + '"]');
+          var tel = findEl(tg.changes[j]);
           if (tel && tel.contains(e.target)) { inside = true; break; }
         }
         if (!inside){ btn.click(); }
