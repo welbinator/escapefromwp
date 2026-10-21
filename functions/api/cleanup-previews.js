@@ -21,11 +21,21 @@ async function reap(env) {
 
   let rows = 0, objects = 0;
   for (const r of results || []) {
+    // Delete the legacy single content object if present.
     try { if (r.content_key) { await env.EXPORTS.delete(r.content_key); objects++; } } catch (_) {}
-    try {
-      // best-effort: also drop a grabbed logo object if we ever store one
-      await env.EXPORTS.delete(`previews/${r.id}/logo`);
-    } catch (_) {}
+    // Sweep ALL R2 objects for this preview: content.json, variant HTML,
+    // replica.html, markers (previews/<id>/*) AND rehosted replica assets
+    // (replica-assets/<id>/*). Paginate each prefix until exhausted.
+    for (const prefix of [`previews/${r.id}/`, `replica-assets/${r.id}/`]) {
+      let cursor;
+      do {
+        const listing = await env.EXPORTS.list({ prefix, cursor, limit: 1000 });
+        for (const obj of listing.objects || []) {
+          try { await env.EXPORTS.delete(obj.key); objects++; } catch (_) {}
+        }
+        cursor = listing.truncated ? listing.cursor : undefined;
+      } while (cursor);
+    }
     await env.DB.prepare(`DELETE FROM ec_previews WHERE id = ?`).bind(r.id).run();
     rows++;
   }
