@@ -273,17 +273,21 @@ export async function captureReplica(env, id, pageUrl) {
     }
     html = html.replace(/<\/head>/i, `<style>${bundled}</style></head>`);
 
-    // Re-wire interactions. PRIMARY: replay the real behavior we recorded from the
-    // live site (theme-agnostic). FALLBACK: if the recorder captured nothing usable
-    // (e.g. hover-only menus, or JS we couldn't drive), use the generic a11y shim so
-    // standard patterns still work. Belt-and-suspenders: both can coexist safely —
-    // the replay only acts on stamped data-efw-* elements, the shim on the rest.
+    // Re-wire interactions with BOTH systems, cleanly divided so neither
+    // double-fires:
+    //   • REPLAY (interaction-recorder) drives elements we stamped with
+    //     data-efw-tgl — the exact observed behavior (dropdowns, flyouts, etc.).
+    //   • SHIM (interactions-shim) handles everything we did NOT stamp — most
+    //     importantly the mobile hamburger, whose stamp can be lost when the theme
+    //     re-renders its nav on the mobile→desktop resize. The shim explicitly
+    //     skips any element carrying data-efw-tgl, so the two never collide.
+    // Injecting both (not either/or) is what fixes the "hamburger does nothing"
+    // regression: even if the recorder couldn't keep the hamburger's stamp, the
+    // shim still wires it.
     if (recording && recording.toggles && recording.toggles.length) {
       html = injectReplay(html, recording);
-      if (recording.toggles.length < 1) html = injectInteractions(html);
-    } else {
-      html = injectInteractions(html);
     }
+    html = injectInteractions(html);
 
     return { ok: true, html, assets: cache.size, css_files: Object.keys(cssFiles).length, interactions_recorded: (recording && recording.toggles ? recording.toggles.length : 0) };
   } catch (e) {

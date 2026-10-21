@@ -91,6 +91,8 @@ const SHIM_JS = `(function(){
 
   function wireToggle(btn){
     if (btn.__efwWired) return; btn.__efwWired = true;
+    // Replay owns any element it stamped (data-efw-tgl) — don't double-wire it.
+    if (btn.hasAttribute && btn.hasAttribute("data-efw-tgl")) return;
     btn.addEventListener("click", function(e){
       var target = resolveTarget(btn);
       // If it's a real link to another page (no in-page target), let it navigate.
