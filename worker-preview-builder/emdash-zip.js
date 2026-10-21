@@ -378,6 +378,21 @@ ${prebuiltHome
 - Seed applies once on first setup; never rely on re-seeding a live site to add content.
 - No live 404s — set redirects before changing URLs.
 
+## FINAL STEP (required) — brief the user in plain language
+When you've finished the build, do NOT just say "done." Give the user a short, non-technical handoff message. They are likely not a developer. Include all of the following, in your own words:
+
+1. **The ONE setup choice that matters.** Tell them explicitly: when they run the EmDash setup wizard, at the content step they MUST choose the option that **includes the content** (labeled something like *"Include sample content,"* *"Sample content,"* or *"Seed content"* depending on version) — NOT *"Empty site."* Make it unambiguous:
+   > ⚠️ During setup, choose **"Include sample content"** (not "Empty site"). That "sample content" is actually *your real ${siteName} content* — ${totalEntries} entries. If you pick "Empty site," you'll get the page structure but **none of your posts**, and there's no way to load them in afterward without starting setup over on a fresh database.
+   If they already ran setup and landed on an empty site, tell them plainly how to recover: they need to reset to a fresh/empty database and re-run setup, choosing the include-content option this time — re-seeding a live site will NOT work.
+
+2. **Warn them about JavaScript-dependent features.** The exact-copy homepage is a static snapshot of their old site with the original scripts removed, so some interactive pieces may not behave exactly like the original until rebuilt. Call out the usual suspects in plain terms:
+   > Heads up: some things that need JavaScript — like the **mobile/hamburger menu**, dropdown menus, sliders/carousels, accordions, or FAQ toggles — may not work perfectly on the copied homepage yet, since the original site's scripts weren't carried over. Most basic menus should still open and close, but anything fancy might need a quick fix.
+
+3. **Offer to help.** Close warmly and make it easy for them to come back:
+   > Take a look around your new site and click through everything — especially on your phone. **If anything doesn't work or doesn't look right, just tell me what it is and I'll fix it for you.** No need to know why it's broken; point me at it and I'll handle it.
+
+Keep this handoff friendly and jargon-free. The goal is that a non-technical owner knows exactly what to click during setup, isn't surprised when a menu misbehaves, and feels comfortable asking you to fix anything.
+
 Hand this whole folder to your assistant and work the steps in order.
 `;
 }
