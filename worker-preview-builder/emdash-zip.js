@@ -278,6 +278,49 @@ function staticHomepageFiles(localizedHtml) {
   return files;
 }
 
+// The exact human-facing handoff message the building agent must send the shop owner
+// when the build is done. Shipped BOTH as a standalone, placeholder-filled
+// HANDOFF_MESSAGE.md (so the agent just copies it) AND embedded in AGENT_INSTRUCTIONS.md.
+// siteName/totalEntries are pre-filled; only <SITE_URL> is left for the agent.
+function handoffMessage(siteName, totalEntries) {
+  return `🎉 **Your new site is live:** <SITE_URL>
+
+## 🚨 STEP 1 — THE ONE CHOICE YOU CAN'T GET WRONG (please read)
+The very first time you open your new site's admin, a **setup wizard** appears and asks
+what content to start with. This is the single most important moment of the whole process.
+
+### 👉 Choose **"Include sample content"** — NOT "Empty site."
+
+That "sample content" is **your real ${siteName} content — all ${totalEntries} of your pages and posts.** It only *looks* like a generic option; it is actually everything we migrated for you.
+
+⚠️ **If you choose "Empty site," you get a blank shell — none of your ${totalEntries} pages** — and there is **NO way to add them back later** except wiping it and starting the setup over. There is no undo button for this.
+
+✅ **So, one more time: when the wizard asks, pick "Include sample content." Every single time.**
+
+> **Already ran setup and your site came up empty?** No harm done — just reset to a fresh/empty database and run the setup again, this time choosing **"Include sample content."** (Re-importing into a site that's already set up will NOT work — it has to be a clean start.)
+
+## ⚠️ STEP 2 — SOME INTERACTIVE THINGS MIGHT NEED A QUICK TOUCH-UP (totally normal)
+Your site is an exact copy of your old one, but a handful of features used to be powered
+by WordPress behind the scenes. When we freed your site from WordPress, we re-wired the
+common ones (like your **mobile menu**) — but on some sites, one or two interactive bits
+may still act up at first. The usual suspects:
+
+- 📱 the **mobile / hamburger menu**
+- 🔽 **dropdown** menus
+- 🎞️ **sliders / carousels**
+- ➕ **accordions / FAQ toggles**
+- 📝 **forms** (contact, sign-up — these talked to WordPress and may need reconnecting)
+
+**None of this is cause for worry — it's expected, and every bit of it is fixable.** You
+don't need to hunt for problems or understand any of it.
+
+## 💬 STEP 3 — I'VE GOT YOU, JUST POINT AND I'LL FIX IT
+Take a minute to click around your new site — **especially on your phone** — and try the
+menus, buttons, forms, and anything that moves.
+
+👉 **If ANYTHING doesn't work or doesn't look right, just tell me what it is in plain words and I'll fix it for you.** You don't need technical terms — things like *"the menu on mobile doesn't open"* or *"the contact form doesn't send"* or *"the slider is stuck"* are perfect. Point me at it and I'll handle the rest. 🙂`;
+}
+
 function agentInstructions(siteName, host, stats, totalEntries, menuData, prebuiltHome) {
   const list = (stats || []).map((s) => `- \`${s.collection}\` — ${s.entries} entr${s.entries === 1 ? "y" : "ies"}`).join("\n") || "- (see seed/seed.json)";
   const menuNote = menuData
@@ -332,6 +375,20 @@ BOTH into your \`Base.astro\` (end of \`<body>\`), and in Astro mark them \`is:i
 \`<script is:inline data-efw="replay">\` — or Astro will hoist/break them and the menu
 won't open.`;
   return `# Rebuild ${siteName} in EmDash — instructions for your AI coding assistant
+
+> 🚨🚨 **STOP — TWO NON-NEGOTIABLE RULES BEFORE YOU DO ANYTHING ELSE** 🚨🚨
+>
+> **1. Your job is NOT done until you send the user the exact handoff message in
+> \`HANDOFF_MESSAGE.md\`** (also reproduced at the bottom of this file). Copy it
+> **verbatim**, fill in only \`<SITE_URL>\`, and send it as your final reply. Do **NOT**
+> rewrite it, shorten it, summarize it into a line or two, or replace it with your own
+> wording. It is deliberately long and emphatic because the user is a shop owner, not a
+> developer. Ending with just "it's live" or a link is a **FAILED task.**
+>
+> **2. The #1 way this migration fails is the user picking the wrong option in the EmDash
+> setup wizard.** The handoff message's STEP 1 warns them to choose **"Include sample
+> content"** (their real content) and NOT "Empty site." That warning must reach the user
+> loud and intact — it's the whole reason the message exists. Do not soften or drop it.
 
 You have an **EmDash content package** extracted from **${host}**: a spec-correct
 EmDash **seed** (with every page/post baked in)${prebuiltHome ? ", a **pre-built exact-copy homepage**," : ", an **exact HTML copy** of the original homepage,"}
@@ -415,38 +472,14 @@ Your build is NOT complete until you send the user a handoff message. Skipping t
 or only saying "done / it's live," is a FAILURE of the task. The user is NOT a
 developer — write for a shop owner, not an engineer.
 
-You MUST output the handoff using the exact structure and emphasis below. Do not
-summarize it into one line. Do not drop a section. Reproduce the three headers,
-the ⚠️ callouts, and the bold emphasis so the critical parts catch the eye:
+**The exact message to send is in \`HANDOFF_MESSAGE.md\` (shipped in this package).**
+Open it, copy it **verbatim**, fill in only \`<SITE_URL>\`, and send it as your final
+reply. Do NOT summarize it, shorten it, drop a section, or reword it — the length and
+the ⚠️/🚨/👉 emphasis are deliberate. For convenience the same message is reproduced
+here; the two are identical, so use either but change NOTHING except the URL:
 
 ---
-🎉 **Your new site is live:** <SITE_URL>
-
-## 🚨 STEP 1 — THE ONE CHOICE YOU CAN'T GET WRONG
-When you open the setup wizard, it will ask what content to start with.
-
-### 👉 Choose **"Include sample content"** — NOT "Empty site."
-
-That "sample content" is **your real ${siteName} content — all ${totalEntries} of your pages and posts.** It only looks like a generic option; it's actually everything we migrated for you.
-
-⚠️ **If you pick "Empty site," you get an empty shell — none of your ${totalEntries} entries** — and there is **no way to add them later** without wiping the database and starting setup over. So: **"Include sample content." Every time.**
-
-> Already ran setup and your site came up empty? Don't worry — just reset to a fresh/empty database and run setup again, this time choosing **"Include sample content."** (Re-running the import on a site that's already set up will NOT work — it has to be a fresh start.)
-
-## ⚠️ STEP 2 — A FEW THINGS MIGHT NEED A TOUCH-UP
-Your homepage is an exact copy of your old site, but a few features that rely on JavaScript were left behind when we escaped WordPress. We've re-wired the common ones (like your **mobile menu**), but on some sites a few may still be glitchy:
-
-- 📱 the **mobile / hamburger menu**
-- 🔽 **dropdown** menus
-- 🎞️ **sliders / carousels**
-- ➕ **accordions / FAQ toggles**
-
-**This is expected and 100% fixable** — don't panic if something feels off.
-
-## 💬 STEP 3 — I'VE GOT YOU
-Click around your new site — **especially on your phone** — and try the menus, buttons, and anything interactive.
-
-👉 **If ANYTHING doesn't work or doesn't look right, just tell me what it is and I'll fix it for you.** You don't need to know why it's broken or use any technical words — point me at it ("the menu on mobile doesn't open," "the slider on the homepage is stuck") and I'll handle the rest.
+${handoffMessage(siteName, totalEntries)}
 ---
 
 Fill in <SITE_URL> with the real local/deployed URL. Keep every ⚠️/🚨/👉 marker and
@@ -511,6 +544,17 @@ export async function buildEmdashZip(env, { id, sourceUrl, businessName, replica
 
   // 5) Instructions + README.
   files.push({ name: "AGENT_INSTRUCTIONS.md", data: agentInstructions(siteName, host, stats, totalEntries, menuData, prebuiltHome) });
+  // 5b) The verbatim, placeholder-filled handoff message the agent must send the user.
+  //     Shipped as its own copy-ready file so the agent emits it exactly instead of
+  //     improvising a thin "it's live" one-liner (the #1 handoff failure we've seen).
+  files.push({ name: "HANDOFF_MESSAGE.md", data:
+`<!-- AI AGENT: This is the message you MUST send the site owner when the build is done.
+     Copy everything below the line VERBATIM. Fill in only <SITE_URL>. Do NOT shorten,
+     reword, or drop any section — the length and emphasis are intentional (the owner is
+     not a developer). Sending just a link or "it's live" is a FAILED handoff. -->
+
+${handoffMessage(siteName, totalEntries)}
+` });
   files.push({ name: "README.md", data:
 `# ${siteName} — your EmDash content package
 
