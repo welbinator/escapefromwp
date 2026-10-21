@@ -298,12 +298,39 @@ you do **not** rebuild the design from scratch.
 - **Never** replace it with a generic/starter theme. If your result doesn't look like
   \`public/index.html\`, you did it wrong — diff against it.
 - Reuse the exact header/footer markup + styles from \`public/index.html\` for every
-  other route so the whole site is visually consistent with the original.`
+  other route so the whole site is visually consistent with the original.
+
+### 🔌 CRITICAL: keep the interaction scripts, or the menu dies
+\`public/index.html\` ends with TWO small \`<script>\` tags just before \`</body>\` that
+make the **mobile menu, dropdowns, and accordions** work with no WordPress/jQuery:
+  - \`<script data-efw="replay">…</script>\` — replays the exact open/close behavior we
+    recorded from your live site.
+  - \`<script data-efw="interactions">…</script>\` — a generic fallback for anything not
+    recorded.
+These are self-contained vanilla JS. **If you port the homepage into \`Base.astro\` or
+reuse the header on other routes, you MUST carry BOTH scripts into the shared layout**
+(put them at the end of \`<body>\` in \`Base.astro\` so every page gets them). Two ways to
+lose the menu — avoid both:
+  1. **Don't strip them.** An agent "cleaning up" the HTML often deletes inline scripts.
+     Keep these two verbatim.
+  2. **Astro gotcha — mark them \`is:inline\`.** Astro processes/hoists any \`<script>\` in a
+     \`.astro\` file by default, which breaks these. Write them as
+     \`<script is:inline data-efw="replay">\` and \`<script is:inline data-efw="interactions">\`
+     so Astro ships them to the browser untouched.
+Verify after porting: load a page on a narrow screen, tap the hamburger — the nav must
+open AND close. If it doesn't, you dropped or hoisted one of these scripts.`
     : `## Match the exact design
 \`reference/your-exact-site.html\` is a pixel-faithful, self-contained copy of your old
 homepage (CSS inlined, assets rehosted). **It is your design brief — reproduce it
 exactly.** Extract its fonts, colors, spacing, header, and footer and build your Astro
-layout + homepage to match. Do NOT ship a generic/starter theme.`;
+layout + homepage to match. Do NOT ship a generic/starter theme.
+
+### 🔌 Keep the interaction scripts for the menu
+\`reference/your-exact-site.html\` ends with two \`<script>\` tags (\`data-efw="replay"\` and
+\`data-efw="interactions"\`) that drive the mobile menu/dropdowns with no WordPress. Copy
+BOTH into your \`Base.astro\` (end of \`<body>\`), and in Astro mark them \`is:inline\` —
+\`<script is:inline data-efw="replay">\` — or Astro will hoist/break them and the menu
+won't open.`;
   return `# Rebuild ${siteName} in EmDash — instructions for your AI coding assistant
 
 You have an **EmDash content package** extracted from **${host}**: a spec-correct
@@ -360,8 +387,13 @@ ${prebuiltHome
    \`src/layouts/Base.astro\` + \`src/pages/index.astro\` **verbatim**, then swap the
    hardcoded text/images for the seeded collection data via EmDash's content API +
    \`<PortableText />\`. The rendered page must stay visually identical to the original.
+   **Carry the two \`data-efw\` interaction scripts into \`Base.astro\` (end of \`<body>\`)
+   and mark them \`is:inline\` — see "🔌 keep the interaction scripts" above — or the
+   mobile menu breaks on the ported site.**
 8. **Other routes:** add one route per collection (e.g. \`src/pages/[slug].astro\`),
-   reusing the SAME header/footer/styles from \`public/index.html\` so every page matches.`
+   reusing the SAME header/footer/styles **and the same \`Base.astro\` layout (which now
+   carries the interaction scripts)** from \`public/index.html\` so every page matches
+   AND its menu works.`
   : `6. **Study the exact look:** open \`reference/your-exact-site.html\`. Extract design
    tokens — fonts, colors, spacing, header/footer, section layouts.
 7. **Build the layout + homepage:** create \`src/layouts/Base.astro\` and rebuild
