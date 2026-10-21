@@ -239,3 +239,77 @@ export async function sendLeadLikedEmail(env, { siteName, variantLabel, variantU
     return { ok: false, error: String(e?.message || e) };
   }
 }
+
+// -------- Offer modal: YES → notify James a lead wants the $49/mo build ------
+
+export async function sendOfferLeadEmail(env, { siteName, sourceUrl, replicaUrl, leadEmail, leadMessage }) {
+  const apiKey = env.BREVO_API_KEY;
+  if (!apiKey) return { ok: false, error: "email not configured" };
+  const html = `<!doctype html><html><body style="font-family:Arial,sans-serif;color:#111;max-width:560px;margin:0 auto;padding:20px">
+    <h2 style="margin:0 0 4px">🔥 Site claim: ${escapeHtml(siteName)}</h2>
+    <p style="color:#555;margin:0 0 16px">They saw their exact rebuilt site and want it live — <strong>no money down, $49/mo</strong> for unlimited updates. Follow up to close it.</p>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="font-size:14px;line-height:1.7">
+      <tr><td style="color:#888;padding-right:12px">Email</td><td><a href="mailto:${escapeHtml(leadEmail)}">${escapeHtml(leadEmail || "—")}</a></td></tr>
+      <tr><td style="color:#888;padding-right:12px">Original site</td><td>${escapeHtml(sourceUrl || "—")}</td></tr>
+      <tr><td style="color:#888;padding-right:12px;vertical-align:top">Message</td><td>${escapeHtml(leadMessage || "—")}</td></tr>
+    </table>
+    <p style="margin:18px 0 0"><a href="${replicaUrl}" style="background:#0b0405;color:#fff;padding:11px 22px;border-radius:4px;text-decoration:none;font-weight:600">Open the rebuilt site they want →</a></p>
+  </body></html>`;
+  const payload = {
+    sender: { name: "Escape From WP", email: "james@apexbranding.design" },
+    to: [{ email: "james.welbes@gmail.com" }],
+    replyTo: { name: "Lead", email: leadEmail || "james@apexbranding.design" },
+    subject: `🔥 Site claim — ${siteName} wants the $49/mo build`,
+    htmlContent: html,
+  };
+  try {
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: { "api-key": apiKey, "content-type": "application/json", accept: "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) return { ok: false, error: `brevo ${res.status}` };
+    const data = await res.json().catch(() => ({}));
+    return { ok: true, messageId: data.messageId || null };
+  } catch (e) { return { ok: false, error: String(e?.message || e) }; }
+}
+
+// -------- Offer modal: NO → email the customer their EmDash site download -----
+
+export async function sendEmdashZipEmail(env, { to, siteName, downloadUrl }) {
+  const apiKey = env.BREVO_API_KEY;
+  if (!apiKey) return { ok: false, error: "email not configured" };
+  const html = `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#faf9f8;margin:0;padding:24px">
+  <table role="presentation" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #eee">
+    <tr><td style="background:#0b0405;padding:22px 28px">
+      <span style="color:#fff;font-weight:700;font-size:18px;letter-spacing:.5px">ESCAPE FROM <span style="color:#e32735">WP</span></span>
+    </td></tr>
+    <tr><td style="padding:28px">
+      <h2 style="margin:0 0 10px;color:#111">Your EmDash site is ready to download.</h2>
+      <p style="color:#555;line-height:1.6;margin:0 0 20px">We packaged <strong>${escapeHtml(siteName)}</strong> as a ready-to-run EmDash + Astro project — your content baked in, plus an exact copy of your original site to match the design, and step-by-step instructions your AI assistant can follow.</p>
+      <p style="margin:0 0 22px"><a href="${downloadUrl}" style="background:#4ee36b;color:#06230f;padding:13px 26px;border-radius:4px;text-decoration:none;font-weight:700;font-size:15px">⬇ Download your EmDash site</a></p>
+      <p style="color:#888;font-size:13px;line-height:1.6;margin:0 0 6px">Unzip it, open <strong>README.md</strong>, and run <code>npm install</code> then <code>npm run dev</code>. This link is good for 24 hours. Changed your mind and want us to just build and host it for $49/mo? Reply to this email.</p>
+    </td></tr>
+    <tr><td style="background:#faf9f8;padding:16px 28px;color:#999;font-size:11px;font-family:'Courier New',monospace">
+      Escape From WP · WordPress migration &amp; rescue · escapefromwp.com
+    </td></tr>
+  </table>
+</body></html>`;
+  const payload = {
+    sender: { name: "James @ Escape From WP", email: "james@apexbranding.design" },
+    to: [{ email: to }],
+    replyTo: { name: "James Welbes", email: "james@apexbranding.design" },
+    subject: `⬇ ${siteName} — your EmDash site is ready`,
+    htmlContent: html,
+  };
+  try {
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: { "api-key": apiKey, "content-type": "application/json", accept: "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) { const txt = await res.text().catch(() => ""); return { ok: false, error: `brevo ${res.status}: ${txt.slice(0, 160)}` }; }
+    const data = await res.json().catch(() => ({}));
+    return { ok: true, messageId: data.messageId || null };
+  } catch (e) { return { ok: false, error: String(e?.message || e) }; }
+}

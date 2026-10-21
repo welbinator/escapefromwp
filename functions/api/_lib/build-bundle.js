@@ -71,6 +71,16 @@ function yamlFrontmatter(obj) {
 
 // Build the complete bundle. Returns { filename, bytes }.
 export function buildBundle(extract, target) {
+  const { files, host, stamp } = buildBundleFiles(extract, target);
+  const bytes = zipSync(files);
+  const filename = `${slugify(host)}-content-${target}-${stamp}.zip`;
+  return { filename, bytes };
+}
+
+// Returns the raw file list ([{name,data}]) + a little metadata, WITHOUT zipping —
+// so callers that need to add their own files (e.g. the EmDash scaffold zip) can
+// extend the bundle before zipping it themselves.
+export function buildBundleFiles(extract, target) {
   const files = [];
   const siteName = extract.site?.name || extract.site?.base || "wordpress-site";
   const host = (() => { try { return new URL(extract.site.base).host; } catch { return "site"; } })();
@@ -162,9 +172,7 @@ export function buildBundle(extract, target) {
   files.push({ name: "AGENT_INSTRUCTIONS.md", data: agentInstructions(target, extract, stats, totalEntries, mediaUrls.size, menuData) });
   files.push({ name: "README.md", data: humanReadme(target, siteName, extract.site.base, stats, totalEntries, mediaUrls.size, extract.notice, menuData) });
 
-  const bytes = zipSync(files);
-  const filename = `${slugify(host)}-content-${target}-${stamp}.zip`;
-  return { filename, bytes };
+  return { files, host, stamp };
 }
 
 // Count menu items recursively (for the instruction summary line).
