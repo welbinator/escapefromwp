@@ -67,13 +67,21 @@ const SHIM_JS = `(function(){
     [btn, target].forEach(function(el){
       if (!el) return;
       el.classList.toggle("efw-open", open);
-      // Mirror onto the theme's own likely class if it already uses one.
-      OPEN_CLASSES.forEach(function(c){
-        // Only add classes the stylesheet probably expects: we can't know which,
-        // so we add the two most universal ("is-open","open") + .efw-open backstop.
-      });
     });
-    if (target){ target.classList.toggle("is-open", open); target.classList.toggle("open", open); }
+    if (target){
+      target.classList.toggle("is-open", open);
+      target.classList.toggle("open", open);
+      // CRITICAL: many themes reveal the panel via an aria-expanded rule on the
+      // TARGET itself (e.g. nav[aria-expanded='true']{display:block}), not via a
+      // class. The button's own aria-expanded only drives the icon animation. So
+      // mirror the state onto the target's aria-expanded too — but only if the
+      // target isn't an interactive control whose aria-expanded means something
+      // else (it's a plain container like nav/ul/div, which is the usual case).
+      var tag = target.tagName;
+      if (tag === "NAV" || tag === "UL" || tag === "DIV" || tag === "SECTION" || tag === "ASIDE") {
+        target.setAttribute("aria-expanded", open ? "true" : "false");
+      }
+    }
     // Also toggle the common "menu-open" flag on <body> for themes that gate the
     // mobile panel off a body class.
     if (btn.matches("[aria-controls], .menu-toggle, .hamburger, .nav-toggle, .mobile-nav-toggle, [class*='menu-toggle'], [class*='hamburger']")){

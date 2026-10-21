@@ -378,20 +378,49 @@ ${prebuiltHome
 - Seed applies once on first setup; never rely on re-seeding a live site to add content.
 - No live 404s — set redirects before changing URLs.
 
-## FINAL STEP (required) — brief the user in plain language
-When you've finished the build, do NOT just say "done." Give the user a short, non-technical handoff message. They are likely not a developer. Include all of the following, in your own words:
+## FINAL STEP (REQUIRED, NON-NEGOTIABLE) — message the user before you stop
+Your build is NOT complete until you send the user a handoff message. Skipping this,
+or only saying "done / it's live," is a FAILURE of the task. The user is NOT a
+developer — write for a shop owner, not an engineer.
 
-1. **The ONE setup choice that matters.** Tell them explicitly: when they run the EmDash setup wizard, at the content step they MUST choose the option that **includes the content** (labeled something like *"Include sample content,"* *"Sample content,"* or *"Seed content"* depending on version) — NOT *"Empty site."* Make it unambiguous:
-   > ⚠️ During setup, choose **"Include sample content"** (not "Empty site"). That "sample content" is actually *your real ${siteName} content* — ${totalEntries} entries. If you pick "Empty site," you'll get the page structure but **none of your posts**, and there's no way to load them in afterward without starting setup over on a fresh database.
-   If they already ran setup and landed on an empty site, tell them plainly how to recover: they need to reset to a fresh/empty database and re-run setup, choosing the include-content option this time — re-seeding a live site will NOT work.
+You MUST output the handoff using the exact structure and emphasis below. Do not
+summarize it into one line. Do not drop a section. Reproduce the three headers,
+the ⚠️ callouts, and the bold emphasis so the critical parts catch the eye:
 
-2. **Warn them about JavaScript-dependent features.** The exact-copy homepage is a static snapshot of their old site with the original scripts removed, so some interactive pieces may not behave exactly like the original until rebuilt. Call out the usual suspects in plain terms:
-   > Heads up: some things that need JavaScript — like the **mobile/hamburger menu**, dropdown menus, sliders/carousels, accordions, or FAQ toggles — may not work perfectly on the copied homepage yet, since the original site's scripts weren't carried over. Most basic menus should still open and close, but anything fancy might need a quick fix.
+---
+🎉 **Your new site is live:** <SITE_URL>
 
-3. **Offer to help.** Close warmly and make it easy for them to come back:
-   > Take a look around your new site and click through everything — especially on your phone. **If anything doesn't work or doesn't look right, just tell me what it is and I'll fix it for you.** No need to know why it's broken; point me at it and I'll handle it.
+## 🚨 STEP 1 — THE ONE CHOICE YOU CAN'T GET WRONG
+When you open the setup wizard, it will ask what content to start with.
 
-Keep this handoff friendly and jargon-free. The goal is that a non-technical owner knows exactly what to click during setup, isn't surprised when a menu misbehaves, and feels comfortable asking you to fix anything.
+### 👉 Choose **"Include sample content"** — NOT "Empty site."
+
+That "sample content" is **your real ${siteName} content — all ${totalEntries} of your pages and posts.** It only looks like a generic option; it's actually everything we migrated for you.
+
+⚠️ **If you pick "Empty site," you get an empty shell — none of your ${totalEntries} entries** — and there is **no way to add them later** without wiping the database and starting setup over. So: **"Include sample content." Every time.**
+
+> Already ran setup and your site came up empty? Don't worry — just reset to a fresh/empty database and run setup again, this time choosing **"Include sample content."** (Re-running the import on a site that's already set up will NOT work — it has to be a fresh start.)
+
+## ⚠️ STEP 2 — A FEW THINGS MIGHT NEED A TOUCH-UP
+Your homepage is an exact copy of your old site, but a few features that rely on JavaScript were left behind when we escaped WordPress. We've re-wired the common ones (like your **mobile menu**), but on some sites a few may still be glitchy:
+
+- 📱 the **mobile / hamburger menu**
+- 🔽 **dropdown** menus
+- 🎞️ **sliders / carousels**
+- ➕ **accordions / FAQ toggles**
+
+**This is expected and 100% fixable** — don't panic if something feels off.
+
+## 💬 STEP 3 — I'VE GOT YOU
+Click around your new site — **especially on your phone** — and try the menus, buttons, and anything interactive.
+
+👉 **If ANYTHING doesn't work or doesn't look right, just tell me what it is and I'll fix it for you.** You don't need to know why it's broken or use any technical words — point me at it ("the menu on mobile doesn't open," "the slider on the homepage is stuck") and I'll handle the rest.
+---
+
+Fill in <SITE_URL> with the real local/deployed URL. Keep every ⚠️/🚨/👉 marker and
+the bold text — they are what make the critical setup choice impossible to miss. The
+#1 reason a migration "fails" is the user picking "Empty site," so STEP 1 must be the
+loudest thing in your message.
 
 Hand this whole folder to your assistant and work the steps in order.
 `;
