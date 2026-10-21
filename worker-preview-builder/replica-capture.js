@@ -12,6 +12,7 @@
 //   6. Store the final HTML at previews/<id>/replica.html.
 
 import puppeteer from "@cloudflare/puppeteer";
+import { injectInteractions } from "./interactions-shim.js";
 
 const SITE_ORIGIN_DEFAULT = "https://escapefromwp.com";
 
@@ -232,6 +233,11 @@ export async function captureReplica(env, id, pageUrl) {
       if (rep) html = html.replace(pl[1], rep);
     }
     html = html.replace(/<\/head>/i, `<style>${bundled}</style></head>`);
+
+    // We stripped every <script> above (no origin JS/analytics). Re-wire the
+    // standard interaction patterns (mobile menu, dropdowns, accordions) with a
+    // single dependency-free shim that reads the kept markup's a11y attributes.
+    html = injectInteractions(html);
 
     return { ok: true, html, assets: cache.size, css_files: Object.keys(cssFiles).length };
   } catch (e) {
