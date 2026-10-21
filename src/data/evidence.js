@@ -9,6 +9,16 @@
 // }
 export const evidence = [
   {
+    title: "Another emergency PHP security release — and WordPress runs on PHP",
+    url: "https://www.php.net/archive/2026.php#2026-10-20-1",
+    source: "php.net",
+    type: "post",
+    date: "2026-10-20",
+    summary:
+      "The PHP security team gave advance notice of an urgent security release scheduled for 21 October 2026 — the kind of patch-now bulletin that lands on a regular cadence. WordPress is built on PHP, so every one of these is a server your WordPress site has to keep patched, or quietly fall behind. A static, pre-built site has no live PHP for an attacker to reach in the first place — the whole class of risk simply goes away.",
+    image: null,
+  },
+  {
     title: "Stolen UpdraftCentral keys are backdooring WordPress sites",
     url: "https://patchstack.com/articles/updraftcentral-key-compromise-wordpress-backdoors/",
     source: "Patchstack",
