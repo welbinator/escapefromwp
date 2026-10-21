@@ -204,7 +204,7 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
     .tool-result :global(.res-download) { display: flex; width: 100%; justify-content: center; text-align: center; font-size: 15px; padding: 15px 20px; margin-bottom: 14px; box-sizing: border-box; }
     .tool-result :global(.res-actions) { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
     .tool-result :global(.res-actions .res-download) { margin-bottom: 0; }
-    .tool-result :global(.btn-ghost) { display: flex; width: 100%; justify-content: center; align-items: center; gap: 9px; text-align: center; font-size: 15px; padding: 15px 20px; box-sizing: border-box; background: transparent; color: var(--chalk); border: 1px solid var(--term-green); cursor: pointer; font-family: inherit; font-weight: 600; transition: background .15s, color .15s; }
+    .tool-result :global(.btn-ghost) { display: flex; width: 100%; justify-content: center; align-items: center; gap: 9px; text-align: center; font-size: 13px; line-height: 1.35; padding: 15px 18px; box-sizing: border-box; background: transparent; color: var(--chalk); border: 1px solid var(--term-green); cursor: pointer; font-family: var(--font-mono); font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; white-space: normal; word-break: break-word; transition: background .15s, color .15s; }
     .tool-result :global(.btn-ghost:hover) { background: rgba(78,227,107,.12); }
     .tool-result :global(.btn-ghost:disabled) { cursor: default; opacity: .9; }
     .tool-result :global(.btn-ghost.building) { border-color: var(--steel); color: var(--slate); }
@@ -420,12 +420,14 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
           return;
         }
 
-        // 3) Done — swap the button into a real download.
-        btn.classList.remove("building");
-        btn.disabled = false;
-        btn.classList.add("ready");
-        btn.innerHTML = "⬇ Download your EmDash site (.zip)";
-        btn.onclick = function () { window.location.href = downloadUrl; };
+        // 3) Done — swap the button out for a real download link (fresh element,
+        // so the build click-listener is gone and a second tap just re-downloads).
+        const dl = document.createElement("a");
+        dl.className = "btn btn-ghost ready";
+        dl.href = downloadUrl;
+        dl.setAttribute("download", "");
+        dl.textContent = "⬇ Download your EmDash site (.zip)";
+        btn.replaceWith(dl);
         if (hint) hint.innerHTML = "✓ Ready! We've also <strong>emailed you this link</strong> so you don't lose it. It works for <strong>24 hours</strong>. Unzip it, open <code>README.md</code>, and follow the steps — or hand the folder to your AI coding assistant.";
       });
     }
