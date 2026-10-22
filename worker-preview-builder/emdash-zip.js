@@ -279,11 +279,11 @@ function staticHomepageFiles(localizedHtml) {
 }
 
 // The exact human-facing handoff message the building agent must send the shop owner
-// when the build is done. Shipped BOTH as a standalone, placeholder-filled
-// HANDOFF_MESSAGE.md (so the agent just copies it) AND embedded in AGENT_INSTRUCTIONS.md.
-// siteName/totalEntries are pre-filled; only <SITE_URL> is left for the agent.
+// when the build is done. Inlined as the final numbered step of AGENT_INSTRUCTIONS.md
+// (not shipped as a separate file — one file, one place to look).
+// siteName/totalEntries are pre-filled; only the URL placeholder is left for the agent.
 function handoffMessage(siteName, totalEntries) {
-  return `🎉 **Your new site is live:** <SITE_URL>
+  return `🎉 **Your new site is live:** [REPLACE THIS WITH THE REAL SITE URL BEFORE SENDING]
 
 ## 🚨 STEP 1 — THE ONE CHOICE YOU CAN'T GET WRONG (please read)
 The very first time you open your new site's admin, a **setup wizard** appears and asks
@@ -378,9 +378,10 @@ won't open.`;
 
 > 🚨🚨 **STOP — TWO NON-NEGOTIABLE RULES BEFORE YOU DO ANYTHING ELSE** 🚨🚨
 >
-> **1. Your job is NOT done until you send the user the exact handoff message in
-> \`HANDOFF_MESSAGE.md\`** (also reproduced at the bottom of this file). Copy it
-> **verbatim**, fill in only \`<SITE_URL>\`, and send it as your final reply. Do **NOT**
+> **1. Your job is NOT done until you send the site owner the exact handoff message found
+> in the "MESSAGE FOR THE SITE OWNER" section at the very bottom of this file** (it is the
+> final numbered step, Step 11). Copy it **verbatim**, replace only the URL placeholder,
+> and send it as your final reply. Do **NOT**
 > rewrite it, shorten it, summarize it into a line or two, or replace it with your own
 > wording. It is deliberately long and emphatic because the user is a shop owner, not a
 > developer. Ending with just "it's live" or a link is a **FAILED task.**
@@ -460,6 +461,14 @@ ${prebuiltHome
    to match the reference.`}${menuNote}
 9. **Redirects:** add old→new 301s to \`public/_redirects\` before going live. No 404s.
 10. **Deploy:** Cloudflare Pages + D1 + R2 (EmDash's standard target), or your host.
+    Confirm \`npm run build\` succeeds and the deploy returns a working URL.
+11. **🚨 SEND THE SITE-OWNER MESSAGE — this is a real build step, not optional cleanup.**
+    Your job is **not done** when the deploy returns a URL. It is done when you have
+    **sent the owner the exact message in the "MESSAGE FOR THE SITE OWNER" section below.**
+    Copy that whole message verbatim, replace the URL placeholder with the real URL, and
+    send it as your final reply. Do NOT summarize it, shorten it, drop a section, or
+    reword it. Treat this exactly like Step 3 (\`npm install\`): a concrete action you
+    perform, not a guideline. If you have not sent it, you have not finished.
 
 ## Rules
 - The content is already structured — do NOT retype it. It's in \`seed/seed.json\`.
@@ -467,27 +476,28 @@ ${prebuiltHome
 - Seed applies once on first setup; never rely on re-seeding a live site to add content.
 - No live 404s — set redirects before changing URLs.
 
-## FINAL STEP (REQUIRED, NON-NEGOTIABLE) — message the user before you stop
-Your build is NOT complete until you send the user a handoff message. Skipping this,
-or only saying "done / it's live," is a FAILURE of the task. The user is NOT a
-developer — write for a shop owner, not an engineer.
+## ✅ YOU ARE NOT DONE UNTIL ALL OF THESE ARE TRUE
+- [ ] \`npm run build\` succeeded
+- [ ] The site is deployed and the URL opens and works
+- [ ] The setup wizard was run with **"Include sample content"** so all ${totalEntries} entries loaded
+- [ ] **The EXACT "MESSAGE FOR THE SITE OWNER" below has been sent, with the real URL filled in**
 
-**The exact message to send is in \`HANDOFF_MESSAGE.md\` (shipped in this package).**
-Open it, copy it **verbatim**, fill in only \`<SITE_URL>\`, and send it as your final
-reply. Do NOT summarize it, shorten it, drop a section, or reword it — the length and
-the ⚠️/🚨/👉 emphasis are deliberate. For convenience the same message is reproduced
-here; the two are identical, so use either but change NOTHING except the URL:
+If the last box is not checked, the task is still open. Go send the message.
 
 ---
+---
+## 📋 EVERYTHING ABOVE IS FOR YOU, THE AGENT. EVERYTHING BELOW IS THE MESSAGE FOR THE SITE OWNER.
+The site owner is NOT a developer — this message is written for a shop owner, not an
+engineer. Send it **verbatim** as your final reply. Change **nothing** except replacing
+the URL placeholder on the first line with the real local/deployed URL. Keep every
+⚠️/🚨/👉 marker and all the bold text — they are what make the critical setup choice
+impossible to miss. The #1 reason a migration "fails" is the owner picking "Empty site,"
+so STEP 1 must be the loudest thing in your message. Do not add commentary before or
+after it, and do not describe it ("here is the message...") — just send the message itself.
+---
+---
+
 ${handoffMessage(siteName, totalEntries)}
----
-
-Fill in <SITE_URL> with the real local/deployed URL. Keep every ⚠️/🚨/👉 marker and
-the bold text — they are what make the critical setup choice impossible to miss. The
-#1 reason a migration "fails" is the user picking "Empty site," so STEP 1 must be the
-loudest thing in your message.
-
-Hand this whole folder to your assistant and work the steps in order.
 `;
 }
 
@@ -543,18 +553,10 @@ export async function buildEmdashZip(env, { id, sourceUrl, businessName, replica
   }
 
   // 5) Instructions + README.
+  // The handoff message the agent must send the owner lives INSIDE AGENT_INSTRUCTIONS.md
+  // as its final numbered step — NOT as a separate file. A second file doubled the chance
+  // an agent read one and missed the other (reported by a real agent), so it's inlined.
   files.push({ name: "AGENT_INSTRUCTIONS.md", data: agentInstructions(siteName, host, stats, totalEntries, menuData, prebuiltHome) });
-  // 5b) The verbatim, placeholder-filled handoff message the agent must send the user.
-  //     Shipped as its own copy-ready file so the agent emits it exactly instead of
-  //     improvising a thin "it's live" one-liner (the #1 handoff failure we've seen).
-  files.push({ name: "HANDOFF_MESSAGE.md", data:
-`<!-- AI AGENT: This is the message you MUST send the site owner when the build is done.
-     Copy everything below the line VERBATIM. Fill in only <SITE_URL>. Do NOT shorten,
-     reword, or drop any section — the length and emphasis are intentional (the owner is
-     not a developer). Sending just a link or "it's live" is a FAILED handoff. -->
-
-${handoffMessage(siteName, totalEntries)}
-` });
   files.push({ name: "README.md", data:
 `# ${siteName} — your EmDash content package
 
