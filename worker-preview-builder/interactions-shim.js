@@ -30,6 +30,15 @@ const SHIM_JS = `(function(){
 
   var OPEN_CLASSES = ["is-open","is-active","open","active","show","expanded","toggled","menu-open"];
 
+  // Some builders (ElementsKit/Elementor, offcanvas navs) reveal the mobile panel
+  // via a specific class on a specific element that has NO aria-controls link back
+  // to the hamburger. Map a toggle to its panel structurally when aria/href fail.
+  // Each entry: [toggle matches selector, panel selector to search document for].
+  var PANEL_MAP = [
+    [".elementskit-menu-hamburger,.elementskit-menu-toggler,.elementskit-menu-close", ".elementskit-menu-offcanvas-elements"],
+    [".mobile-menu-toggle,.mobile-nav-toggle", ".mobile-menu,.mobile-nav,.offcanvas,.off-canvas"],
+  ];
+
   // Resolve the element a toggle controls:
   //  1) aria-controls="id"  -> #id (most reliable; themes set this for a11y)
   //  2) data-target / href="#id"
@@ -42,6 +51,15 @@ const SHIM_JS = `(function(){
     var href = btn.getAttribute("href");
     if (href && href.charAt(0) === "#" && href.length > 1){
       var h = document.getElementById(href.slice(1)); if (h) return h;
+    }
+    // Builder-specific offcanvas panels that have no aria link to the toggle.
+    for (var p=0;p<PANEL_MAP.length;p++){
+      try {
+        if (btn.matches(PANEL_MAP[p][0])){
+          var panel = document.querySelector(PANEL_MAP[p][1]);
+          if (panel) return panel;
+        }
+      } catch(_){}
     }
     // Structural: a submenu/dropdown inside the same list item.
     var li = btn.closest("li, .menu-item, .nav-item, .etch-nav__item");
@@ -71,6 +89,9 @@ const SHIM_JS = `(function(){
     if (target){
       target.classList.toggle("is-open", open);
       target.classList.toggle("open", open);
+      // Builder offcanvas panels (ElementsKit etc.) reveal via an 'active' class.
+      // Toggling it here is safe: on panels that don't use it, an extra class is inert.
+      target.classList.toggle("active", open);
       // CRITICAL: many themes reveal the panel via an aria-expanded rule on the
       // TARGET itself (e.g. nav[aria-expanded='true']{display:block}), not via a
       // class. The button's own aria-expanded only drives the icon animation. So
