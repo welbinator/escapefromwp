@@ -182,17 +182,23 @@ export async function captureReplica(env, id, pageUrl) {
         console.log(`[${id}] domcontentloaded also failed (${String(navErr2).slice(0, 80)}) — capturing current state`);
       }
     }
-    // Scroll to force lazy-load.
-    await page.evaluate(async () => {
-      await new Promise((r) => {
-        let y = 0; const t = setInterval(() => {
-          window.scrollBy(0, 700); y += 700;
-          if (y > document.body.scrollHeight + 2000) { clearInterval(t); r(); }
-        }, 80);
+    // Scroll to force lazy-load. Wrapped defensively: on some sites a late script
+    // fires a client-side navigation/reload while we're scrolling, which destroys
+    // the execution context ("Execution context was destroyed"). That must NOT kill
+    // the whole capture — we still have a rendered page to mirror. So swallow it,
+    // re-settle, and continue. Same for every in-page evaluate below.
+    try {
+      await page.evaluate(async () => {
+        await new Promise((r) => {
+          let y = 0; const t = setInterval(() => {
+            window.scrollBy(0, 700); y += 700;
+            if (y > document.body.scrollHeight + 2000) { clearInterval(t); r(); }
+          }, 80);
+        });
       });
-    });
+    } catch (e) { console.log(`[${id}] scroll evaluate skipped: ${String(e).slice(0, 80)}`); }
     await new Promise((r) => setTimeout(r, 1500));
-    await page.evaluate(() => window.scrollTo(0, 0));
+    try { await page.evaluate(() => window.scrollTo(0, 0)); } catch (_) {}
     await new Promise((r) => setTimeout(r, 400));
 
     // --- RECORD-AND-REPLAY: observe real interactions while origin JS is alive ---
@@ -233,8 +239,28 @@ export async function captureReplica(env, id, pageUrl) {
       recording = { version: 1, toggles: merged };
     } catch (_) { recording = { version: 1, toggles: [] }; }
 
+    // Make sure we're back at the desktop viewport even if the recording block threw
+    // partway (a mid-recording navigation can leave us at the mobile viewport).
+    try { await page.setViewport({ width: 1440, height: 1800, deviceScaleFactor: 1 }); } catch (_) {}
+
     // Grab hydrated HTML (now carries the data-efw-* stamps from the recorder).
-    let html = await page.content();
+    // page.content() throws if the execution context was destroyed by a late
+    // navigation/reload. Retry once after a short settle; if it still fails, fall
+    // back to reading documentElement.outerHTML directly. Only truly give up if we
+    // end up with nothing usable.
+    let html = "";
+    for (let attempt = 0; attempt < 2 && !html; attempt++) {
+      try {
+        html = await page.content();
+      } catch (e) {
+        console.log(`[${id}] page.content() attempt ${attempt + 1} failed: ${String(e).slice(0, 80)}`);
+        await new Promise((r) => setTimeout(r, 1200));
+        try { html = await page.evaluate(() => document.documentElement.outerHTML); } catch (_) {}
+      }
+    }
+    if (!html || html.length < 2000) {
+      throw new Error(`could not read page HTML after render (${html ? html.length + "b" : "empty"})`);
+    }
 
     // --- Rewrite relative src/href/data-src/srcset to ABSOLUTE first. ---
     html = html.replace(/\b(src|href|data-src|data-lazy-src)=["']([^"']+)["']/gi, (m, attr, u) => {
