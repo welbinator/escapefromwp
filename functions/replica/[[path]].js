@@ -5,7 +5,18 @@ function html(body, status = 200) {
   return new Response(body, { status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
 }
 
-function buildingPage() {
+function buildingPage(opts) {
+  opts = opts || {};
+  // Honest, data-driven reassurance. `ahead` = how many other rebuilds are queued
+  // in front of this one; `etaMin` = rough minutes to wait. We only show the queue
+  // line when there's actually a line, so a quiet moment doesn't invent a wait.
+  var queueLine = "";
+  if (opts.ahead && opts.ahead > 0) {
+    queueLine = `<p style="color:#8a837f;font-size:13px;margin-top:14px">` +
+      `${opts.ahead} other rebuild${opts.ahead === 1 ? "" : "s"} ahead of you` +
+      (opts.etaMin ? ` — about ${opts.etaMin} minute${opts.etaMin === 1 ? "" : "s"} to go.` : ".") +
+      ` You can close this tab; we're emailing you when it's ready.</p>`;
+  }
   return html(`<!doctype html><html lang="en"><head><meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta http-equiv="refresh" content="15">
@@ -15,7 +26,8 @@ function buildingPage() {
   @keyframes s{to{transform:rotate(360deg)}}h1{font-size:1.5rem;margin:0 0 10px}p{color:#bbb;max-width:44ch;line-height:1.6;margin:0 auto}
   @media(prefers-reduced-motion:reduce){.spin{animation-duration:2.5s}}</style></head>
   <body><div><div class="spin"></div><h1>Rebuilding your site off WordPress.</h1>
-  <p>We're capturing every page, image and font and rehosting it on fast infrastructure. This usually takes a minute or two. This page refreshes itself — or check the email we're sending you.</p></div></body></html>`, 200);
+  <p>We're capturing every page, image and font and rehosting it on fast infrastructure. This usually takes a minute or two. This page refreshes itself — or check the email we're sending you.</p>
+  ${queueLine}</div></body></html>`, 200);
 }
 
 function notFound() {
@@ -149,7 +161,24 @@ export async function onRequestGet({ params, env }) {
     // No replica yet. If the build permanently failed, tell the truth instead of
     // spinning forever; otherwise it's still in progress — show the building page.
     if (row.status === "failed") return failedPage();
-    return buildingPage();
+    // Estimate the wait honestly: count how many other still-building rebuilds were
+    // created before this one. With 5 concurrent build slots and ~1 min per build,
+    // ETA ≈ ceil(ahead / 5) minutes. Best-effort — never let this block the page.
+    let ahead = 0, etaMin = 0;
+    try {
+      const me = await env.DB.prepare(`SELECT created_at FROM ec_previews WHERE id=?`).bind(id).first();
+      if (me && me.created_at) {
+        const cnt = await env.DB.prepare(
+          `SELECT COUNT(*) AS n FROM ec_previews
+             WHERE status NOT IN ('dead','failed')
+               AND created_at < ?
+               AND created_at > datetime('now','-10 minutes')`
+        ).bind(me.created_at).first();
+        ahead = (cnt && cnt.n) || 0;
+        if (ahead > 0) etaMin = Math.max(1, Math.ceil(ahead / 5));
+      }
+    } catch (_) {}
+    return buildingPage({ ahead, etaMin });
   }
 
   // Inject the offer modal just before </body> (fall back to append).
