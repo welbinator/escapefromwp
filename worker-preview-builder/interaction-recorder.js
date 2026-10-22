@@ -274,7 +274,10 @@ export function buildReplayScript(recording) {
   function wire(tg){
     var btn = findBtn(tg);
     if (!btn || btn.__efwWired) return;
-    btn.__efwWired = true;
+    // NB: do NOT mark btn wired here. When the click surface ends up being btn
+    // itself (the common case, a hamburger/toggle with no wrapping anchor), an
+    // early mark makes the surface.__efwWired guard below short-circuit BEFORE
+    // the listener is attached, leaving the control dead. Mark at the very end.
     // Determine the best click surface. A submenu arrow is often a tiny <button>
     // nested inside the menu item's <a href="#"> label. Users tap the label, not
     // the arrow — and because the anchor CONTAINS the button, a tap bubbles through
@@ -308,6 +311,7 @@ export function buildReplayScript(recording) {
     }
     if (surface.__efwWired) return;
     surface.__efwWired = true;
+    btn.__efwWired = true;  // dedup guard for the top of wire() on later passes
     tg.__surface = surface;  // remember which element actually carries the toggle
     surface.addEventListener("click", function(e){
       // Let real navigation links through if they aren't in-page toggles.
