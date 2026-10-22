@@ -222,10 +222,19 @@ export function buildReplayScript(recording) {
   if (window.__efwReplay) return; window.__efwReplay = true;
   var REC = ${json};
 
-  function apply(el, attrs, open){
+  function apply(el, attrs, open, baseline){
     if (!el) return;
     for (var name in attrs){
-      var val = open ? attrs[name].to : attrs[name].from;
+      var val;
+      if (open){
+        val = attrs[name].to;
+      } else {
+        // Close: restore the element's REAL shipped value (captured at first open),
+        // not the recorded "from" — recordings can disagree with the static HTML
+        // (e.g. recorded from:null while the shipped node has style="display:none"),
+        // which would otherwise leave submenus stuck open after closing.
+        val = (baseline && name in baseline) ? baseline[name] : attrs[name].from;
+      }
       if (val == null){ el.removeAttribute(name); }
       else if (name === "class"){ el.className = val; }
       else { el.setAttribute(name, val); }
@@ -249,24 +258,64 @@ export function buildReplayScript(recording) {
   function findBtn(tg){ return resolve("data-efw-tgl", tg.tgl, tg.sel); }
   function findEl(ch){ return resolve("data-efw-el", ch.el, ch.sel); }
 
+  // Shared open-state per target element id, so two toggles (e.g. a mobile-pass
+  // and desktop-pass record of the SAME submenu) don't desync and leave it stuck.
+  var SHARED = {};
+  function captureBaseline(el, attrs){
+    var base = {};
+    for (var name in attrs){
+      var v = name === "class" ? el.className
+            : el.getAttribute(name);
+      base[name] = (v === "" && name !== "class") ? "" : (v == null ? null : String(v));
+    }
+    return base;
+  }
+
   function wire(tg){
     var btn = findBtn(tg);
     if (!btn || btn.__efwWired) return;
     btn.__efwWired = true;
-    var open = false;
-    btn.addEventListener("click", function(e){
-      // Let real navigation links through if they aren't in-page toggles.
-      if (btn.tagName === "A"){
-        var href = btn.getAttribute("href");
-        if (href && href.charAt(0) !== "#" && !/^javascript:/i.test(href) && tg.changes.length === 0) return;
+    // Determine the best click surface. A submenu arrow is often a tiny <button>
+    // nested inside the menu item's <a href="#"> label. Users tap the label, not
+    // the arrow — and because the anchor CONTAINS the button, a tap bubbles through
+    // BOTH if we wire both, firing the toggle twice (open then instantly re-close).
+    // So pick ONE surface: prefer a wrapping non-navigating anchor when present.
+    var surface = btn;
+    var a = btn.closest ? btn.closest("a") : null;
+    if (a && a !== btn){
+      var ahref = a.getAttribute("href");
+      if (!ahref || ahref === "#" || ahref.charAt(0) === "#" || /^javascript:/i.test(ahref)){
+        surface = a;
       }
-      e.preventDefault();
-      open = !open;
+    }
+    function toggle(e){
+      if (e){ e.preventDefault(); e.stopPropagation(); }
+      var anyOpen = false;
       for (var i=0;i<tg.changes.length;i++){
         var ch = tg.changes[i];
         var target = findEl(ch);
-        apply(target, ch.attrs, open);
+        if (!target) continue;
+        var key = ch.el;
+        // Capture the element's REAL shipped state once, before we ever touch it.
+        if (!(key in SHARED)){ SHARED[key] = { open: false, base: captureBaseline(target, ch.attrs) }; }
+        SHARED[key].open = !SHARED[key].open;
+        apply(target, ch.attrs, SHARED[key].open, SHARED[key].base);
+        if (SHARED[key].open) anyOpen = true;
       }
+      // Mark the actual wired surface open/closed — the outside-click handler and
+      // the close logic both key off this exact element.
+      surface.classList.toggle("efw-open", anyOpen);
+    }
+    if (surface.__efwWired) return;
+    surface.__efwWired = true;
+    tg.__surface = surface;  // remember which element actually carries the toggle
+    surface.addEventListener("click", function(e){
+      // Let real navigation links through if they aren't in-page toggles.
+      if (surface.tagName === "A"){
+        var href = surface.getAttribute("href");
+        if (href && href.charAt(0) !== "#" && !/^javascript:/i.test(href) && tg.changes.length === 0) return;
+      }
+      toggle(e);
     }, false);
   }
 
@@ -280,19 +329,26 @@ export function buildReplayScript(recording) {
       for (var rc=0; rc<rt.changes.length; rc++){ findEl(rt.changes[rc]); }
     }
     for (var i=0;i<REC.toggles.length;i++){ wire(REC.toggles[i]); }
-    // Close open dropdowns on outside click (desktop flyouts).
+    // Close open dropdowns on outside click (desktop flyouts). Use the element
+    // that actually carries the toggle (the wired surface — anchor or button), not
+    // just the recorded button, so a tap ON the label isn't misread as "outside"
+    // (which would close-then-reopen and leave the submenu stuck).
     document.addEventListener("click", function(e){
       for (var i=0;i<REC.toggles.length;i++){
         var tg = REC.toggles[i];
-        var btn = findBtn(tg);
-        if (!btn || !btn.classList.contains("efw-open")) continue;
-        if (btn.contains(e.target)) continue;
+        var surface = tg.__surface;
+        // Only toggles that actually OWN a wired surface participate. A duplicate
+        // record (same submenu recorded in both the mobile and desktop pass) never
+        // got __surface set because the surface was already wired — skipping it
+        // here prevents it from firing a spurious close on the shared element.
+        if (!surface || !surface.classList.contains("efw-open")) continue;
+        if (surface.contains(e.target)) continue;
         var inside = false;
         for (var j=0;j<tg.changes.length;j++){
           var tel = findEl(tg.changes[j]);
           if (tel && tel.contains(e.target)) { inside = true; break; }
         }
-        if (!inside){ btn.click(); }
+        if (!inside){ surface.click(); }
       }
     }, true);
   }
