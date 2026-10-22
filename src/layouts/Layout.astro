@@ -81,6 +81,7 @@ const orgSchema = {
         set:html={JSON.stringify(orgSchema)}
       />
     )}
+    <slot name="head" />
   </head>
   <body>
     <slot />

@@ -3,10 +3,27 @@ import Layout from "../layouts/Layout.astro";
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 // Turnstile only renders when a public site key is provided at build time.
 const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
+
+const faqs = [
+  ["How do I move my site from WordPress to EmDash?", "The fastest way is to paste your WordPress URL on this page. We render your live site, download your images and fonts, and rebuild it as a self-contained EmDash CMS copy, then email you a link. You can also migrate manually with EmDash's built-in WordPress importer, but this tool gives you a pixel-faithful copy of your existing design without any setup."],
+  ["What is EmDash and why move off WordPress?", "EmDash is a modern CMS built on Astro that serves fast static pages instead of running PHP and a database on every request like WordPress. Moving from WordPress to EmDash means no plugins to update, a much smaller attack surface, and faster load times, while keeping a friendly admin for editing content."],
+  ["Will my site look the same after moving to EmDash?", "Yes. We capture your fully-rendered pages exactly as a visitor sees them, so your EmDash copy keeps the same look, layout, images, and fonts. Nothing about your live WordPress site changes during the process."],
+  ["Is the WordPress-to-EmDash rebuild free?", "Yes. Building your EmDash copy is free and we email you the link, usually within a minute or two. If you want it put on your own domain or need changes, reply to that email and we'll handle the full migration for you."],
+  ["Does this touch or break my existing WordPress site?", "No. We never log in to your site or touch your server. We only view your public pages the way any visitor would, so your live WordPress site keeps running untouched while we build your EmDash copy."],
+];
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map(([q, a]) => ({
+    "@type": "Question",
+    name: q,
+    acceptedAnswer: { "@type": "Answer", text: a },
+  })),
+};
 ---
 <Layout
-  title="See Your Site Rebuilt — Escape From WP"
-  description="Paste your WordPress URL and we'll rebuild your site as a fast, self-contained exact copy on a modern stack — same look, your images and fonts, no WordPress. We email you the link in about a minute."
+  title="Move From WordPress to EmDash — Free Site Rebuild | Escape From WP"
+  description="Moving from WordPress to EmDash? Paste your WordPress URL and we'll rebuild your site as a fast, self-contained EmDash CMS copy — same look, your images and fonts, no WordPress. Free, and we email you the link in about a minute."
 >
   <!-- NAV -->
   <header class="nav">
@@ -32,14 +49,14 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
 
   <!-- HERO -->
   <section class="wrap tool-hero rise">
-    <span class="eyebrow">◦ Site mirror · 01</span>
-    <h1 class="tool-title">Get an exact copy of your site — off WordPress.</h1>
+    <span class="eyebrow">◦ WordPress → EmDash · 01</span>
+    <h1 class="tool-title">Move your site from WordPress to EmDash.</h1>
     <p class="tool-lead">
-      Paste your site's URL and we'll rebuild it as a fast, self-contained copy on a modern
-      stack — <strong>the same look, the same content, no WordPress</strong>. We render every
-      page, download your images and fonts, and host them on fast infrastructure that doesn't
-      phone home to your old site. No login, no plugins, we never touch your live site.
-      We email you a link when it's ready, usually in a minute or two.
+      Thinking about moving from WordPress to EmDash? Paste your site's URL and we'll rebuild it as a
+      fast, self-contained <strong>EmDash CMS</strong> copy — <strong>the same look, the same content,
+      no WordPress</strong>. We render every page, download your images and fonts, and host them on fast
+      infrastructure that doesn't phone home to your old site. No login, no plugins, we never touch your
+      live WordPress site. We email you a link when your EmDash copy is ready, usually in a minute or two.
     </p>
   </section>
 
@@ -50,6 +67,7 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
         <label for="lf-url">Your WordPress site URL</label>
         <input id="lf-url" name="url" type="text" inputmode="url" autocomplete="url"
                placeholder="yoursite.com" required />
+        <p class="field-hint">Enter the WordPress site you want moved to EmDash.</p>
       </div>
 
       <div class="field">
@@ -92,22 +110,42 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
       <li>
         <span class="how-no">02</span>
         <div>
-          <h3>We rebuild it off WordPress</h3>
-          <p>We capture the fully-rendered page, download your images and fonts, and rehost everything on fast infrastructure. The result is a self-contained copy that looks the same but no longer depends on WordPress or your old host.</p>
+          <h3>We rebuild it as an EmDash site</h3>
+          <p>We capture the fully-rendered page, download your images and fonts, and rehost everything on fast infrastructure as a self-contained EmDash CMS copy. The result looks the same but no longer depends on WordPress, plugins, or your old host.</p>
         </div>
       </li>
       <li>
         <span class="how-no">03</span>
         <div>
-          <h3>You get a live link</h3>
-          <p>We email you a link to your rebuilt site — open it on your phone or desktop and see your site, running without WordPress. Like it? Reply and we'll put it on your own domain and take care of any changes.</p>
+          <h3>You get a live link to your EmDash copy</h3>
+          <p>We email you a link to your rebuilt site — open it on your phone or desktop and see your site running on EmDash instead of WordPress. Like it? Reply and we'll put it on your own domain and take care of any changes.</p>
         </div>
       </li>
     </ol>
     <p class="how-foot">
-      Don't want to DIY? <a href={`${base}/#breakout`}>Let us run the whole migration for you ↗</a>
+      Don't want to DIY? <a href={`${base}/#breakout`}>Let us run the whole WordPress-to-EmDash migration for you ↗</a>
     </p>
   </section>
+
+  <!-- FAQ (SEO: WordPress to EmDash) -->
+  <section class="wrap faq-section rise">
+    <h2 class="how-head">WordPress to EmDash: common questions</h2>
+    <div class="faq-list">
+      {faqs.map(([q, a]) => (
+        <div class="faq-item">
+          <h3>{q}</h3>
+          <p>{a}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <script
+    slot="head"
+    type="application/ld+json"
+    is:inline
+    set:html={JSON.stringify(faqSchema)}
+  />
 
   <!-- FOOTER -->
   <footer class="footer">
@@ -141,6 +179,12 @@ const turnstileKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY || "";
 
     .footer { border-top: 1px solid var(--steel); padding: 40px 0; margin-top: 40px; }
     .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+
+    .faq-section { max-width: 760px; padding-top: 20px; }
+    .faq-list { display: flex; flex-direction: column; gap: 22px; margin-top: 24px; }
+    .faq-item { border: 1px solid var(--steel); padding: 20px 22px; background: rgba(255,255,255,0.015); }
+    .faq-item h3 { font-size: 18px; margin-bottom: 8px; color: var(--chalk); }
+    .faq-item p { color: var(--slate); font-size: 15px; line-height: 1.6; }
     .footer-mono { font-family: var(--font-mono); font-size: 12px; color: var(--slate); letter-spacing: 0.04em; }
     .footer-mono.dim { color: var(--slate-dim); }
 
