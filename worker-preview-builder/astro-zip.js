@@ -98,8 +98,76 @@ ${defs}
 `;
 }
 
-function agentInstructions(siteName, host, stats, totalEntries, menuData, prebuiltHome) {
+function agentInstructions(siteName, host, stats, totalEntries, menuData, prebuiltHome, fullyRendered) {
   const list = (stats || []).map((s) => `- \`src/content/${s.collection}/\` — ${s.entries} entr${s.entries === 1 ? "y" : "ies"}`).join("\n") || "- (see src/content/)";
+
+  // When fullyRendered, the zip is a COMPLETE site: homepage + every collection
+  // route already generated server-side. There is nothing for a bot to assemble —
+  // `npm install && npm run build` produces the finished site. Ship a short,
+  // deploy-only README instead of the bot-assembly playbook.
+  if (fullyRendered) {
+    return `# ${siteName} — your finished static Astro site
+
+This is a **complete, ready-to-deploy** static Astro site built from **${host}**. The
+homepage AND a page for every one of your ${totalEntries} content entries are **already
+built** — there is nothing to assemble. No WordPress, no CMS, no database.
+
+## Deploy it (two commands)
+\`\`\`
+npm install
+npm run build      # outputs the finished site to dist/
+\`\`\`
+Then deploy the \`dist/\` folder to Cloudflare Pages, Netlify, or any static host. To preview
+locally first: \`npm run dev\` and open http://localhost:4321.
+
+## What's already done for you
+- \`public/index.html\` + \`public/_site/\` — your **pixel-identical homepage** with all
+  images/fonts/CSS bundled locally. Served untouched at \`/\`.
+- \`src/content/<collection>/*.md\` — your ${totalEntries} entries as Astro content collections.
+- \`src/layouts/Base.astro\` + \`src/lib/shell.json\` — the layout that wraps every inner
+  page in your homepage's **exact header, footer, and menu scripts**, so the whole site
+  looks consistent and the mobile menu works everywhere.
+- \`src/pages/<collection>/\` — a list page and a detail page per content type, **already
+  generated.** Your routes:
+${(stats || []).filter((s) => s.entries).map((s) => `  - \`/${s.collection}/\` + \`/${s.collection}/<slug>\` (${s.entries} page${s.entries === 1 ? "" : "s"})`).join("\n") || "  - (see src/pages/)"}
+
+## Content model
+${list}
+Total: **${totalEntries} entries.**
+
+## ⚠️ Don't recreate the homepage
+The homepage is \`public/index.html\` and is served as-is. **Do NOT add \`src/pages/index.astro\`** —
+in Astro that silently overrides \`public/index.html\` and would replace your pixel-perfect
+homepage with a worse reconstruction. You don't need to; it's already perfect.
+
+## Optional polish (only if you want to)
+- **Images:** inner-page images currently reference the original media URLs. They work as-is;
+  download them into \`public/\` and update refs if you want everything self-hosted.
+- **Redirects:** add old→new 301s to \`public/_redirects\` if your URL structure changed.
+- **Nav links:** the header menu came straight from your old site. If a link points somewhere
+  you no longer have, update it in \`src/lib/shell.json\` (\`headerHtml\`).
+
+---
+---
+## 📋 MESSAGE FOR THE SITE OWNER — send this verbatim as your final reply
+The site owner is NOT a developer. Change **nothing** except the URL on the first line.
+---
+---
+
+🎉 **Your new site is live:** [REPLACE THIS WITH THE REAL SITE URL BEFORE SENDING]
+
+Your ${siteName} website has been rebuilt as a fast, modern **static site** — no more
+WordPress, no plugins to update, nothing to hack. It looks exactly like your old site, and
+all ${totalEntries} of your pages came across.
+
+## 💬 Click around — especially on your phone
+Try your menus, dropdowns, and links, **especially on mobile.** We re-wired the common
+interactive bits (like your **hamburger menu**), but if ANYTHING doesn't work or doesn't look
+right — a menu that won't open, a form that doesn't send, an image that's missing — just tell
+me in plain words (e.g. *"the mobile menu doesn't open"*) and I'll fix it. 🙂
+`;
+  }
+
   const menuNote = menuData
     ? `\nThis package also includes \`reference/menus.json\` (${menuData.menus.length} menu${menuData.menus.length === 1 ? "" : "s"}, source: \`${menuData.source}\`). Rebuild the nav in your \`Base.astro\` header from it, preserving label order and nesting.`
     : "";
@@ -241,6 +309,105 @@ doesn't open"* or *"the contact form doesn't send"* are perfect. Point me at it 
 handle the rest. 🙂`;
 }
 
+// ─── Server-side full pre-render ─────────────────────────────────────────────
+// The OLD design shipped the content as collections and asked an external AI bot
+// to hand-build the routes. Bots reliably botch this: they recreate the homepage
+// in src/pages/index.astro (which shadows public/index.html) and/or choke on the
+// 60KB+ of inlined CSS braces that Astro parses as JSX expressions. So instead we
+// generate the ENTIRE site ourselves here: the homepage stays as the untouched
+// pixel-perfect public/index.html, and every collection entry becomes a real route
+// wrapped in a layout that reuses the homepage's exact header/footer/scripts.
+//
+// extractShell() splits the localized homepage into reusable chrome. We inject each
+// part with Astro's <Fragment set:html={...}> so the raw HTML (braces and all) is
+// NEVER parsed as Astro expressions — the thing that breaks naive ports.
+function extractShell(localizedHtml) {
+  const h = localizedHtml;
+  const htmlTag = (h.match(/<html[^>]*>/i) || [""])[0];
+  const lang = (htmlTag.match(/lang="([^"]+)"/i) || [null, "en"])[1] || "en";
+  const headInnerRaw = (h.match(/<head[^>]*>([\s\S]*?)<\/head>/i) || [null, ""])[1];
+  // Pull the <title> out so each page sets its own; keep everything else (CSS, meta).
+  const headInner = headInnerRaw.replace(/<title>[\s\S]*?<\/title>/i, "");
+  const bodyOpen = (h.match(/<body[^>]*>/i) || [""])[0];
+  const bodyClass = (bodyOpen.match(/class="([^"]*)"/i) || [null, ""])[1] || "";
+  const headerHtml = (h.match(/<header[\s\S]*?<\/header>/i) || [""])[0] || "";
+  const footerHtml = (h.match(/<footer[\s\S]*?<\/footer>/i) || [""])[0] || "";
+  const replay = (h.match(/<script[^>]*data-efw="replay"[^>]*>[\s\S]*?<\/script>/i) || [""])[0] || "";
+  const interactions = (h.match(/<script[^>]*data-efw="interactions"[^>]*>[\s\S]*?<\/script>/i) || [""])[0] || "";
+  if (!headInner || !headerHtml) return null; // can't build a faithful shell
+  return { lang, bodyClass, headInner, headerHtml, footerHtml, replay, interactions };
+}
+
+// Base layout that reconstructs the exact page chrome around arbitrary body HTML.
+// Everything comes from shell.json via set:html so no raw markup is ever compiled
+// as an Astro expression. Scripts are re-emitted with is:inline so Astro doesn't
+// hoist/bundle them (which would break the replay/interaction menu logic).
+function baseLayout() {
+  return `---
+import shell from "../lib/shell.json";
+const { title = "", body = "" } = Astro.props;
+---
+<html lang={shell.lang}>
+  <head>
+    <title set:html={title}></title>
+    <Fragment set:html={shell.headInner} />
+  </head>
+  <body class={shell.bodyClass}>
+    <Fragment set:html={shell.headerHtml} />
+    <main>
+      <div class="efw-content" style="max-width:1100px;margin:0 auto;padding:2rem 1rem;">
+        <slot><Fragment set:html={body} /></slot>
+      </div>
+    </main>
+    <Fragment set:html={shell.footerHtml} />
+    {shell.replay && <Fragment set:html={shell.replay} />}
+    {shell.interactions && <Fragment set:html={shell.interactions} />}
+  </body>
+</html>
+`;
+}
+
+// Per-collection detail route: renders each entry's markdown body inside Base.
+function detailRoute(coll) {
+  return `---
+import { getCollection, render } from "astro:content";
+import Base from "../../layouts/Base.astro";
+export async function getStaticPaths() {
+  const items = await getCollection(${JSON.stringify(coll)});
+  return items.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const title = (entry.data && (entry.data.title || entry.data.slug)) || entry.id;
+---
+<Base title={title}>
+  <article>
+    <h1 set:html={title}></h1>
+    <Content />
+  </article>
+</Base>
+`;
+}
+
+// Per-collection list route.
+function listRoute(coll) {
+  return `---
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+const items = await getCollection(${JSON.stringify(coll)});
+const label = ${JSON.stringify(coll)};
+---
+<Base title={label}>
+  <h1>{label}</h1>
+  <ul>
+    {items.map((e) => (
+      <li><a href={\`/\${label}/\${e.id}\`} set:html={(e.data && e.data.title) || e.id}></a></li>
+    ))}
+  </ul>
+</Base>
+`;
+}
+
 // Main entry: returns { zip: Uint8Array, filename, siteName } or throws.
 export async function buildAstroZip(env, { id, sourceUrl, businessName, replicaHtml }) {
   const base = normalizeSiteUrl(sourceUrl) || sourceUrl;
@@ -282,6 +449,7 @@ export async function buildAstroZip(env, { id, sourceUrl, businessName, replicaH
 
   // 3) Exact-look reference HTML + PRE-BUILT, pixel-identical homepage.
   let prebuiltHome = false;
+  let fullyRendered = false;
   if (replicaHtml && replicaHtml.length > 500) {
     files.push({ name: "reference/your-exact-site.html", data: replicaHtml });
     try {
@@ -295,13 +463,48 @@ export async function buildAstroZip(env, { id, sourceUrl, businessName, replicaH
         }
         for (const a of local.assets) files.push(a);
         prebuiltHome = true;
+
+        // 3b) FULL SERVER-SIDE PRE-RENDER. Extract the homepage shell and stamp a
+        //     real route for every collection entry — no external bot assembly.
+        //     Homepage stays public/index.html; inner pages reuse its exact chrome.
+        const shell = extractShell(local.html);
+        if (shell) {
+          files.push({ name: "src/lib/shell.json", data: JSON.stringify(shell) });
+          files.push({ name: "src/layouts/Base.astro", data: baseLayout() });
+          for (const s of stats) {
+            if (!s.entries) continue;
+            files.push({ name: `src/pages/${s.collection}/[...slug].astro`, data: detailRoute(s.collection) });
+            files.push({ name: `src/pages/${s.collection}/index.astro`, data: listRoute(s.collection) });
+          }
+          fullyRendered = true;
+        }
       }
     } catch (_) { /* fall back to reference-only if localization fails */ }
   }
 
   // 4) Instructions + README.
-  files.push({ name: "AGENT_INSTRUCTIONS.md", data: agentInstructions(siteName, host, stats, totalEntries, menuData, prebuiltHome) });
-  files.push({ name: "README.md", data:
+  files.push({ name: "AGENT_INSTRUCTIONS.md", data: agentInstructions(siteName, host, stats, totalEntries, menuData, prebuiltHome, fullyRendered) });
+  files.push({ name: "README.md", data: fullyRendered ?
+`# ${siteName} — your finished static Astro site
+
+Everything from **${host}**, built into a **complete, ready-to-deploy** static Astro site.
+The homepage AND a page for every one of your ${totalEntries} content entries are already
+built — nothing to assemble. No WordPress, no CMS, no database.
+
+## Deploy it
+\`\`\`
+npm install
+npm run build     # finished site lands in dist/
+\`\`\`
+Deploy \`dist/\` to Cloudflare Pages, Netlify, or any static host. Preview first with
+\`npm run dev\` (http://localhost:4321).
+
+Your homepage is \`public/index.html\` (pixel-identical to your old site). Inner pages are
+in \`src/pages/<collection>/\`, wrapped in your exact header/footer via \`src/layouts/Base.astro\`.
+See **AGENT_INSTRUCTIONS.md** for details and the owner handoff message.
+
+No WordPress required.
+` :
 `# ${siteName} — your static Astro site
 
 Everything from **${host}**, packaged as a ready-to-run **static Astro** project —
