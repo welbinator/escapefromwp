@@ -104,31 +104,40 @@ function agentInstructions(siteName, host, stats, totalEntries, menuData, prebui
     ? `\nThis package also includes \`reference/menus.json\` (${menuData.menus.length} menu${menuData.menus.length === 1 ? "" : "s"}, source: \`${menuData.source}\`). Rebuild the nav in your \`Base.astro\` header from it, preserving label order and nesting.`
     : "";
   const designSection = prebuiltHome
-    ? `## The design is ALREADY BUILT — do not recreate it
-This package ships your homepage **pre-built and pixel-identical** to the original at
+    ? `## 🏠 The homepage is ALREADY DONE — do NOT rebuild it (this is the #1 mistake)
+Your homepage ships **pre-built and pixel-identical** to the original at
 \`public/index.html\`, with every image/font/stylesheet bundled locally under
-\`public/_site/\`. The moment you run \`npm run dev\` it looks exactly like your old
-site — you do **not** rebuild the design from scratch.
+\`public/_site/\`. Astro serves everything in \`public/\` **as-is, untouched** — so the
+moment you deploy, \`/\` already shows your exact old site. The design is finished.
 
-**Your job on the design is to PRESERVE it, then extend it:**
-- Leave \`public/index.html\` as the faithful homepage, OR port it into
-  \`src/layouts/Base.astro\` + \`src/pages/index.astro\` **verbatim** (same markup, same
-  inline CSS, same \`/_site/...\` asset paths) if you want it to share a layout with the
-  rest of the site. Either way the visual result must stay identical.
-- **Never** replace it with a generic/starter theme. Diff your result against
-  \`public/index.html\`.
-- Reuse the exact header/footer markup + styles from \`public/index.html\` for every
-  other route so the whole site is visually consistent.
+> 🚨 **ABSOLUTE RULE — READ TWICE:** Do **NOT** create \`src/pages/index.astro\` (or
+> \`src/pages/index.md\`, or any \`src/pages/index.*\`). In Astro, a file at
+> \`src/pages/index.astro\` **silently overrides \`public/index.html\`** and your \`/\` route
+> will render YOUR reconstruction instead of the real pre-built homepage. This is exactly
+> how these rebuilds get ruined: the agent "helpfully" recreates the homepage in Astro, it
+> comes out worse, and the pixel-perfect one we shipped never gets served. **Leave the
+> homepage as \`public/index.html\`. Touch nothing about it. Do not port it, do not
+> "improve" it, do not wrap it in a layout.** Your job on the homepage is to do NOTHING.
 
-### 🔌 CRITICAL: keep the interaction scripts, or the menu dies
-\`public/index.html\` ends with TWO small \`<script>\` tags just before \`</body>\`
+**What you MAY do for the design:**
+- Add routes ONLY for the content collections, under their own paths (e.g.
+  \`/class/...\`, \`/machine/...\`) — NEVER at \`/\`. See Step 3.
+- For those inner pages, reuse the **exact header/footer markup + CSS** from
+  \`public/index.html\` (copy it into a \`src/layouts/Base.astro\` you apply only to the
+  collection routes) so the inner pages visually match the homepage. The homepage itself
+  keeps using \`public/index.html\` — it does not need and must not get a layout.
+- **Never** introduce a generic/starter theme anywhere. Diff every page against
+  \`public/index.html\` for visual consistency.
+
+### 🔌 CRITICAL: carry the interaction scripts onto inner pages, or the menu dies
+\`public/index.html\` ends with TWO \`<script>\` tags just before \`</body>\`
 (\`data-efw="replay"\` and \`data-efw="interactions"\`) that make the **mobile menu,
-dropdowns, and accordions** work with no WordPress/jQuery. If you port the homepage
-into \`Base.astro\` or reuse the header on other routes, you MUST carry BOTH scripts
-into the shared layout, and in Astro mark them \`is:inline\`
+dropdowns, and accordions** work with no WordPress/jQuery. The homepage already has them.
+For the INNER collection pages you build, you MUST copy BOTH scripts into your
+\`Base.astro\` (end of \`<body>\`), and mark them \`is:inline\`
 (\`<script is:inline data-efw="replay">\`) or Astro will hoist/break them and the menu
-won't open.`
-    : `## Match the exact design
+won't open on those pages.`
+    : `## Match the exact design — but do NOT override the homepage route
 \`reference/your-exact-site.html\` is a pixel-faithful, self-contained copy of your old
 homepage (CSS inlined, assets rehosted). **It is your design brief — reproduce it
 exactly.** Extract its fonts, colors, spacing, header, and footer and build your Astro
@@ -172,11 +181,12 @@ ${designSection}
 ## Step-by-step (follow in order)
 1. **Install:** \`npm install\`.
 2. **Run it:** \`npm run dev\`, then open \`http://localhost:4321\`.${prebuiltHome ? " The homepage should already render your exact site from `public/index.html`." : ""}
-3. **Build routes for your content.** For each collection in \`src/content/\`, add a route
-   that renders its entries — e.g. a list page \`src/pages/<collection>/index.astro\` using
-   \`getCollection("<collection>")\`, and a detail page
-   \`src/pages/<collection>/[...slug].astro\` using \`render(entry)\` to output the markdown
-   body. Reuse the exact header/footer/styles from${prebuiltHome ? " `public/index.html`" : " `reference/your-exact-site.html`"} so every page matches.
+3. **Build routes for your content — but NOT for \`/\`.** The homepage is already served by
+   \`public/index.html\`; do **not** add \`src/pages/index.astro\`. For each collection in
+   \`src/content/\`, add routes under that collection's own path — e.g. a list page
+   \`src/pages/<collection>/index.astro\` using \`getCollection("<collection>")\`, and a detail
+   page \`src/pages/<collection>/[...slug].astro\` using \`render(entry)\` to output the
+   markdown body. Reuse the exact header/footer/styles from${prebuiltHome ? " `public/index.html`" : " `reference/your-exact-site.html`"} so every inner page matches the homepage.
 4. **Images:** frontmatter \`featured_image\` and inline markdown images reference the
    original media URLs (see \`reference/content.json\` \`media[]\`). Either keep them as
    remote URLs, or download them into \`src/assets/\`/\`public/\` and update the references.${menuNote}
@@ -186,11 +196,11 @@ ${designSection}
 
 ## Rules
 - The content is already structured — do NOT retype it. It's in \`src/content/\`.
-- ${prebuiltHome ? "The design is already built in `public/index.html` — PRESERVE it; never swap in a generic theme." : "Match `reference/your-exact-site.html` faithfully — it IS the brief."} Preserve copy exactly.
+- ${prebuiltHome ? "The homepage is already built at `public/index.html` — PRESERVE it; do NOT create `src/pages/index.astro` (it would shadow the real homepage); never swap in a generic theme." : "Match `reference/your-exact-site.html` faithfully — it IS the brief; do NOT ship a bare Astro starter homepage."} Preserve copy exactly.
 - No live 404s — set redirects before changing URLs.
 
 ## ✅ YOU ARE NOT DONE UNTIL ALL OF THESE ARE TRUE
-- [ ] \`npm run build\` succeeded
+- [ ] \`npm run build\` succeeded${prebuiltHome ? "\n- [ ] You did NOT create `src/pages/index.astro` — `/` still serves the pre-built `public/index.html`\n- [ ] The deployed homepage matches the original (hero, testimonials, sections all present — diff against `public/index.html`)" : ""}
 - [ ] The site is deployed and the URL opens and works
 - [ ] Every collection has a route and all ${totalEntries} entries render
 - [ ] **The EXACT "MESSAGE FOR THE SITE OWNER" below has been sent, with the real URL filled in**
