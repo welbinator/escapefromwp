@@ -248,6 +248,11 @@ const faqSchema = {
     .tool-result :global(.btn-ghost:disabled) { cursor: default; opacity: .9; }
     .tool-result :global(.btn-ghost.building) { border-color: var(--steel); color: var(--slate); }
     .tool-result :global(.btn-ghost.ready) { background: var(--term-green); color: #06230f; border-color: var(--term-green); }
+    .tool-result :global(.res-zip-group) { display: flex; flex-direction: column; gap: 8px; }
+    .tool-result :global(.res-zip-label) { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--slate); }
+    .tool-result :global(.res-zip-select) { width: 100%; box-sizing: border-box; background: var(--carbon, #0b0405); color: var(--chalk); border: 1px solid var(--term-green); font-family: var(--font-mono); font-size: 13px; padding: 12px 14px; cursor: pointer; border-radius: 0; }
+    .tool-result :global(.res-zip-select:disabled) { opacity: .6; cursor: default; }
+    .tool-result :global(.res-zip-group .res-zip-btn) { margin-top: 2px; }
     .tool-result :global(.efw-btn-spin) { width: 15px; height: 15px; border: 2px solid var(--steel); border-top-color: var(--term-green); border-radius: 50%; display: inline-block; animation: efw-spin 0.8s linear infinite; flex-shrink: 0; }
     .tool-result :global(.res-zip-hint) { font-size: 13px; color: var(--slate); line-height: 1.6; margin: 0 0 16px; }
     .tool-result :global(.res-zip-hint strong) { color: var(--chalk); }
@@ -433,9 +438,16 @@ const faqSchema = {
         '<p class="res-sub">' + subline + "</p>" +
         '<div class="res-actions">' +
           '<a class="btn btn-primary res-download" href="' + esc(replicaUrl) + '" target="_blank" rel="noopener">' + viewLabel + "</a>" +
-          '<button type="button" class="btn btn-ghost res-zip-btn" id="lf-zip-btn">⬇ Generate the full EmDash site (.zip)</button>' +
+          '<span class="res-zip-group">' +
+            '<label class="res-zip-label" for="lf-zip-target">Generate zip</label>' +
+            '<select class="res-zip-select" id="lf-zip-target" aria-label="Choose export format">' +
+              '<option value="emdash">EmDash</option>' +
+              '<option value="astro">Static Astro</option>' +
+            "</select>" +
+            '<button type="button" class="btn btn-ghost res-zip-btn" id="lf-zip-btn">⬇ Generate zip</button>' +
+          "</span>" +
         "</div>" +
-        '<p class="res-zip-hint" id="lf-zip-hint">Prefer to build it yourself? Generate a ready-to-run EmDash project — your content baked in, plus an exact copy of your site to match the design.</p>' +
+        '<p class="res-zip-hint" id="lf-zip-hint">Prefer to build it yourself? Pick a format and generate a ready-to-run project — your content baked in, plus an exact copy of your site to match the design. <strong>EmDash</strong> gives you a CMS-backed site; <strong>Static Astro</strong> gives you a plain static site (no CMS).</p>' +
         '<p class="res-expiry">' + emailLine + " Like it? Reply to that email and we'll put it on your own domain and handle any changes you want.</p>" +
         '<button type="button" class="res-again" id="lf-again">↻ Rebuild another site</button>';
 
@@ -444,42 +456,52 @@ const faqSchema = {
       wireAgain();
     }
 
-    // ---- Full EmDash site (.zip) — triggered from the result card -----------
-    // Reuses the already-created preview row: /api/replica-offer {choice:'no'}
-    // enqueues the 'emdash-zip' worker job, then /api/zip-status is polled until
-    // the zip + download token are ready.
+    // ---- Full site (.zip) — triggered from the result card ------------------
+    // Reuses the already-created preview row: /api/replica-offer {choice:'no',target}
+    // enqueues the '<target>-zip' worker job, then /api/zip-status is polled (per
+    // target) until the zip + download token are ready. target ∈ {emdash, astro}.
     function wireZipButton(previewId, siteName) {
       const btn = document.getElementById("lf-zip-btn");
       const hint = document.getElementById("lf-zip-hint");
+      const sel = document.getElementById("lf-zip-target");
       if (!btn || !previewId) return;
 
+      // Human label for the currently-selected format (for button/hint copy).
+      function fmtLabel() {
+        const v = sel ? sel.value : "emdash";
+        return v === "astro" ? "static Astro site" : "EmDash site";
+      }
+
       btn.addEventListener("click", async function () {
+        const target = sel ? sel.value : "emdash";
+        const label = fmtLabel();
         btn.disabled = true;
+        if (sel) sel.disabled = true;
         btn.classList.add("building");
-        btn.innerHTML = '<span class="efw-btn-spin"></span> Building your EmDash site now…';
-        if (hint) hint.textContent = "Packaging your content and an exact copy of your site into a ready-to-run EmDash project. This usually takes a minute or two — keep this page open.";
+        btn.innerHTML = '<span class="efw-btn-spin"></span> Building your ' + esc(label) + " now…";
+        if (hint) hint.textContent = "Packaging your content and an exact copy of your site into a ready-to-run " + label + ". This usually takes a minute or two — keep this page open.";
 
         // 1) Kick off the build (idempotent on the server).
         try {
           const kick = await fetch(apiBase() + "/api/replica-offer", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: previewId, choice: "no" }),
+            body: JSON.stringify({ id: previewId, choice: "no", target: target }),
           });
           const kd = await kick.json().catch(() => ({}));
           if (!kick.ok || !kd.ok) {
-            return zipError(btn, hint, (kd && kd.error) || "Couldn't start the export. Please try again.");
+            return zipError(btn, hint, sel, (kd && kd.error) || "Couldn't start the export. Please try again.");
           }
         } catch (_) {
-          return zipError(btn, hint, "Network error starting the export. Please try again.");
+          return zipError(btn, hint, sel, "Network error starting the export. Please try again.");
         }
 
-        // 2) Poll for the finished zip (~up to 5 min).
+        // 2) Poll for the finished zip (~up to 5 min), scoped to this target.
         let downloadUrl = null;
         for (let i = 0; i < 50; i++) {
           await new Promise((r) => setTimeout(r, 6000));
           try {
-            const s = await fetch(apiBase() + "/api/zip-status?id=" + encodeURIComponent(previewId), { cache: "no-store" });
+            const s = await fetch(apiBase() + "/api/zip-status?id=" + encodeURIComponent(previewId) + "&target=" + encodeURIComponent(target), { cache: "no-store" });
             const sd = await s.json().catch(() => ({}));
             if (sd && sd.ok && sd.ready && sd.download_url) { downloadUrl = sd.download_url; break; }
           } catch (_) {}
@@ -489,7 +511,7 @@ const faqSchema = {
           // Build is still running — the email will carry the link.
           btn.classList.remove("building");
           btn.innerHTML = "⬇ Still building — check your email";
-          if (hint) hint.innerHTML = "Your EmDash site is taking a little longer. We'll <strong>email you the download link</strong> the moment it's ready (good for 24 hours).";
+          if (hint) hint.innerHTML = "Your " + esc(label) + " is taking a little longer. We'll <strong>email you the download link</strong> the moment it's ready (good for 24 hours).";
           return;
         }
 
@@ -499,16 +521,18 @@ const faqSchema = {
         dl.className = "btn btn-ghost ready";
         dl.href = downloadUrl;
         dl.setAttribute("download", "");
-        dl.textContent = "⬇ Download your EmDash site (.zip)";
+        dl.textContent = "⬇ Download your " + label + " (.zip)";
         btn.replaceWith(dl);
+        if (sel) sel.disabled = true;
         if (hint) hint.innerHTML = "✓ Ready! We've also <strong>emailed you this link</strong> so you don't lose it. It works for <strong>24 hours</strong>. Unzip it, open <code>README.md</code>, and follow the steps — or hand the folder to your AI coding assistant.";
       });
     }
 
-    function zipError(btn, hint, msg) {
+    function zipError(btn, hint, sel, msg) {
       btn.classList.remove("building");
       btn.disabled = false;
-      btn.innerHTML = "⬇ Generate the full EmDash site (.zip)";
+      if (sel) sel.disabled = false;
+      btn.innerHTML = "⬇ Generate zip";
       if (hint) { hint.innerHTML = '<span style="color:#ff6b6b">✕ ' + esc(msg) + "</span>"; }
     }
 

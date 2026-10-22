@@ -65,16 +65,19 @@ export async function onRequestPost({ request, env }) {
     return json({ ok: true, choice: "yes" });
   }
 
-  // ---- NO: build & email them a ready-to-run EmDash project -----------------
+  // ---- NO: build & email them a ready-to-run project (EmDash or static Astro) ----
   if (choice === "no") {
     if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
       return json({ ok: false, error: "We don't have a valid email on file — please email james@apexbranding.design." }, 400);
+    // target selects the deliverable: 'astro' → static Astro project, else EmDash.
+    const target = (data.target || "emdash").toString() === "astro" ? "astro" : "emdash";
+    const mode = target === "astro" ? "astro-zip" : "emdash-zip";
     let queued = false;
     try {
-      if (env.PREVIEW_QUEUE) { await env.PREVIEW_QUEUE.send({ id, mode: "emdash-zip", url: row.source_url }); queued = true; }
+      if (env.PREVIEW_QUEUE) { await env.PREVIEW_QUEUE.send({ id, mode, target, url: row.source_url }); queued = true; }
     } catch (_) {}
     if (!queued) return json({ ok: false, error: "Export queue unavailable — please try again shortly." }, 503);
-    return json({ ok: true, choice: "no", queued, email });
+    return json({ ok: true, choice: "no", queued, email, target });
   }
 
   return json({ ok: false, error: "unknown choice" }, 400);

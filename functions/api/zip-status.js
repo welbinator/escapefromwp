@@ -1,10 +1,11 @@
-// Cloudflare Pages Function — GET /api/zip-status?id=<previewId>
-// Polled by the liberate page after the user clicks "Generate the full export".
+// Cloudflare Pages Function — GET /api/zip-status?id=<previewId>&target=<emdash|astro>
+// Polled by the liberate page after the user clicks "Generate zip".
 // Returns { ok, ready, download_url?, filename? }:
-//   - ready:false while the queued 'emdash-zip' worker job is still building.
+//   - ready:false while the queued zip worker job is still building.
 //   - ready:true + download_url once the worker has stored the zip + token.
-// The worker persists the download token on ec_previews.spam_reason and writes a
-// `previews/<id>/.emdash-emailed` marker when the build+email completes.
+// The worker writes a per-target done-marker `previews/<id>/.zip-<target>.json` whose
+// BODY is { token, filename, target, at } — written LAST, after the zip object exists.
+// Each target has its own marker/token so EmDash and static Astro never collide.
 
 function json(obj, status = 200) {
   return new Response(JSON.stringify(obj), {
@@ -14,23 +15,22 @@ function json(obj, status = 200) {
 }
 
 export async function onRequestGet({ request, env }) {
-  const id = (new URL(request.url).searchParams.get("id") || "").toLowerCase();
+  const url = new URL(request.url);
+  const id = (url.searchParams.get("id") || "").toLowerCase();
+  const target = (url.searchParams.get("target") || "emdash") === "astro" ? "astro" : "emdash";
   if (!/^[0-9a-f]{32}$/.test(id)) return json({ ok: false, error: "bad id" }, 400);
   if (!env.DB || !env.EXPORTS) return json({ ok: false, error: "not configured" }, 500);
 
-  const row = await env.DB.prepare(
-    `SELECT business_name, spam_reason FROM ec_previews WHERE id=?`
-  ).bind(id).first();
+  const row = await env.DB.prepare(`SELECT business_name FROM ec_previews WHERE id=?`).bind(id).first();
   if (!row) return json({ ok: false, error: "not found" }, 404);
 
-  const token = (row.spam_reason || "").toString();
-  const done = await env.EXPORTS.head(`previews/${id}/.emdash-emailed`);
-
-  // Ready once the worker has both persisted a valid token AND written the done
-  // marker (so we never hand out a URL before the zip object exists).
-  if (done && /^[a-f0-9]{32}$/.test(token)) {
-    const origin = new URL(request.url).origin;
-    return json({ ok: true, ready: true, download_url: `${origin}/api/download/${token}` });
+  const marker = await env.EXPORTS.get(`previews/${id}/.zip-${target}.json`);
+  if (marker) {
+    let token = "", filename = "";
+    try { const m = JSON.parse(await marker.text()); token = (m.token || "").toString(); filename = m.filename || ""; } catch (_) {}
+    if (/^[a-f0-9]{32}$/.test(token)) {
+      return json({ ok: true, ready: true, download_url: `${url.origin}/api/download/${token}`, filename });
+    }
   }
   return json({ ok: true, ready: false });
 }

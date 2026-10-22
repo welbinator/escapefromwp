@@ -28,11 +28,11 @@ import { extractSite, normalizeSiteUrl } from "../functions/api/_lib/wp-extract.
 import { buildBundleFiles } from "../functions/api/_lib/build-bundle.js";
 import { zipSync } from "../functions/api/_lib/zip.js";
 
-function slug(s) {
+export function slug(s) {
   return (s || "site").toString().toLowerCase().replace(/^https?:\/\//, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 60) || "site";
 }
 
-function slugify(s) {
+export function slugify(s) {
   return (s || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").replace(/_{2,}/g, "_").slice(0, 63) || "untitled";
 }
 
@@ -233,7 +233,7 @@ function scaffoldPackageJson(siteSlug) {
 //     and written into the zip under public/_site/<file>
 //   - the HTML's references are rewritten to the local /_site/<file> path
 // Returns { html, assets: [{name,data(Uint8Array)}] } or null if nothing usable.
-async function localizeReplica(replicaHtml) {
+export async function localizeReplica(replicaHtml) {
   if (!replicaHtml || replicaHtml.length < 500) return null;
   // Find every absolute reference to one of our rehosted assets.
   const re = /https?:\/\/[^"')\s]+\/replica-asset\/[0-9a-f]{32}\/[A-Za-z0-9._-]+/g;
@@ -264,7 +264,7 @@ async function localizeReplica(replicaHtml) {
 // Astro config set up for a plain static build. This means the DOWNLOADED site looks
 // exactly like the original the moment it runs — the bot's job becomes wiring the
 // seeded content into the other routes, not recreating the design from scratch.
-function staticHomepageFiles(localizedHtml) {
+export function staticHomepageFiles(localizedHtml) {
   const files = [];
   // Serve the exact copy as the root route via a passthrough Astro page. We emit the
   // full original document untouched (doctype/head/body) so styling is pixel-identical.

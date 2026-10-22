@@ -6,9 +6,10 @@
 //   mode 'emdash-zip' → buildEmdashZip(): a runnable EmDash project + replica zip.
 // The old AI 3-variant redesign path was removed (James's directive: 100% AI-free).
 
-import { sendReplicaLinkEmail, sendEmdashZipEmail } from "../functions/api/_lib/send-email.js";
+import { sendReplicaLinkEmail, sendZipEmail } from "../functions/api/_lib/send-email.js";
 import { captureReplica } from "./replica-capture.js";
 import { buildEmdashZip } from "./emdash-zip.js";
+import { buildAstroZip } from "./astro-zip.js";
 
 // Build the exact-replica mirror for one preview row.
 async function buildReplica(env, id) {
@@ -46,15 +47,19 @@ async function buildReplica(env, id) {
   }
 }
 
-// Build & email a ready-to-run EmDash project zip (the offer modal's "No" path).
-// Reuses the content extractor + bundle builder + the already-captured replica HTML.
-// Idempotent via a per-id marker so a retry won't rebuild or double-email.
-async function buildEmdashZipJob(env, id) {
+// Build & email a ready-to-run project zip (the offer modal's "No" / "Generate zip"
+// path). `target` picks the deliverable: 'emdash' → EmDash project, 'astro' → plain
+// static Astro project. Reuses the content extractor + the already-captured replica
+// HTML. Idempotent + target-scoped via per-target R2 markers so the two targets never
+// clobber each other's token or email. The marker object BODY holds the download token
+// (JSON) so /api/zip-status can hand the browser the right link per target.
+async function buildZipJob(env, id, target) {
+  const t0 = target === "astro" ? "astro" : "emdash";
   const row = await env.DB.prepare(`SELECT * FROM ec_previews WHERE id=?`).bind(id).first();
-  if (!row) { console.log(`[${id}] emdash-zip: no row`); return; }
+  if (!row) { console.log(`[${id}] ${t0}-zip: no row`); return; }
 
-  const doneMarker = `previews/${id}/.emdash-emailed`;
-  if (await env.EXPORTS.head(doneMarker)) { console.log(`[${id}] emdash-zip already done`); return; }
+  const doneMarker = `previews/${id}/.zip-${t0}.json`;
+  if (await env.EXPORTS.head(doneMarker)) { console.log(`[${id}] ${t0}-zip already done`); return; }
 
   // Reuse the exact-replica HTML we already captured, if present (design source).
   let replicaHtml = "";
@@ -64,29 +69,28 @@ async function buildEmdashZipJob(env, id) {
   } catch (_) {}
 
   const t = Date.now();
-  const { zip, filename, siteName } = await buildEmdashZip(env, {
+  const builder = t0 === "astro" ? buildAstroZip : buildEmdashZip;
+  const { zip, filename, siteName } = await builder(env, {
     id, sourceUrl: row.source_url, businessName: row.business_name, replicaHtml,
   });
 
   // Store the zip under a fresh download token (served by /api/download/<token>,
-  // 24h R2 lifecycle). Reuse a stored token on retry so we don't orphan objects.
-  let token = row.spam_reason && /^[a-f0-9]{32}$/.test(row.spam_reason) ? row.spam_reason : null;
-  if (!token) {
-    const b = new Uint8Array(16); crypto.getRandomValues(b);
-    token = [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
-  }
+  // 24h R2 lifecycle).
+  const b = new Uint8Array(16); crypto.getRandomValues(b);
+  const token = [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
   await env.EXPORTS.put(`exports/${token}.zip`, zip, {
     httpMetadata: { contentType: "application/zip", contentDisposition: `attachment; filename="${filename}"` },
   });
-  // Persist the token on the row so /api/zip-status can hand the browser the link.
-  try { await env.DB.prepare(`UPDATE ec_previews SET spam_reason=? WHERE id=?`).bind(token, id).run(); } catch (_) {}
   const origin = env.SITE_ORIGIN || "https://escapefromwp.com";
   const downloadUrl = `${origin}/api/download/${token}`;
-  console.log(`[${id}] emdash-zip built ${zip.length}b in ${((Date.now() - t) / 1000).toFixed(0)}s`);
+  console.log(`[${id}] ${t0}-zip built ${zip.length}b in ${((Date.now() - t) / 1000).toFixed(0)}s`);
 
-  await sendEmdashZipEmail(env, { to: row.email, siteName: siteName || row.business_name || "your site", downloadUrl });
-  await env.EXPORTS.put(doneMarker, new Date().toISOString(), { httpMetadata: { contentType: "text/plain" } });
-  console.log(`[${id}] emdash-zip emailed ${row.email}`);
+  await sendZipEmail(env, { to: row.email, siteName: siteName || row.business_name || "your site", downloadUrl, target: t0 });
+  // Write the done-marker LAST, with the token in its body, so zip-status only hands
+  // out a link once the zip object exists.
+  await env.EXPORTS.put(doneMarker, JSON.stringify({ token, filename, target: t0, at: new Date().toISOString() }),
+    { httpMetadata: { contentType: "application/json" } });
+  console.log(`[${id}] ${t0}-zip emailed ${row.email}`);
 }
 
 export default {
@@ -96,7 +100,8 @@ export default {
       const mode = (msg.body && msg.body.mode) || "replica";
       if (!id || !/^[0-9a-f]{32}$/.test(id)) { msg.ack(); continue; }
       try {
-        if (mode === "emdash-zip") await buildEmdashZipJob(env, id);
+        if (mode === "emdash-zip") await buildZipJob(env, id, "emdash");
+        else if (mode === "astro-zip") await buildZipJob(env, id, "astro");
         else await buildReplica(env, id);
         msg.ack();
       } catch (e) {
