@@ -161,7 +161,27 @@ export async function captureReplica(env, id, pageUrl) {
       } catch (_) {}
     });
 
-    await page.goto(base, { waitUntil: "networkidle0", timeout: 55000 });
+    // Load the page. Use networkidle2 (tolerates up to 2 lingering connections)
+    // instead of networkidle0, because many sites keep a socket open forever —
+    // live chat (Crisp/Intercom/Tawk), analytics long-poll, YouTube/video embeds —
+    // and networkidle0 would NEVER fire, timing the whole job out. If even
+    // networkidle2 doesn't settle in time, we DON'T abandon the capture: we fall
+    // back to a domcontentloaded wait and proceed with whatever rendered. A
+    // slightly-less-complete replica beats an eternal "building" page + no email.
+    try {
+      await page.goto(base, { waitUntil: "networkidle2", timeout: 45000 });
+    } catch (navErr) {
+      console.log(`[${id}] networkidle2 timed out (${String(navErr).slice(0, 80)}) — falling back to domcontentloaded`);
+      try {
+        await page.goto(base, { waitUntil: "domcontentloaded", timeout: 30000 });
+        // Give async content (images, fonts, hero) a moment to paint.
+        await new Promise((r) => setTimeout(r, 6000));
+      } catch (navErr2) {
+        // If it's already on the page from the first attempt, keep going; only
+        // bail if we truly have nothing.
+        console.log(`[${id}] domcontentloaded also failed (${String(navErr2).slice(0, 80)}) — capturing current state`);
+      }
+    }
     // Scroll to force lazy-load.
     await page.evaluate(async () => {
       await new Promise((r) => {

@@ -100,9 +100,34 @@ export default {
         else await buildReplica(env, id);
         msg.ack();
       } catch (e) {
-        console.log(`[${id}] batch ERR (${mode}) ${String(e).slice(0, 160)} — retrying`);
-        msg.retry();
+        // Cloudflare Queues expose how many times THIS message has been delivered.
+        // On the final allowed attempt, stop retrying and record the failure so the
+        // user isn't stranded on an eternal "building" page with no email. The
+        // consumer's max_retries is 3, so attempts 1..4 are possible; treat >=4 as final.
+        const attempt = msg.attempts || 1;
+        const FINAL = 4;
+        if (attempt >= FINAL) {
+          console.log(`[${id}] batch FAILED permanently (${mode}) after ${attempt} attempts: ${String(e).slice(0, 160)}`);
+          try { await markBuildFailed(env, id, mode, String(e).slice(0, 180)); } catch (_) {}
+          msg.ack(); // give up cleanly instead of infinite redelivery
+        } else {
+          console.log(`[${id}] batch ERR (${mode}) attempt ${attempt}: ${String(e).slice(0, 160)} — retrying`);
+          msg.retry();
+        }
       }
     }
   },
 };
+
+// Record a permanent build failure: flip the row to 'failed' (so the /replica page
+// shows an honest error instead of spinning forever) and drop a .failed marker in R2.
+async function markBuildFailed(env, id, mode, errText) {
+  try { await env.DB.prepare(`UPDATE ec_previews SET status='failed' WHERE id=? AND status!='dead'`).bind(id).run(); } catch (_) {}
+  const marker = `previews/${id}/.failed`;
+  try {
+    if (await env.EXPORTS.head(marker)) return;
+    await env.EXPORTS.put(marker, JSON.stringify({ mode, error: errText, at: new Date().toISOString() }), {
+      httpMetadata: { contentType: "application/json" },
+    });
+  } catch (_) {}
+}

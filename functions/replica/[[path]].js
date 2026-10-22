@@ -124,6 +124,17 @@ function offerMarkup(id) {
 </script>`;
 }
 
+function failedPage() {
+  return html(`<!doctype html><html lang="en"><head><meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Rebuild didn't finish</title>
+  <style>body{font-family:system-ui,sans-serif;background:#0b0405;color:#fff;display:grid;place-items:center;min-height:100vh;margin:0;text-align:center;padding:24px}
+  h1{font-size:1.5rem;margin:0 0 12px}p{color:#bbb;max-width:46ch;line-height:1.6;margin:0 auto 10px}a{color:#4ee36b;font-weight:600}</style></head>
+  <body><div><h1>This rebuild didn't finish.</h1>
+  <p>Something on the original site stopped us from capturing a complete copy (often a live-chat widget or a very slow-loading page). This is on us, not you.</p>
+  <p><a href="https://escapefromwp.com/liberate">← Try the rebuild again</a></p></div></body></html>`, 200);
+}
+
 export async function onRequestGet({ params, env }) {
   const id = (params.path && params.path[0] || "").toLowerCase();
   if (!/^[0-9a-f]{32}$/.test(id)) return notFound();
@@ -134,7 +145,12 @@ export async function onRequestGet({ params, env }) {
   if (row.status === "dead") return notFound();
 
   const obj = await env.EXPORTS.get(`previews/${id}/replica.html`);
-  if (!obj) return buildingPage();
+  if (!obj) {
+    // No replica yet. If the build permanently failed, tell the truth instead of
+    // spinning forever; otherwise it's still in progress — show the building page.
+    if (row.status === "failed") return failedPage();
+    return buildingPage();
+  }
 
   // Inject the offer modal just before </body> (fall back to append).
   let page = await obj.text();
