@@ -108,6 +108,16 @@ const SHIM_JS = `(function(){
       if (target.hasAttribute("aria-hidden")) {
         target.setAttribute("aria-hidden", open ? "false" : "true");
       }
+      // CRITICAL: builder drawers (Bricks x-offcanvas etc.) ship the panel with the
+      // inert attribute so the closed, off-screen menu can't be tabbed/clicked.
+      // The origin JS removes inert on open. We weren't — so the panel opened
+      // visually (aria-hidden flipped) but stayed inert: every tap INSIDE it was
+      // dead (submenu "didn't work") AND taps PASSED THROUGH it to the hero beneath
+      // (looked like it covered content but you could click what's under it).
+      // A scripted .click() bypasses inert, which is why this never showed up until
+      // a real finger-tap on a phone. Flip inert opposite to open.
+      if (open) { target.removeAttribute("inert"); target.__efwInert = true; }
+      else if (target.__efwInert) { target.setAttribute("inert", ""); }
     }
     // Also toggle the common "menu-open" flag on <body> for themes that gate the
     // mobile panel off a body class.

@@ -35,7 +35,7 @@ export const RECORDER_FN = function (opts) {
   var PASS = (opts && opts.pass) || "";  // id prefix to keep multi-pass ids unique
 
   // Attributes whose change commonly drives "open/visible" state.
-  var WATCH = ["class", "style", "hidden", "open", "aria-expanded", "aria-hidden", "aria-selected", "data-state", "data-open"];
+  var WATCH = ["class", "style", "hidden", "inert", "open", "aria-expanded", "aria-hidden", "aria-selected", "data-state", "data-open"];
 
   // Candidate toggles: a11y-driven first, then common class names. Mirrors the
   // shim's net, but here it only decides WHAT to click — the effect is recorded.
