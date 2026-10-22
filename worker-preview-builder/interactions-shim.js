@@ -102,6 +102,12 @@ const SHIM_JS = `(function(){
       if (tag === "NAV" || tag === "UL" || tag === "DIV" || tag === "SECTION" || tag === "ASIDE") {
         target.setAttribute("aria-expanded", open ? "true" : "false");
       }
+      // Offcanvas/drawer panels (Bricks x-offcanvas, many a11y drawers) are hidden
+      // via [aria-hidden="true"] and slid in when it becomes "false". If the target
+      // carries aria-hidden, flip it so the reveal transform applies.
+      if (target.hasAttribute("aria-hidden")) {
+        target.setAttribute("aria-hidden", open ? "false" : "true");
+      }
     }
     // Also toggle the common "menu-open" flag on <body> for themes that gate the
     // mobile panel off a body class.
@@ -134,9 +140,47 @@ const SHIM_JS = `(function(){
     ".accordion-toggle", ".accordion-trigger", ".accordion-header button", ".faq-question", "[class*='accordion'] button"
   ].join(",");
 
+  // Dismiss ("close X") controls: cookie banners, modals, notices, popups. Origin
+  // JS normally hides the container on click; with that JS stripped, the X does
+  // nothing. We wire these to hide their nearest dismissible ancestor.
+  var DISMISS_SELECTOR = [
+    ".cmplz-close",                 // Complianz GDPR cookie banner
+    "[class*='cookie'] [class*='close']", "[class*='cookie'][class*='close']",
+    "[class*='consent'] [class*='close']",
+    ".modal-close", ".close-modal", "[class*='modal'] [class*='close']",
+    ".popup-close", "[class*='popup'] [class*='close']",
+    "[class*='notice'] [class*='dismiss']", "[class*='dismiss']",
+    "[aria-label='Close']", "[aria-label='Close dialog']", "[aria-label='Dismiss']"
+  ].join(",");
+
+  // Containers we allow a dismiss button to hide (nearest matching ancestor).
+  var DISMISSABLE_ANCESTOR = [
+    "[class*='cookiebanner']", "[class*='cookie-banner']", "[class*='cookie']",
+    "[class*='consent']", "[role='dialog']", "[class*='modal']", "[class*='popup']",
+    "[class*='notice']", "[class*='banner']", "[aria-modal='true']"
+  ].join(",");
+
+  function wireDismiss(btn){
+    if (btn.__efwDismiss) return; btn.__efwDismiss = true;
+    if (btn.hasAttribute && btn.hasAttribute("data-efw-tgl")) return;
+    btn.addEventListener("click", function(e){
+      var box = btn.closest(DISMISSABLE_ANCESTOR);
+      if (!box) return;
+      e.preventDefault(); e.stopPropagation();
+      // Hide robustly: display:none inline wins over most theme CSS, and we also
+      // add the common hidden classes some themes animate off of.
+      box.style.setProperty("display", "none", "important");
+      box.classList.add("cmplz-hidden", "efw-dismissed");
+      box.setAttribute("aria-hidden", "true");
+    }, false);
+  }
+
   function scan(root){
-    var nodes = (root || document).querySelectorAll(SELECTOR);
+    var r = root || document;
+    var nodes = r.querySelectorAll(SELECTOR);
     for (var i=0;i<nodes.length;i++){ wireToggle(nodes[i]); }
+    var dnodes = r.querySelectorAll(DISMISS_SELECTOR);
+    for (var j=0;j<dnodes.length;j++){ wireDismiss(dnodes[j]); }
   }
 
   function init(){
