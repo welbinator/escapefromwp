@@ -168,8 +168,18 @@ export async function captureReplica(env, id, pageUrl) {
     // networkidle2 doesn't settle in time, we DON'T abandon the capture: we fall
     // back to a domcontentloaded wait and proceed with whatever rendered. A
     // slightly-less-complete replica beats an eternal "building" page + no email.
+    //
+    // PERF: this networkidle2 timeout is intentionally SHORT (18s). On sites with a
+    // live-chat widget (Crisp etc.) the network never truly idles, so networkidle2
+    // can only ever end by timing out — a long timeout just makes every such build
+    // wait the full duration for nothing. 18s is plenty for a normal site to settle,
+    // and for a chat-widget site it caps the dead wait, then the domcontentloaded
+    // fallback (+6s paint) produces a complete replica. We do NOT block the chat
+    // widget's requests: doing so makes Crisp retry its socket in a loop, generating
+    // MORE network churn and defeating the purpose (learned the hard way).
+    let blockedChat = 0; // retained for the log line below; always 0 now (no blocking)
     try {
-      await page.goto(base, { waitUntil: "networkidle2", timeout: 45000 });
+      await page.goto(base, { waitUntil: "networkidle2", timeout: 18000 });
     } catch (navErr) {
       console.log(`[${id}] networkidle2 timed out (${String(navErr).slice(0, 80)}) — falling back to domcontentloaded`);
       try {
@@ -182,6 +192,7 @@ export async function captureReplica(env, id, pageUrl) {
         console.log(`[${id}] domcontentloaded also failed (${String(navErr2).slice(0, 80)}) — capturing current state`);
       }
     }
+    if (blockedChat > 0) console.log(`[${id}] blocked ${blockedChat} live-chat/long-poll request(s) to speed up network-idle`);
     // Scroll to force lazy-load. Wrapped defensively: on some sites a late script
     // fires a client-side navigation/reload while we're scrolling, which destroys
     // the execution context ("Execution context was destroyed"). That must NOT kill
