@@ -1,0 +1,48 @@
+name: Deploy to production (Cloudflare)
+
+# Deploys on every push to main:
+#   1. Builds the Astro site and publishes dist/ to the Cloudflare Pages project
+#      "escapefromwp" (production → https://escapefromwp.com)
+#   2. Deploys the preview-builder Worker (escapefromwp-preview-builder)
+# GitHub stays the source of truth; this is the push-to-production step.
+# Requires repo secrets: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cf-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Build Astro site
+        run: npm run build
+
+      - name: Deploy frontend to Cloudflare Pages
+        run: npx wrangler@4 pages deploy dist --project-name escapefromwp --branch main --commit-dirty=true
+
+      - name: Deploy preview-builder Worker
+        working-directory: worker-preview-builder
+        run: |
+          npm ci
+          npx wrangler@4 deploy
