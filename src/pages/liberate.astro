@@ -250,7 +250,7 @@ const faqSchema = {
     .tool-result :global(.btn-ghost.ready) { background: var(--term-green); color: #06230f; border-color: var(--term-green); }
     .tool-result :global(.res-zip-group) { display: flex; flex-direction: column; gap: 8px; }
     .tool-result :global(.res-zip-row) { display: flex; align-items: stretch; gap: 10px; }
-    .tool-result :global(.res-zip-label) { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--slate); }
+    .tool-result :global(.res-zip-label) { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 700; color: var(--chalk); }
     .tool-result :global(.res-zip-field) { position: relative; display: block; flex: 1 1 auto; min-width: 0; }
     .tool-result :global(.res-zip-field::after) { content: "\25BE"; position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--slate); font-size: 12px; pointer-events: none; }
     .tool-result :global(.res-zip-select) { -webkit-appearance: none; -moz-appearance: none; appearance: none; width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); color: var(--chalk); border: 1px solid var(--steel); font-family: var(--font-mono); font-size: 14px; text-align: left; padding: 13px 38px 13px 16px; cursor: pointer; border-radius: var(--radius); transition: border-color .15s; }
@@ -452,7 +452,7 @@ const faqSchema = {
               '<option value="astro">Static Astro</option>' +
             "</select>" +
             "</span>" +
-            '<button type="button" class="btn btn-ghost res-zip-btn" id="lf-zip-btn">Generate zip</button>' +
+            '<button type="button" class="btn btn-ghost res-zip-btn" id="lf-zip-btn">GO</button>' +
             "</span>" +
           "</span>" +
         "</div>" +
