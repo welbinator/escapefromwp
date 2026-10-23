@@ -13,7 +13,7 @@
 
 import puppeteer from "@cloudflare/puppeteer";
 import { injectInteractions } from "./interactions-shim.js";
-import { RECORDER_FN, injectReplay } from "./interaction-recorder.js";
+import { RECORDER_FN, injectReplay, CONSENT_NEUTRALIZER_FN, CONSENT_SELECTORS_EXPORT, stripConsentHtml } from "./interaction-recorder.js";
 
 const SITE_ORIGIN_DEFAULT = "https://escapefromwp.com";
 
@@ -254,6 +254,20 @@ export async function captureReplica(env, id, pageUrl) {
     // partway (a mid-recording navigation can leave us at the mobile viewport).
     try { await page.setViewport({ width: 1440, height: 1800, deviceScaleFactor: 1 }); } catch (_) {}
 
+    // --- NEUTRALIZE consent/cookie banners + un-freeze off-canvas nav panels ---
+    // Done AFTER recording (so their own open/close was observed if any) but BEFORE
+    // we serialize. Consent platforms (CookieYes/Iubenda/Complianz/…) put all their
+    // dismiss logic in vendor JS we're about to strip; left in place they freeze a
+    // fixed, top-of-everything overlay that also eats clicks meant for the menu.
+    // Their JS is gone, so they add nothing to a static demo — we remove them and
+    // clear any body scroll-lock / inert nav panel they left behind.
+    try {
+      const neu = await page.evaluate(CONSENT_NEUTRALIZER_FN, CONSENT_SELECTORS_EXPORT);
+      if (neu && (neu.removed || neu.unfrozen)) {
+        console.log(`[${id}] consent neutralized: removed ${neu.removed}, unfroze ${neu.unfrozen}`);
+      }
+    } catch (e) { console.log(`[${id}] consent neutralize skipped: ${String(e).slice(0, 80)}`); }
+
     // Grab hydrated HTML (now carries the data-efw-* stamps from the recorder).
     // page.content() throws if the execution context was destroyed by a late
     // navigation/reload. Retry once after a short settle; if it still fails, fall
@@ -329,6 +343,12 @@ export async function captureReplica(env, id, pageUrl) {
       if (rep) html = html.replace(pl[1], rep);
     }
     html = html.replace(/<\/head>/i, `<style>${bundled}</style></head>`);
+
+    // Safety net: if the in-page consent neutralizer was skipped (destroyed
+    // context) a banner can survive in the serialized HTML. Strip the well-known
+    // consent containers + any lingering `inert` on off-canvas nav panels at the
+    // string level so the menu isn't blocked and no frozen cookie wall ships.
+    html = stripConsentHtml(html);
 
     // Re-wire interactions with BOTH systems, cleanly divided so neither
     // double-fires:

@@ -43,6 +43,35 @@ async function usageToday(env, email, ipHash) {
   return { user: u?.n || 0, global: g?.n || 0 };
 }
 
+// --- Command Center push (HMAC) — mirrors functions/api/contact.js ---
+async function hmacHex(secret, msg) {
+  const key = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(msg));
+  return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function notifyCommandCenter(env, lead) {
+  const secret = env.PUSH_NOTIFY_SECRET;
+  if (!secret) return;
+  const url = env.CC_NOTIFY_URL || "https://cc.crweb.design/api/push/notify";
+  try {
+    const ts = Math.floor(Date.now() / 1000);
+    const body = JSON.stringify({
+      name: lead.name || "", email: lead.email, site: "escapefromwp.com",
+      message: lead.message || "", website: lead.website || "",
+      tags: lead.tags || [], ts,
+    });
+    const sig = await hmacHex(secret, `v0:${ts}:${body}`);
+    await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-CC-Signature": `t=${ts},v0=${sig}` },
+      body,
+    });
+  } catch (_) { /* CC down — never block the build */ }
+}
+
 export async function onRequestPost({ request, env }) {
   let data;
   try { data = await request.json(); } catch { return json({ ok: false, error: "Invalid request" }, 400); }
@@ -51,6 +80,7 @@ export async function onRequestPost({ request, env }) {
   const email = (data.email || "").toString().trim();
   const honeypot = (data.website_hp || "").toString().trim();
   const tsToken = (data.turnstile_token || data["cf-turnstile-response"] || "").toString();
+  const optin = data.optin === undefined ? true : !!data.optin;
   const ip = request.headers.get("CF-Connecting-IP") || "";
 
   if (honeypot) return json({ ok: false, error: "Blocked" }, 400);
@@ -101,6 +131,17 @@ export async function onRequestPost({ request, env }) {
     if (env.PREVIEW_QUEUE) { await env.PREVIEW_QUEUE.send({ id, mode: "replica", url: base }); queued = true; }
   } catch (_) {}
   if (!queued) return json({ ok: false, error: "Build queue unavailable — please try again shortly." }, 503);
+
+  // Opt-in → file the lead in the Command Center CRM, tagged "escape".
+  // Their pasted WordPress URL becomes the contact's website. Never block the build.
+  if (optin) {
+    try {
+      await notifyCommandCenter(env, {
+        email, website: base, tags: ["escape"],
+        message: `Opted in via /liberate. Site to rescue: ${base}`,
+      });
+    } catch (_) {}
+  }
 
   const origin = new URL(request.url).origin;
   return json({

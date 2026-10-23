@@ -34,8 +34,13 @@ export const RECORDER_FN = function (opts) {
   var SETTLE = (opts && opts.settleMs) || 350;
   var PASS = (opts && opts.pass) || "";  // id prefix to keep multi-pass ids unique
 
-  // Attributes whose change commonly drives "open/visible" state.
-  var WATCH = ["class", "style", "hidden", "inert", "open", "aria-expanded", "aria-hidden", "aria-selected", "data-state", "data-open"];
+  // Attributes whose change commonly drives "open/visible" state. Includes the
+  // body/html state attributes that modal-drawer themes toggle to reveal a panel
+  // via a descendant CSS selector (e.g. Blocksy's `body[data-panel*=in] .ct-panel
+  // .active{display:flex}` — the `.active` class alone is display:none until the
+  // ancestor `data-panel` attribute is also set). Without watching these, a drawer
+  // records as "class changed" but never actually reveals on replay.
+  var WATCH = ["class", "style", "hidden", "inert", "open", "aria-expanded", "aria-hidden", "aria-selected", "data-state", "data-open", "data-panel", "data-modal", "data-offcanvas", "data-menu-open", "aria-modal"];
 
   // Candidate toggles: a11y-driven first, then common class names. Mirrors the
   // shim's net, but here it only decides WHAT to click — the effect is recorded.
@@ -361,11 +366,168 @@ export function buildReplayScript(recording) {
 })();`;
 }
 
+// ---------------------------------------------------------------------------
+// CONSENT-BANNER NEUTRALIZER
+// ---------------------------------------------------------------------------
+// Cookie/consent platforms (CookieYes, Iubenda, Complianz, Cookiebot, Borlabs,
+// Moove GDPR, Termly, Osano, OneTrust, Didomi, Quantcast/__tcfapi, Real Cookie
+// Banner, GDPR Cookie Compliance, …) render a FIXED, top-of-everything overlay
+// and put ALL of their accept/close logic in vendor JavaScript. Because replica
+// capture strips every <script>, that overlay freezes on-screen with no way to
+// dismiss it — AND, being position:fixed at a massive z-index, it intercepts
+// every click, so the menu/links behind it feel dead too. Their JS is gone, so
+// the banner adds zero value to a static demo: we remove it outright.
+//
+// We run this IN-BROWSER right before serialization (so computed styles are
+// available to catch generic full-viewport fixed overlays we don't know by name)
+// AND again as an HTML-string safety net after capture (stripConsentHtml), in
+// case the in-page pass was skipped by a late navigation/destroyed context.
+
+// Known consent-platform container selectors (removed outright).
+export var CONSENT_SELECTORS_EXPORT = [
+  // CookieYes
+  "#cky-consent", ".cky-consent-container", ".cky-consent-bar", ".cky-modal",
+  ".cky-overlay", ".cky-btn-revisit-wrapper", "[class*='cky-consent']",
+  // Iubenda
+  "#iubenda-cs-banner", ".iubenda-cs-container", "#iubenda-iframe", ".iub-cs-container",
+  // Cookiebot
+  "#CybotCookiebotDialog", "#CybotCookiebotDialogBodyUnderlay", "#CookiebotWidget",
+  // Complianz
+  "#cmplz-cookiebanner-container", ".cmplz-cookiebanner", ".cmplz-blocker",
+  "#cmplz-manage-consent", ".cc-type-categories",
+  // Borlabs
+  "#BorlabsCookieBox", ".BorlabsCookie",
+  // Moove GDPR / GDPR Cookie Consent (WP plugin)
+  "#moove_gdpr_cookie_info_bar", "#moove_gdpr_cookie_modal", ".moove-gdpr-dpuChecked",
+  // Cookie Notice & Compliance (dFactory)
+  "#cookie-notice", ".cookie-notice-container",
+  // GDPR Cookie Compliance (WebToffee / CookieLawInfo legacy)
+  "#cookie-law-info-bar", "#cookie-law-info-again", ".cli-modal",
+  // OneTrust
+  "#onetrust-banner-sdk", "#onetrust-consent-sdk", ".onetrust-pc-dark-filter",
+  // Osano
+  ".osano-cm-window", ".osano-cm-dialog",
+  // Termly
+  "#termly-code-snippet-support", ".termly-styles-root", "[data-tid='banner']",
+  // Didomi
+  "#didomi-host", "#didomi-popup",
+  // Quantcast
+  ".qc-cmp2-container", "#qc-cmp2-ui",
+  // Real Cookie Banner
+  ".rcb-banner", "[class*='real-cookie-banner']",
+  // Generic / theme-agnostic
+  "[class*='cookie-banner']", "[class*='cookie-consent']", "[class*='cookie-notice']",
+  "[id*='cookie-banner']", "[id*='cookie-consent']", "[id*='gdpr']",
+  "[aria-label*='cookie' i][role='dialog']", "[aria-label*='consent' i][role='dialog']",
+  "[class*='consent-banner']", "[class*='consent-overlay']", "[class*='gdpr-overlay']"
+];
+
+// In-browser neutralizer. Removes known consent containers, then sweeps for any
+// remaining FULL-VIEWPORT fixed/sticky overlay whose text smells of cookies and
+// kills it. Also strips `inert`/`aria-hidden`/`hidden` off off-canvas menu panels
+// (Blocksy, Elementor, etc.) that the origin JS left frozen in a disabled state,
+// and clears body scroll-locks a consent/menu library may have set. Serialized
+// and run via page.evaluate(); dependency-free.
+export const CONSENT_NEUTRALIZER_FN = function (selectors) {
+  var removed = 0, unfrozen = 0;
+  function kill(el) { if (el && el.parentNode) { el.parentNode.removeChild(el); removed++; } }
+
+  // 1) Remove by known selector.
+  for (var i = 0; i < selectors.length; i++) {
+    try {
+      var nodes = document.querySelectorAll(selectors[i]);
+      for (var j = 0; j < nodes.length; j++) kill(nodes[j]);
+    } catch (e) {}
+  }
+
+  // 2) Generic sweep: fixed/sticky, high z-index, covers most of the viewport OR
+  //    pinned to an edge, and mentions cookies/consent. Catches unnamed banners.
+  try {
+    var vw = window.innerWidth || 1440, vh = window.innerHeight || 900;
+    var all = document.body ? document.body.querySelectorAll("*") : [];
+    for (var k = 0; k < all.length; k++) {
+      var el = all[k];
+      if (!el || !el.parentNode) continue;
+      var s;
+      try { s = getComputedStyle(el); } catch (e) { continue; }
+      if (s.position !== "fixed" && s.position !== "sticky") continue;
+      var z = parseInt(s.zIndex, 10); if (isNaN(z)) z = 0;
+      if (z < 100) continue;
+      var r;
+      try { r = el.getBoundingClientRect(); } catch (e) { continue; }
+      if (r.width < vw * 0.55 && r.height < vh * 0.5) continue; // not a banner/overlay
+      var txt = (el.textContent || "").toLowerCase();
+      if (txt.length > 4000) continue; // whole-page wrapper, not a banner
+      if (/cookie|consent|gdpr|privacy|we use|tracking|accept all|opt[- ]?out/.test(txt)) {
+        kill(el); continue;
+      }
+      // A near-opaque full-screen fixed backdrop with little/no text = modal veil.
+      if (r.width >= vw * 0.92 && r.height >= vh * 0.92 && txt.trim().length < 30) kill(el);
+    }
+  } catch (e) {}
+
+  // 3) Un-freeze off-canvas menu panels: origin JS often ships them inert/hidden
+  //    and toggles the attribute on open. Our replay re-reveals via class/style,
+  //    but a lingering inert/aria-hidden blocks interaction. Strip on nav panels.
+  try {
+    var frozen = document.querySelectorAll(
+      "[inert],[aria-hidden='true']");
+    for (var f = 0; f < frozen.length; f++) {
+      var fe = frozen[f];
+      var cls = (fe.className && typeof fe.className === "string") ? fe.className : "";
+      var idn = fe.id || "";
+      if (/offcanvas|off-canvas|mobile-menu|mobile-nav|menu-panel|nav-drawer|ct-panel|side-menu|slideout|drawer/i.test(cls + " " + idn)) {
+        fe.removeAttribute("inert"); fe.removeAttribute("aria-hidden"); fe.removeAttribute("hidden"); unfrozen++;
+      }
+    }
+  } catch (e) {}
+
+  // 4) Release body scroll-lock a consent/menu lib may have left behind.
+  try {
+    var b = document.body, h = document.documentElement;
+    [b, h].forEach(function (n) {
+      if (!n) return;
+      n.style.overflow = ""; n.style.position = ""; n.style.height = "";
+      n.classList.remove("cky-consent-open", "iub-body-lock", "cmplz-modal-open",
+        "modal-open", "no-scroll", "noscroll", "overflow-hidden", "menu-open",
+        "cli-barmodal-open", "gdpr-infobar-visible");
+    });
+  } catch (e) {}
+
+  return { removed: removed, unfrozen: unfrozen };
+};
+
+// HTML-string safety net. Runs after capture in case the in-page pass missed
+// (destroyed context). Removes known consent containers by id/class and strips
+// `inert` from off-canvas nav panels. Regex-based and deliberately conservative
+// — only the well-known id/class hooks, so it can't eat real content.
+export function stripConsentHtml(html) {
+  try {
+    var ids = [
+      "iubenda-cs-banner", "cky-consent", "CybotCookiebotDialog",
+      "CybotCookiebotDialogBodyUnderlay", "cmplz-cookiebanner-container",
+      "BorlabsCookieBox", "moove_gdpr_cookie_info_bar", "moove_gdpr_cookie_modal",
+      "cookie-notice", "cookie-law-info-bar", "onetrust-banner-sdk", "didomi-host"
+    ];
+    var out = html;
+    for (var i = 0; i < ids.length; i++) {
+      // Remove a top-level <div id="..."> ... </div> (non-greedy, best-effort).
+      var re = new RegExp("<(div|aside|section)[^>]*\\bid=[\"']" + ids[i] +
+        "[\"'][^>]*>[\\s\\S]*?</\\1>", "i");
+      out = out.replace(re, "");
+    }
+    // Strip inert from off-canvas nav panels so the menu can open.
+    out = out.replace(/(<[^>]*\b(?:class|id)=["'][^"']*(?:offcanvas|off-canvas|mobile-menu|mobile-nav|ct-panel|nav-drawer|drawer)[^"']*["'][^>]*?)\sinert(=["'][^"']*["'])?/gi, "$1");
+    return out;
+  } catch (e) { return html; }
+}
+
 // Convenience: inject the replay script (+ a tiny backstop CSS) before </body>.
 export function injectReplay(html, recording) {
   try {
     var script = `<script data-efw="replay">${buildReplayScript(recording)}</script>`;
-    var css = `<style data-efw="replay-backstop">.efw-open:where(nav,ul,.sub-menu,.submenu,.dropdown-menu,[class*='dropdown'],[class*='flyout'],[class*='accordion']){display:block}</style>`;
+    var css = `<style data-efw="replay-backstop">.efw-open:where(nav,ul,.sub-menu,.submenu,.dropdown-menu,[class*='dropdown'],[class*='flyout'],[class*='accordion']){display:block}
+.efw-open:where([class*='offcanvas'],[class*='off-canvas'],[class*='ct-panel'],[class*='side-menu'],[class*='nav-drawer'],[class*='drawer'],[class*='mobile-menu'],[class*='mobile-nav'],[role='dialog']){display:flex!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;transform:none!important}</style>`;
     var out = html;
     if (/<\/head>/i.test(out)) out = out.replace(/<\/head>/i, css + "</head>"); else out = css + out;
     if (/<\/body>/i.test(out)) out = out.replace(/<\/body>/i, script + "</body>"); else out = out + script;
