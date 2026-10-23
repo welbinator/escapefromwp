@@ -497,7 +497,7 @@ const faqSchema = {
         btn.disabled = true;
         if (sel) sel.disabled = true;
         btn.classList.add("building");
-        btn.innerHTML = '<span class="efw-btn-spin"></span> Building your ' + esc(label) + " now…";
+        btn.innerHTML = '<span class="efw-btn-spin"></span> Building…';
         if (hint) hint.textContent = "Packaging your content and an exact copy of your site into a ready-to-run " + label + ". This usually takes a minute or two — keep this page open.";
 
         // 1) Kick off the build (idempotent on the server).
