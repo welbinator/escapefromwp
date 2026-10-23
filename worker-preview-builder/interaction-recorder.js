@@ -338,6 +338,48 @@ export function buildReplayScript(recording) {
       for (var rc=0; rc<rt.changes.length; rc++){ findEl(rt.changes[rc]); }
     }
     for (var i=0;i<REC.toggles.length;i++){ wire(REC.toggles[i]); }
+
+    // Wire CLOSE affordances the recorder never clicked. A full-screen off-canvas
+    // panel covers the hamburger once open, so re-tapping it to close is impossible
+    // for the user — they tap the panel's X button or the backdrop. Neither is a
+    // recorded toggle. Here we find any close control / backdrop and, on click,
+    // close every currently-open recorded surface (reversing its recorded state).
+    function closeAllOpen(){
+      for (var i=0;i<REC.toggles.length;i++){
+        var s = REC.toggles[i].__surface;
+        if (s && s.classList.contains("efw-open")) s.click();
+      }
+    }
+    function isOpen(){
+      for (var i=0;i<REC.toggles.length;i++){
+        var s = REC.toggles[i].__surface;
+        if (s && s.classList.contains("efw-open")) return true;
+      }
+      return false;
+    }
+    // Delegated: catch clicks on close buttons AND on a panel's own backdrop (a
+    // click landing directly on the fixed .ct-panel / [role=dialog] container, not
+    // its inner content, is a backdrop dismiss). Capture phase so it beats links.
+    var CLOSE_SEL = "[class*='toggle-close'],[class*='panel-close'],[class*='close-menu']," +
+      "[class*='menu-close'],[class*='offcanvas-close'],[class*='drawer-close']," +
+      "[aria-label*='close' i],[data-micromodal-close],.ct-toggle-close";
+    var PANEL_SEL = "[class*='offcanvas'],[class*='off-canvas'],[class*='ct-panel']," +
+      "[class*='side-menu'],[class*='nav-drawer'],[class*='mobile-menu'],[role='dialog']";
+    document.addEventListener("click", function(e){
+      if (!isOpen()) return;
+      var t = e.target;
+      if (t && t.closest){
+        if (t.closest(CLOSE_SEL)){ e.preventDefault(); e.stopPropagation(); closeAllOpen(); return; }
+        // Backdrop: the click target IS a panel container (not inner content).
+        var pan = t.matches && t.matches(PANEL_SEL) ? t : null;
+        if (pan){ e.preventDefault(); e.stopPropagation(); closeAllOpen(); return; }
+      }
+    }, true);
+    // Esc closes too (expected modal behavior).
+    document.addEventListener("keydown", function(e){
+      if ((e.key === "Escape" || e.keyCode === 27) && isOpen()) closeAllOpen();
+    });
+
     // Close open dropdowns on outside click (desktop flyouts). Use the element
     // that actually carries the toggle (the wired surface — anchor or button), not
     // just the recorded button, so a tap ON the label isn't misread as "outside"
@@ -527,7 +569,9 @@ export function injectReplay(html, recording) {
   try {
     var script = `<script data-efw="replay">${buildReplayScript(recording)}</script>`;
     var css = `<style data-efw="replay-backstop">.efw-open:where(nav,ul,.sub-menu,.submenu,.dropdown-menu,[class*='dropdown'],[class*='flyout'],[class*='accordion']){display:block}
-.efw-open:where([class*='offcanvas'],[class*='off-canvas'],[class*='ct-panel'],[class*='side-menu'],[class*='nav-drawer'],[class*='drawer'],[class*='mobile-menu'],[class*='mobile-nav'],[role='dialog']){display:flex!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;transform:none!important}</style>`;
+.efw-open:where([class*='offcanvas'],[class*='off-canvas'],[class*='ct-panel'],[class*='side-menu'],[class*='nav-drawer'],[class*='drawer'],[class*='mobile-menu'],[class*='mobile-nav'],[role='dialog']){display:flex!important;opacity:1!important;visibility:visible!important;pointer-events:auto!important;transform:none!important}
+li:has(> button[aria-expanded='true']) > :where(ul,.sub-menu,.submenu,.children,.sub-nav),li:has(> a[aria-expanded='true']) > :where(ul,.sub-menu,.submenu,.children,.sub-nav),li:has(> *[aria-expanded='true']) > :where(ul,.sub-menu,.submenu){display:block!important;opacity:1!important;visibility:visible!important;height:auto!important;max-height:none!important;transform:none!important;position:static!important;pointer-events:auto!important}
+button[aria-expanded='true'] + :where(ul,.sub-menu,.submenu),*[aria-expanded='true'] + :where(ul,.sub-menu,.submenu){display:block!important;opacity:1!important;visibility:visible!important;height:auto!important;max-height:none!important}</style>`;
     var out = html;
     if (/<\/head>/i.test(out)) out = out.replace(/<\/head>/i, css + "</head>"); else out = css + out;
     if (/<\/body>/i.test(out)) out = out.replace(/<\/body>/i, script + "</body>"); else out = out + script;
