@@ -249,14 +249,15 @@ const faqSchema = {
     .tool-result :global(.btn-ghost.building) { border-color: var(--steel); color: var(--slate); }
     .tool-result :global(.btn-ghost.ready) { background: var(--term-green); color: #06230f; border-color: var(--term-green); }
     .tool-result :global(.res-zip-group) { display: flex; flex-direction: column; gap: 8px; }
+    .tool-result :global(.res-zip-row) { display: flex; align-items: stretch; gap: 10px; }
     .tool-result :global(.res-zip-label) { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--slate); }
-    .tool-result :global(.res-zip-field) { position: relative; display: block; }
+    .tool-result :global(.res-zip-field) { position: relative; display: block; flex: 1 1 auto; min-width: 0; }
     .tool-result :global(.res-zip-field::after) { content: "\25BE"; position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--slate); font-size: 12px; pointer-events: none; }
     .tool-result :global(.res-zip-select) { -webkit-appearance: none; -moz-appearance: none; appearance: none; width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); color: var(--chalk); border: 1px solid var(--steel); font-family: var(--font-mono); font-size: 14px; text-align: left; padding: 13px 38px 13px 16px; cursor: pointer; border-radius: var(--radius); transition: border-color .15s; }
     .tool-result :global(.res-zip-select:hover) { border-color: var(--steel-lit); }
     .tool-result :global(.res-zip-select:focus) { outline: none; border-color: var(--slate); }
     .tool-result :global(.res-zip-select:disabled) { opacity: .6; cursor: default; }
-    .tool-result :global(.res-zip-group .res-zip-btn) { margin-top: 2px; }
+    .tool-result :global(.res-zip-group .res-zip-btn) { flex: 0 0 auto; width: auto; white-space: nowrap; padding-left: 20px; padding-right: 20px; }
     .tool-result :global(.efw-btn-spin) { width: 15px; height: 15px; border: 2px solid var(--steel); border-top-color: var(--term-green); border-radius: 50%; display: inline-block; animation: efw-spin 0.8s linear infinite; flex-shrink: 0; }
     .tool-result :global(.res-zip-hint) { font-size: 13px; color: var(--slate); line-height: 1.6; margin: 0 0 16px; }
     .tool-result :global(.res-zip-hint strong) { color: var(--chalk); }
@@ -444,13 +445,15 @@ const faqSchema = {
           '<a class="btn btn-primary res-download" href="' + esc(replicaUrl) + '" target="_blank" rel="noopener">' + viewLabel + "</a>" +
           '<span class="res-zip-group">' +
             '<label class="res-zip-label" for="lf-zip-target">Generate zip</label>' +
+            '<span class="res-zip-row">' +
             '<span class="res-zip-field">' +
             '<select class="res-zip-select" id="lf-zip-target" aria-label="Choose export format">' +
               '<option value="emdash">EmDash</option>' +
               '<option value="astro">Static Astro</option>' +
             "</select>" +
             "</span>" +
-            '<button type="button" class="btn btn-ghost res-zip-btn" id="lf-zip-btn">⬇ Generate zip</button>' +
+            '<button type="button" class="btn btn-ghost res-zip-btn" id="lf-zip-btn">Generate zip</button>' +
+            "</span>" +
           "</span>" +
         "</div>" +
         '<p class="res-zip-hint" id="lf-zip-hint">Prefer to build it yourself? Pick a format and generate a ready-to-run project — your content baked in, plus an exact copy of your site to match the design. <strong>EmDash</strong> gives you a CMS-backed site; <strong>Static Astro</strong> gives you a plain static site (no CMS).</p>' +
