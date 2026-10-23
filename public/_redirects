@@ -1,0 +1,3 @@
+# Canonical sitemap: Astro emits sitemap-index.xml; redirect the conventional
+# /sitemap.xml path so tools/humans that guess it land on the real index.
+/sitemap.xml  /sitemap-index.xml  301
