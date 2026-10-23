@@ -276,14 +276,19 @@ export async function sendOfferLeadEmail(env, { siteName, sourceUrl, replicaUrl,
 
 // -------- Offer modal: NO → email the customer their EmDash site download -----
 
-export async function sendZipEmail(env, { to, siteName, downloadUrl, target }) {
+export async function sendZipEmail(env, { to, siteName, downloadUrl, target, kind }) {
   const apiKey = env.BREVO_API_KEY;
   if (!apiKey) return { ok: false, error: "email not configured" };
   const isAstro = target === "astro";
+  const isBot = kind === "bot";
   const label = isAstro ? "static Astro site" : "EmDash site";
-  const blurb = isAstro
-    ? `We packaged <strong>${escapeHtml(siteName)}</strong> as a ready-to-run <strong>static Astro</strong> project — your content baked in as Astro content collections, plus an exact copy of your original site to match the design, and step-by-step instructions your AI assistant can follow. No CMS, no database.`
-    : `We packaged <strong>${escapeHtml(siteName)}</strong> as a ready-to-run EmDash + Astro project — your content baked in, plus an exact copy of your original site to match the design, and step-by-step instructions your AI assistant can follow.`;
+  const fmt = isAstro ? "static Astro" : "EmDash + Astro";
+  const blurb = isBot
+    ? `We packaged <strong>${escapeHtml(siteName)}</strong> as a <strong>${fmt}</strong> content package for your AI coding assistant — your content baked in, an exact copy of your original site to match the design, and an <strong>AGENT_INSTRUCTIONS.md</strong> prompt that tells the bot how to assemble it.`
+    : `We packaged <strong>${escapeHtml(siteName)}</strong> as a ready-to-run <strong>${fmt}</strong> project you can set up yourself — your content baked in, your exact design and working menus already in place. No AI needed.`;
+  const nextStep = isBot
+    ? `Unzip it, then hand the whole folder to your AI coding assistant — open <strong>AGENT_INSTRUCTIONS.md</strong> for the prompt.`
+    : `Unzip it, open <strong>README.md</strong>, and run the couple of commands it lists.`;
   const html = `<!doctype html><html><body style="font-family:Arial,sans-serif;background:#faf9f8;margin:0;padding:24px">
   <table role="presentation" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #eee">
     <tr><td style="background:#0b0405;padding:22px 28px">
@@ -293,7 +298,7 @@ export async function sendZipEmail(env, { to, siteName, downloadUrl, target }) {
       <h2 style="margin:0 0 10px;color:#111">Your ${label} is ready to download.</h2>
       <p style="color:#555;line-height:1.6;margin:0 0 20px">${blurb}</p>
       <p style="margin:0 0 22px"><a href="${downloadUrl}" style="background:#4ee36b;color:#06230f;padding:13px 26px;border-radius:4px;text-decoration:none;font-weight:700;font-size:15px">⬇ Download your ${label}</a></p>
-      <p style="color:#888;font-size:13px;line-height:1.6;margin:0 0 6px">Unzip it, open <strong>README.md</strong>, and run <code>npm install</code> then <code>npm run dev</code>. This link is good for 24 hours. Changed your mind and want us to just build and host it for $49/mo? Reply to this email.</p>
+      <p style="color:#888;font-size:13px;line-height:1.6;margin:0 0 6px">${nextStep} This link is good for 24 hours. Changed your mind and want us to just build and host it for $49/mo? Reply to this email.</p>
     </td></tr>
     <tr><td style="background:#faf9f8;padding:16px 28px;color:#999;font-size:11px;font-family:'Courier New',monospace">
       Escape From WP &middot; WordPress migration &amp; rescue &middot; escapefromwp.com

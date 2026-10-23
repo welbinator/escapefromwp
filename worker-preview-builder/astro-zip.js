@@ -409,7 +409,8 @@ const label = ${JSON.stringify(coll)};
 }
 
 // Main entry: returns { zip: Uint8Array, filename, siteName } or throws.
-export async function buildAstroZip(env, { id, sourceUrl, businessName, replicaHtml }) {
+export async function buildAstroZip(env, { id, sourceUrl, businessName, replicaHtml, kind }) {
+  const k0 = kind === "bot" ? "bot" : "scripts";
   const base = normalizeSiteUrl(sourceUrl) || sourceUrl;
   const extract = await extractSite(base, { maxEntriesPerType: 500 });
   if (!extract || !extract.ok) {
@@ -464,10 +465,13 @@ export async function buildAstroZip(env, { id, sourceUrl, businessName, replicaH
         for (const a of local.assets) files.push(a);
         prebuiltHome = true;
 
-        // 3b) FULL SERVER-SIDE PRE-RENDER. Extract the homepage shell and stamp a
-        //     real route for every collection entry — no external bot assembly.
-        //     Homepage stays public/index.html; inner pages reuse its exact chrome.
-        const shell = extractShell(local.html);
+        // 3b) FULL SERVER-SIDE PRE-RENDER (kind='scripts' only). Extract the homepage
+        //     shell and stamp a real route for every collection entry — no external
+        //     bot assembly. For kind='bot' we SKIP this so the zip ships the content +
+        //     AGENT_INSTRUCTIONS playbook for an AI assistant to assemble instead.
+        //     Either way the homepage (public/index.html) carries the data-efw menu
+        //     replay script, so menus work in both.
+        const shell = k0 === "bot" ? null : extractShell(local.html);
         if (shell) {
           files.push({ name: "src/lib/shell.json", data: JSON.stringify(shell) });
           files.push({ name: "src/layouts/Base.astro", data: baseLayout() });
@@ -526,6 +530,6 @@ No WordPress required.
 `});
 
   const zip = zipSync(files);
-  const filename = `${siteSlug}-astro-site.zip`;
+  const filename = `${siteSlug}-astro-${k0 === "bot" ? "forbot" : "site"}.zip`;
   return { zip, filename, siteName };
 }

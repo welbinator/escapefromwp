@@ -502,7 +502,8 @@ ${handoffMessage(siteName, totalEntries)}
 }
 
 // Main entry: returns { zip: Uint8Array, filename, siteName } or throws.
-export async function buildEmdashZip(env, { id, sourceUrl, businessName, replicaHtml }) {
+export async function buildEmdashZip(env, { id, sourceUrl, businessName, replicaHtml, kind }) {
+  const k0 = kind === "bot" ? "bot" : "scripts";
   const base = normalizeSiteUrl(sourceUrl) || sourceUrl;
   const extract = await extractSite(base, { maxEntriesPerType: 500 });
   if (!extract || !extract.ok) {
@@ -557,7 +558,7 @@ export async function buildEmdashZip(env, { id, sourceUrl, businessName, replica
   // as its final numbered step — NOT as a separate file. A second file doubled the chance
   // an agent read one and missed the other (reported by a real agent), so it's inlined.
   files.push({ name: "AGENT_INSTRUCTIONS.md", data: agentInstructions(siteName, host, stats, totalEntries, menuData, prebuiltHome) });
-  files.push({ name: "README.md", data:
+  const readmeBot =
 `# ${siteName} — your EmDash content package
 
 Everything from **${host}**, packaged for **EmDash CMS** — with your content already
@@ -584,9 +585,42 @@ Your ${totalEntries} entries load during that setup step. Then open
 fuse your exact design (reference/your-exact-site.html) on top.
 
 No WordPress required.
-`});
+`;
+  const readmeScripts =
+`# ${siteName} — your EmDash site (set up yourself, no AI)
+
+Everything from **${host}**, packaged as a ready-to-run **EmDash CMS** site —
+your content baked into a seed, and your exact design${prebuiltHome ? " already built as the live homepage" : " included as a reference"}.
+Your mobile menu, dropdowns, and accordions already work (the interaction scripts
+are baked into the homepage) — no WordPress, no jQuery.
+
+## Run it — a few commands
+\`\`\`
+# 1. Scaffold the real EmDash starter (correct wiring out of the box)
+npm create astro@latest my-site -- --template @emdash-cms/template-starter-cloudflare
+
+# 2. Copy THIS folder's contents into my-site/ (overwrite seed/seed.json;
+#    keep public/index.html + public/_site/ so the design & menus come along)
+cp -r ./* my-site/        # or drag the files in
+cd my-site
+
+# 3. Install and run
+npm install
+npm run dev               # opens http://localhost:4321
+\`\`\`
+
+- Your homepage renders immediately at \`/\`${prebuiltHome ? " from \`public/index.html\` — pixel-identical to your old site, menus working" : ""}.
+- To load your ${totalEntries} content entries into the CMS, open
+  \`http://localhost:4321/_emdash/admin\`, complete the one-time setup, and choose
+  **"include content"** — that's when EmDash imports \`seed/seed.json\`.
+- Deploy with \`npm run build\` then push \`dist/\` to Cloudflare Pages (see EmDash docs).
+
+That's the whole process — no AI assistant needed. If you'd rather hand it to an AI
+coding assistant, \`AGENT_INSTRUCTIONS.md\` has a prompt for that too.
+`;
+  files.push({ name: "README.md", data: k0 === "bot" ? readmeBot : readmeScripts });
 
   const zip = zipSync(files);
-  const filename = `${siteSlug}-emdash-site.zip`;
+  const filename = `${siteSlug}-emdash-${k0 === "bot" ? "forbot" : "site"}.zip`;
   return { zip, filename, siteName };
 }

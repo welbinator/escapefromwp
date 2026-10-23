@@ -53,13 +53,16 @@ async function buildReplica(env, id) {
 // HTML. Idempotent + target-scoped via per-target R2 markers so the two targets never
 // clobber each other's token or email. The marker object BODY holds the download token
 // (JSON) so /api/zip-status can hand the browser the right link per target.
-async function buildZipJob(env, id, target) {
+async function buildZipJob(env, id, target, kind) {
   const t0 = target === "astro" ? "astro" : "emdash";
+  const k0 = kind === "bot" ? "bot" : "scripts";
   const row = await env.DB.prepare(`SELECT * FROM ec_previews WHERE id=?`).bind(id).first();
-  if (!row) { console.log(`[${id}] ${t0}-zip: no row`); return; }
+  if (!row) { console.log(`[${id}] ${t0}-${k0}-zip: no row`); return; }
 
-  const doneMarker = `previews/${id}/.zip-${t0}.json`;
-  if (await env.EXPORTS.head(doneMarker)) { console.log(`[${id}] ${t0}-zip already done`); return; }
+  // Marker is scoped by target AND kind so all four outputs (emdash/astro ×
+  // scripts/bot) have independent tokens and never clobber each other.
+  const doneMarker = `previews/${id}/.zip-${t0}-${k0}.json`;
+  if (await env.EXPORTS.head(doneMarker)) { console.log(`[${id}] ${t0}-${k0}-zip already done`); return; }
 
   // Reuse the exact-replica HTML we already captured, if present (design source).
   let replicaHtml = "";
@@ -71,7 +74,7 @@ async function buildZipJob(env, id, target) {
   const t = Date.now();
   const builder = t0 === "astro" ? buildAstroZip : buildEmdashZip;
   const { zip, filename, siteName } = await builder(env, {
-    id, sourceUrl: row.source_url, businessName: row.business_name, replicaHtml,
+    id, sourceUrl: row.source_url, businessName: row.business_name, replicaHtml, kind: k0,
   });
 
   // Store the zip under a fresh download token (served by /api/download/<token>,
@@ -83,14 +86,14 @@ async function buildZipJob(env, id, target) {
   });
   const origin = env.SITE_ORIGIN || "https://escapefromwp.com";
   const downloadUrl = `${origin}/api/download/${token}`;
-  console.log(`[${id}] ${t0}-zip built ${zip.length}b in ${((Date.now() - t) / 1000).toFixed(0)}s`);
+  console.log(`[${id}] ${t0}-${k0}-zip built ${zip.length}b in ${((Date.now() - t) / 1000).toFixed(0)}s`);
 
-  await sendZipEmail(env, { to: row.email, siteName: siteName || row.business_name || "your site", downloadUrl, target: t0 });
+  await sendZipEmail(env, { to: row.email, siteName: siteName || row.business_name || "your site", downloadUrl, target: t0, kind: k0 });
   // Write the done-marker LAST, with the token in its body, so zip-status only hands
   // out a link once the zip object exists.
-  await env.EXPORTS.put(doneMarker, JSON.stringify({ token, filename, target: t0, at: new Date().toISOString() }),
+  await env.EXPORTS.put(doneMarker, JSON.stringify({ token, filename, target: t0, kind: k0, at: new Date().toISOString() }),
     { httpMetadata: { contentType: "application/json" } });
-  console.log(`[${id}] ${t0}-zip emailed ${row.email}`);
+  console.log(`[${id}] ${t0}-${k0}-zip emailed ${row.email}`);
 }
 
 export default {
@@ -98,10 +101,11 @@ export default {
     for (const msg of batch.messages) {
       const id = msg.body && msg.body.id;
       const mode = (msg.body && msg.body.mode) || "replica";
+      const kind = (msg.body && msg.body.kind) || "scripts";
       if (!id || !/^[0-9a-f]{32}$/.test(id)) { msg.ack(); continue; }
       try {
-        if (mode === "emdash-zip") await buildZipJob(env, id, "emdash");
-        else if (mode === "astro-zip") await buildZipJob(env, id, "astro");
+        if (mode === "emdash-zip") await buildZipJob(env, id, "emdash", kind);
+        else if (mode === "astro-zip") await buildZipJob(env, id, "astro", kind);
         else await buildReplica(env, id);
         msg.ack();
       } catch (e) {

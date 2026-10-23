@@ -257,7 +257,7 @@ const faqSchema = {
     .tool-result :global(.btn-ghost.building) { border-color: var(--steel); color: var(--slate); }
     .tool-result :global(.btn-ghost.ready) { background: var(--term-green); color: #06230f; border-color: var(--term-green); }
     .tool-result :global(.res-zip-group) { display: flex; flex-direction: column; gap: 8px; }
-    .tool-result :global(.res-zip-row) { display: flex; align-items: stretch; gap: 10px; }
+    .tool-result :global(.res-zip-row) { display: flex; align-items: stretch; gap: 10px; flex-wrap: wrap; }
     .tool-result :global(.res-zip-label) { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 700; color: var(--chalk); }
     .tool-result :global(.res-zip-field) { position: relative; display: block; flex: 1 1 auto; min-width: 0; }
     .tool-result :global(.res-zip-field::after) { content: "\25BE"; position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--slate); font-size: 12px; pointer-events: none; }
@@ -266,7 +266,10 @@ const faqSchema = {
     .tool-result :global(.res-zip-select:focus) { outline: none; border-color: var(--slate); }
     .tool-result :global(.res-zip-select:disabled) { opacity: .6; cursor: default; }
     .tool-result :global(.res-zip-select option) { background: #140d0e; color: #f3efe9; }
-    .tool-result :global(.res-zip-group .res-zip-btn) { flex: 0 0 auto; width: auto; white-space: nowrap; padding-left: 20px; padding-right: 20px; }
+    .tool-result :global(.res-zip-group .res-zip-btn) { flex: 1 1 auto; width: auto; white-space: normal; padding-left: 18px; padding-right: 18px; }
+    .tool-result :global(.res-zip-field) { flex: 1 1 100%; }
+    .tool-result :global(.res-zip-btn-alt) { opacity: .82; }
+    .tool-result :global(.res-zip-btn-alt:hover) { opacity: 1; }
     .tool-result :global(.efw-btn-spin) { width: 15px; height: 15px; border: 2px solid var(--steel); border-top-color: var(--term-green); border-radius: 50%; display: inline-block; animation: efw-spin 0.8s linear infinite; flex-shrink: 0; }
     .tool-result :global(.res-zip-hint) { font-size: 13px; color: var(--slate); line-height: 1.6; margin: 0 0 16px; }
     .tool-result :global(.res-zip-hint strong) { color: var(--chalk); }
@@ -454,19 +457,20 @@ const faqSchema = {
         '<div class="res-actions">' +
           '<a class="btn btn-primary res-download" href="' + esc(replicaUrl) + '" target="_blank" rel="noopener">' + viewLabel + "</a>" +
           '<span class="res-zip-group">' +
-            '<label class="res-zip-label" for="lf-zip-target">Generate zip</label>' +
+            '<label class="res-zip-label" for="lf-zip-target">Build a downloadable site</label>' +
             '<span class="res-zip-row">' +
             '<span class="res-zip-field">' +
-            '<select class="res-zip-select" id="lf-zip-target" aria-label="Choose export format">' +
-              '<option value="emdash">EmDash</option>' +
+            '<select class="res-zip-select" id="lf-zip-target" aria-label="Choose site format">' +
+              '<option value="emdash">EmDash (CMS)</option>' +
               '<option value="astro">Static Astro</option>' +
             "</select>" +
             "</span>" +
-            '<button type="button" class="btn btn-ghost res-zip-btn" id="lf-zip-btn">GO</button>' +
+            '<button type="button" class="btn btn-ghost res-zip-btn" id="lf-zip-scripts" data-kind="scripts">⚙️ Build a zip I\'ll set up myself</button>' +
+            '<button type="button" class="btn btn-ghost res-zip-btn res-zip-btn-alt" id="lf-zip-bot" data-kind="bot">🤖 Build a zip for an AI bot</button>' +
             "</span>" +
           "</span>" +
         "</div>" +
-        '<p class="res-zip-hint" id="lf-zip-hint">Prefer to build it yourself? Pick a format and generate a ready-to-run project — your content baked in, plus an exact copy of your site to match the design. <strong>EmDash</strong> gives you a CMS-backed site; <strong>Static Astro</strong> gives you a plain static site (no CMS).</p>' +
+        '<p class="res-zip-hint" id="lf-zip-hint">Pick a format, then choose how you want to finish it. <strong>Set up myself</strong> gives you a ready-to-run project — install, run a couple commands, done (no AI needed). <strong>For an AI bot</strong> gives you the content plus instructions to hand your AI coding assistant. Either way your exact design and working menus are baked in.</p>' +
         '<p class="res-expiry">' + emailLine + " Like it? Reply to that email and we'll put it on your own domain and handle any changes you want.</p>" +
         '<button type="button" class="res-again" id="lf-again">↻ Rebuild another site</button>';
 
@@ -476,82 +480,97 @@ const faqSchema = {
     }
 
     // ---- Full site (.zip) — triggered from the result card ------------------
-    // Reuses the already-created preview row: /api/replica-offer {choice:'no',target}
-    // enqueues the '<target>-zip' worker job, then /api/zip-status is polled (per
-    // target) until the zip + download token are ready. target ∈ {emdash, astro}.
+    // Two kinds × two targets. kind='scripts' → ready-to-run project (no AI);
+    // kind='bot' → content + AGENT_INSTRUCTIONS for an AI assistant. target ∈
+    // {emdash, astro}. Reuses the preview row: /api/replica-offer {choice:'no',
+    // target, kind} enqueues the worker job; /api/zip-status?id&target&kind is
+    // polled (scoped per target+kind so the four outputs never collide).
     function wireZipButton(previewId, siteName) {
-      const btn = document.getElementById("lf-zip-btn");
-      const hint = document.getElementById("lf-zip-hint");
       const sel = document.getElementById("lf-zip-target");
-      if (!btn || !previewId) return;
+      const hint = document.getElementById("lf-zip-hint");
+      const btns = [document.getElementById("lf-zip-scripts"), document.getElementById("lf-zip-bot")].filter(Boolean);
+      if (!btns.length || !previewId) return;
 
-      // Human label for the currently-selected format (for button/hint copy).
       function fmtLabel() {
         const v = sel ? sel.value : "emdash";
         return v === "astro" ? "static Astro site" : "EmDash site";
       }
+      function kindLabel(kind) {
+        return kind === "bot" ? "AI-bot package" : "ready-to-run project";
+      }
+      function lockButtons(disabled) {
+        btns.forEach((b) => { b.disabled = disabled; });
+        if (sel) sel.disabled = disabled;
+      }
 
-      btn.addEventListener("click", async function () {
-        const target = sel ? sel.value : "emdash";
-        const label = fmtLabel();
-        btn.disabled = true;
-        if (sel) sel.disabled = true;
-        btn.classList.add("building");
-        btn.innerHTML = '<span class="efw-btn-spin"></span> Building…';
-        if (hint) hint.textContent = "Packaging your content and an exact copy of your site into a ready-to-run " + label + ". This usually takes a minute or two — keep this page open.";
+      btns.forEach((btn) => {
+        const kind = btn.getAttribute("data-kind") || "scripts";
+        const baseLabel = btn.textContent;
+        btn.addEventListener("click", async function () {
+          const target = sel ? sel.value : "emdash";
+          const label = fmtLabel();
+          lockButtons(true);
+          btn.classList.add("building");
+          btn.innerHTML = '<span class="efw-btn-spin"></span> Building…';
+          if (hint) hint.textContent = "Packaging your " + kindLabel(kind) + " — your content, your exact design, and working menus baked into a " + label + ". This usually takes a minute or two — keep this page open.";
 
-        // 1) Kick off the build (idempotent on the server).
-        try {
-          const kick = await fetch(apiBase() + "/api/replica-offer", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: previewId, choice: "no", target: target }),
-          });
-          const kd = await kick.json().catch(() => ({}));
-          if (!kick.ok || !kd.ok) {
-            return zipError(btn, hint, sel, (kd && kd.error) || "Couldn't start the export. Please try again.");
-          }
-        } catch (_) {
-          return zipError(btn, hint, sel, "Network error starting the export. Please try again.");
-        }
-
-        // 2) Poll for the finished zip (~up to 5 min), scoped to this target.
-        let downloadUrl = null;
-        for (let i = 0; i < 50; i++) {
-          await new Promise((r) => setTimeout(r, 6000));
+          // 1) Kick off the build (idempotent on the server, scoped by target+kind).
           try {
-            const s = await fetch(apiBase() + "/api/zip-status?id=" + encodeURIComponent(previewId) + "&target=" + encodeURIComponent(target), { cache: "no-store" });
-            const sd = await s.json().catch(() => ({}));
-            if (sd && sd.ok && sd.ready && sd.download_url) { downloadUrl = sd.download_url; break; }
-          } catch (_) {}
-        }
+            const kick = await fetch(apiBase() + "/api/replica-offer", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id: previewId, choice: "no", target: target, kind: kind }),
+            });
+            const kd = await kick.json().catch(() => ({}));
+            if (!kick.ok || !kd.ok) {
+              return zipError(btn, hint, baseLabel, (kd && kd.error) || "Couldn't start the build. Please try again.");
+            }
+          } catch (_) {
+            return zipError(btn, hint, baseLabel, "Network error starting the build. Please try again.");
+          }
 
-        if (!downloadUrl) {
-          // Build is still running — the email will carry the link.
-          btn.classList.remove("building");
-          btn.innerHTML = "⬇ Still building — check your email";
-          if (hint) hint.innerHTML = "Your " + esc(label) + " is taking a little longer. We'll <strong>email you the download link</strong> the moment it's ready (good for 24 hours).";
-          return;
-        }
+          // 2) Poll for the finished zip (~up to 5 min), scoped to this target+kind.
+          let downloadUrl = null;
+          for (let i = 0; i < 50; i++) {
+            await new Promise((r) => setTimeout(r, 6000));
+            try {
+              const s = await fetch(apiBase() + "/api/zip-status?id=" + encodeURIComponent(previewId) + "&target=" + encodeURIComponent(target) + "&kind=" + encodeURIComponent(kind), { cache: "no-store" });
+              const sd = await s.json().catch(() => ({}));
+              if (sd && sd.ok && sd.ready && sd.download_url) { downloadUrl = sd.download_url; break; }
+            } catch (_) {}
+          }
 
-        // 3) Done — swap the button out for a real download link (fresh element,
-        // so the build click-listener is gone and a second tap just re-downloads).
-        const dl = document.createElement("a");
-        dl.className = "btn btn-ghost ready";
-        dl.href = downloadUrl;
-        dl.setAttribute("download", "");
-        dl.textContent = "⬇ Download your " + label + " (.zip)";
-        btn.replaceWith(dl);
-        if (sel) sel.disabled = true;
-        if (hint) hint.innerHTML = "✓ Ready! We've also <strong>emailed you this link</strong> so you don't lose it. It works for <strong>24 hours</strong>. Unzip it, open <code>README.md</code>, and follow the steps — or hand the folder to your AI coding assistant.";
+          if (!downloadUrl) {
+            btn.classList.remove("building");
+            btn.innerHTML = "⬇ Still building — check your email";
+            lockButtons(false);
+            if (hint) hint.innerHTML = "Your " + esc(label) + " is taking a little longer. We'll <strong>email you the download link</strong> the moment it's ready (good for 24 hours).";
+            return;
+          }
+
+          // 3) Done — swap this button for a real download link (fresh element, so a
+          //    second tap just re-downloads). The OTHER button re-enables.
+          const dl = document.createElement("a");
+          dl.className = "btn btn-ghost ready";
+          dl.href = downloadUrl;
+          dl.setAttribute("download", "");
+          dl.textContent = "⬇ Download your " + label + " (.zip)";
+          btn.replaceWith(dl);
+          if (sel) sel.disabled = false;
+          document.querySelectorAll(".res-zip-btn").forEach((b) => { b.disabled = false; });
+          if (hint) hint.innerHTML = kind === "bot"
+            ? "✓ Ready! We've also <strong>emailed you this link</strong> (good for <strong>24 hours</strong>). Unzip it and hand the whole folder to your AI coding assistant — open <code>AGENT_INSTRUCTIONS.md</code> for the prompt."
+            : "✓ Ready! We've also <strong>emailed you this link</strong> (good for <strong>24 hours</strong>). Unzip it, open <code>README.md</code>, and run the couple of commands — no AI needed.";
+        });
       });
     }
 
-    function zipError(btn, hint, sel, msg) {
+    function zipError(btn, hint, baseLabel, msg) {
       btn.classList.remove("building");
-      btn.disabled = false;
+      btn.innerHTML = baseLabel;
+      document.querySelectorAll(".res-zip-btn").forEach((b) => { b.disabled = false; });
+      const sel = document.getElementById("lf-zip-target");
       if (sel) sel.disabled = false;
-      btn.innerHTML = "⬇ Generate zip";
       if (hint) { hint.innerHTML = '<span style="color:#ff6b6b">✕ ' + esc(msg) + "</span>"; }
     }
 
