@@ -47,17 +47,14 @@ const faqSchema = {
     </div>
   </header>
 
-  <!-- HERO -->
-  <section class="wrap tool-hero rise">
+  <!-- HERO SECTION -->
+  <section class="wrap hero-section rise">
     <span class="eyebrow">◦ WordPress → EmDash · 01</span>
     <h1 class="tool-title">Move your site from WordPress to EmDash.</h1>
     <p class="tool-lead">
       Liberate your content from the confines of WordPress, and set it free.
     </p>
-  </section>
 
-  <!-- TOOL -->
-  <section class="wrap tool-section rise">
     <form id="liberate-form" class="tool-form" novalidate>
       <div class="field">
         <label for="lf-url">Your WordPress site URL</label>
@@ -176,12 +173,20 @@ const faqSchema = {
       --section-maxw: 1000px;
     }
 
-    .tool-hero,
-    .tool-section,
+    .hero-section,
     .how-section,
     .faq-section {
       width: var(--section-maxw, 1000px);
       max-width: 100%;
+    }
+
+    .hero-section {
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 90px 24px 50px;
     }
 
     .faq-section { padding-top: 20px; }
@@ -192,7 +197,6 @@ const faqSchema = {
     .footer-mono { font-family: var(--font-mono); font-size: 12px; color: var(--slate); letter-spacing: 0.04em; }
     .footer-mono.dim { color: var(--slate-dim); }
 
-    .tool-hero { padding-top: 120px; }
     .eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--term-green); display: block; margin-bottom: 16px; }
     .wip-badge { font-family: var(--font-mono); font-size: 12px; line-height: 1.5; color: #f6d08a; border: 1px solid rgba(246,208,138,0.4); background: rgba(246,208,138,0.06); padding: 10px 14px; margin-bottom: 20px; border-radius: 4px; }
     /* NOTE: the build-in-progress loader CSS lives in a SEPARATE <style is:global>
@@ -201,10 +205,9 @@ const faqSchema = {
        the template at build time, so scoped rules here would be tree-shaken away
        (which is exactly why the spinner was invisible and the text unstyled). */
     .tool-title { font-size: clamp(34px, 6vw, 60px); line-height: 1.02; margin-bottom: 18px; }
-    .tool-lead { color: var(--slate); font-size: 18px; line-height: 1.6; }
+    .tool-lead { color: var(--slate); font-size: 18px; line-height: 1.6; margin-bottom: 28px; }
     .tool-lead strong { color: var(--chalk); }
 
-    .tool-section { padding-top: 36px; }
     .tool-form { display: flex; flex-direction: column; gap: 16px; border: none; padding: 0; background: transparent; }
     .input-inline-wrap { display: flex; align-items: stretch; gap: 12px; width: 100%; }
     .input-inline-wrap input { flex: 1 1 auto; min-width: 0; }
