@@ -390,7 +390,7 @@ export function staticHomepageFiles(localizedHtml) {
 
 // Complete turnkey EmDash project scaffolding (Astro 7 + EmDash + React + Node adapter).
 // Ships a runnable CMS project out of the box — zero external scaffolding needed.
-export function emdashProjectFiles(siteName, siteSlug, localizedHtml) {
+export function emdashProjectFiles(siteName, siteSlug, localizedHtml, sections = []) {
   const files = [];
 
   // astro.config.mjs with Node/SQLite local dev setup for EmDash
