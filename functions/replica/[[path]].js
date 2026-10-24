@@ -40,7 +40,8 @@ function notFound() {
 // The floating "claim this site" offer, injected into every served replica.
 // Self-contained: scoped styles + inline JS, no external deps. The preview id is
 // baked in so the modal can call /api/replica-offer.
-function offerMarkup(id) {
+function offerMarkup(id, existingEmail) {
+  const hasEmail = Boolean(existingEmail);
   return `
 <style id="efw-offer-style">
   #efw-offer-bar,#efw-offer-modal *{box-sizing:border-box}
@@ -65,8 +66,8 @@ function offerMarkup(id) {
   #efw-yes{background:#4ee36b;color:#06230f}
   #efw-no{background:transparent;color:#cfcac6;border:1px solid #2a2320;font-weight:500}
   #efw-offer-card .efw-close{float:right;background:none;border:0;color:#6c6460;font-size:22px;cursor:pointer;line-height:1;margin:-6px -6px 0 0}
-  #efw-offer-msg{margin-top:16px;font-size:14px;line-height:1.6}
-  #efw-offer-msg.ok{color:#4ee36b}#efw-offer-msg.err{color:#ff6b6b}
+  #efw-offer-msg,#efw-offer-no-msg{margin-top:16px;font-size:14px;line-height:1.6}
+  #efw-offer-msg.ok,#efw-offer-no-msg.ok{color:#4ee36b}#efw-offer-msg.err,#efw-offer-no-msg.err{color:#ff6b6b}
   #efw-offer-card input,#efw-offer-card textarea{width:100%;background:#0b0405;border:1px solid #2a2320;color:#fff;
     border-radius:6px;padding:11px;font-family:inherit;font-size:14px;margin-top:8px}
   #efw-offer-card .efw-sub{font-size:12px;color:#8a837f;margin:14px 0 0}
@@ -85,25 +86,36 @@ function offerMarkup(id) {
       <p>We'll put this exact design on your own domain, off WordPress, and handle your updates for you. No setup fee, cancel anytime.</p>
       <button class="efw-btn" id="efw-yes">Yes! Let's do it</button>
       <button class="efw-btn" id="efw-no">No thanks — just send me a zip</button>
-      <p class="efw-sub">Prefer the DIY route? We'll email you a ready-to-run EmDash project built from your site.</p>
+      <p class="efw-sub">Prefer the DIY route? We'll package a ready-to-run EmDash project built from your site.</p>
     </div>
     <div id="efw-offer-step-yes" style="display:none">
       <h2>Great — let's get you set up.</h2>
-      <p>Drop a note if you'd like (optional) and we'll follow up at the email you used. That's it.</p>
+      <p>${hasEmail ? "Drop a note if you'd like (optional) and we'll follow up at the email you used. That's it." : "Enter your email where we should reach out to get your site live."}</p>
+      ${!hasEmail ? '<input type="email" id="efw-yes-email" placeholder="Your email address" style="margin-bottom:8px" required />' : ''}
       <textarea id="efw-yes-msg" rows="3" placeholder="Anything you want us to know? (optional)"></textarea>
       <button class="efw-btn" id="efw-yes-send">Send — I'm in</button>
       <div id="efw-offer-msg"></div>
+    </div>
+    <div id="efw-offer-step-no" style="display:none">
+      <h2>Build your EmDash site (.zip)</h2>
+      <p>${hasEmail ? "We're packaging a ready-to-run EmDash project from your site and emailing it to you." : "Enter your email where we should send your download link."}</p>
+      ${!hasEmail ? '<input type="email" id="efw-no-email" placeholder="Your email address" style="margin-bottom:8px" required />' : ''}
+      <button class="efw-btn" id="efw-no-send">Build my EmDash zip</button>
+      <div id="efw-offer-no-msg"></div>
     </div>
   </div>
 </div>
 <script>
 (function(){
   var ID=${JSON.stringify(id)};
+  var existingEmail=${JSON.stringify(existingEmail || "")};
   var bar=document.getElementById('efw-offer-bar');
   var modal=document.getElementById('efw-offer-modal');
   var step1=document.getElementById('efw-offer-step1');
   var stepYes=document.getElementById('efw-offer-step-yes');
+  var stepNo=document.getElementById('efw-offer-step-no');
   var msg=document.getElementById('efw-offer-msg');
+  var noMsg=document.getElementById('efw-offer-no-msg');
   function open(){modal.classList.add('open');}
   function close(){modal.classList.remove('open');}
   document.getElementById('efw-offer-open').onclick=open;
@@ -114,23 +126,38 @@ function offerMarkup(id) {
     headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({id:ID},body))}).then(function(r){return r.json();});}
   document.getElementById('efw-yes').onclick=function(){step1.style.display='none';stepYes.style.display='block';};
   document.getElementById('efw-yes-send').onclick=function(){
+    var emInput = document.getElementById('efw-yes-email');
+    var email = emInput ? emInput.value.trim() : existingEmail;
+    if(!email || !email.includes('@')){
+      msg.className='err';msg.textContent='Please enter a valid email address.';
+      if(emInput) emInput.focus();
+      return;
+    }
     var btn=this;btn.disabled=true;msg.className='';msg.textContent='Sending…';
-    post({choice:'yes',message:(document.getElementById('efw-yes-msg').value||'').slice(0,2000)}).then(function(d){
-      if(d&&d.ok){msg.className='ok';msg.textContent="✓ You're in! We'll be in touch at your email shortly to get this live.";}
+    post({choice:'yes',email:email,message:(document.getElementById('efw-yes-msg').value||'').slice(0,2000)}).then(function(d){
+      if(d&&d.ok){msg.className='ok';msg.textContent="✓ You're in! We'll be in touch at " + email + " shortly to get this live.";}
       else{msg.className='err';msg.textContent='Something went wrong — please email james@apexbranding.design and we\\'ll sort it.';btn.disabled=false;}
     }).catch(function(){msg.className='err';msg.textContent='Network error — please try again.';btn.disabled=false;});
   };
   document.getElementById('efw-no').onclick=function(){
-    step1.style.display='none';stepYes.style.display='block';
-    document.querySelector('#efw-offer-step-yes h2').textContent='No problem — building your EmDash site.';
-    document.querySelector('#efw-offer-step-yes p').textContent="We're packaging a ready-to-run EmDash project from your site and emailing it to you. It'll land in a few minutes.";
-    document.getElementById('efw-yes-msg').style.display='none';
-    var sb=document.getElementById('efw-yes-send');sb.style.display='none';
-    msg.className='';msg.textContent='Starting your export…';
-    post({choice:'no'}).then(function(d){
-      if(d&&d.ok){msg.className='ok';msg.textContent="✓ On its way. Check your inbox in a few minutes for your EmDash site download.";}
-      else{msg.className='err';msg.textContent=(d&&d.error)||'Something went wrong — please try again.';}
-    }).catch(function(){msg.className='err';msg.textContent='Network error — please try again.';});
+    step1.style.display='none';stepNo.style.display='block';
+    if(existingEmail){
+      document.getElementById('efw-no-send').click();
+    }
+  };
+  document.getElementById('efw-no-send').onclick=function(){
+    var emInput = document.getElementById('efw-no-email');
+    var email = emInput ? emInput.value.trim() : existingEmail;
+    if(!email || !email.includes('@')){
+      noMsg.className='err';noMsg.textContent='Please enter a valid email address.';
+      if(emInput) emInput.focus();
+      return;
+    }
+    var btn=this;btn.disabled=true;noMsg.className='';noMsg.textContent='Starting your export…';
+    post({choice:'no',email:email}).then(function(d){
+      if(d&&d.ok){noMsg.className='ok';noMsg.textContent="✓ On its way. Check " + email + " in a few minutes for your EmDash site download.";}
+      else{noMsg.className='err';noMsg.textContent=(d&&d.error)||'Something went wrong — please try again.';btn.disabled=false;}
+    }).catch(function(){noMsg.className='err';noMsg.textContent='Network error — please try again.';btn.disabled=false;});
   };
 })();
 </script>`;
@@ -152,7 +179,7 @@ export async function onRequestGet({ params, env }) {
   if (!/^[0-9a-f]{32}$/.test(id)) return notFound();
   if (!env.DB || !env.EXPORTS) return notFound();
 
-  const row = await env.DB.prepare(`SELECT status FROM ec_previews WHERE id=?`).bind(id).first();
+  const row = await env.DB.prepare(`SELECT status, email FROM ec_previews WHERE id=?`).bind(id).first();
   if (!row) return notFound();
   if (row.status === "dead") return notFound();
 
@@ -183,7 +210,7 @@ export async function onRequestGet({ params, env }) {
 
   // Inject the offer modal just before </body> (fall back to append).
   let page = await obj.text();
-  const inject = offerMarkup(id);
+  const inject = offerMarkup(id, row.email || "");
   if (/<\/body>/i.test(page)) page = page.replace(/<\/body>/i, inject + "</body>");
   else page += inject;
 

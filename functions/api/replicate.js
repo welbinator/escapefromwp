@@ -141,7 +141,7 @@ export async function onRequestPost({ request, env }) {
   const ip = request.headers.get("CF-Connecting-IP") || "";
 
   if (honeypot) return json({ ok: false, error: "Blocked" }, 400);
-  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
+  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
     return json({ ok: false, error: "Please enter a valid email address." }, 400);
   if (!(await verifyTurnstile(env, tsToken, ip)))
     return json({ ok: false, error: "Please complete the verification challenge." }, 400);
@@ -160,20 +160,28 @@ export async function onRequestPost({ request, env }) {
 
   const ipHash = ip ? await sha256Hex(ip + (env.IP_SALT || "efw")) : "";
 
-  // In-flight dedupe — if this same email already has a recent build running (or
+  // In-flight dedupe — if this same email/IP already has a recent build running (or
   // done) for this exact URL, hand back that job instead of spawning another.
   // Blunts repeat-submit abuse and saves a duplicate headless-Chrome render.
   try {
     const recent = new Date(Date.now() - 30 * 60 * 1000).toISOString();
-    const dupe = await env.DB.prepare(
-      `SELECT id, business_name FROM ec_previews
-       WHERE source_url = ? AND email = ? AND is_spam = 0 AND created_at > ?
-       ORDER BY created_at DESC LIMIT 1`
-    ).bind(base, email, recent).first();
+    const dupe = email
+      ? await env.DB.prepare(
+          `SELECT id, business_name FROM ec_previews
+           WHERE source_url = ? AND email = ? AND is_spam = 0 AND created_at > ?
+           ORDER BY created_at DESC LIMIT 1`
+        ).bind(base, email, recent).first()
+      : (ipHash
+          ? await env.DB.prepare(
+              `SELECT id, business_name FROM ec_previews
+               WHERE source_url = ? AND ip_hash = ? AND is_spam = 0 AND created_at > ?
+               ORDER BY created_at DESC LIMIT 1`
+            ).bind(base, ipHash, recent).first()
+          : null);
     if (dupe && dupe.id) {
       const origin = new URL(request.url).origin;
       return json({
-        ok: true, preview_id: dupe.id, queued: true, email, deduped: true,
+        ok: true, preview_id: dupe.id, queued: true, email: email || "", deduped: true,
         url: `${origin}/replica/${dupe.id}`, site: dupe.business_name || base,
       });
     }
@@ -218,7 +226,7 @@ export async function onRequestPost({ request, env }) {
 
   // Opt-in → file the lead in the Command Center CRM, tagged "escape".
   // Their pasted WordPress URL becomes the contact's website. Never block the build.
-  if (optin) {
+  if (optin && email) {
     try {
       await notifyCommandCenter(env, {
         email, website: base, tags: ["escape"],
@@ -229,7 +237,7 @@ export async function onRequestPost({ request, env }) {
 
   const origin = new URL(request.url).origin;
   return json({
-    ok: true, preview_id: id, queued, email,
+    ok: true, preview_id: id, queued, email: email || "",
     url: `${origin}/replica/${id}`,
     site: siteName,
   });

@@ -61,22 +61,15 @@ const faqSchema = {
     <form id="liberate-form" class="tool-form" novalidate>
       <div class="field">
         <label for="lf-url">Your WordPress site URL</label>
-        <input id="lf-url" name="url" type="text" inputmode="url" autocomplete="url"
-               placeholder="yoursite.com" required />
+        <div class="input-inline-wrap">
+          <input id="lf-url" name="url" type="text" inputmode="url" autocomplete="url"
+                 placeholder="yoursite.com" required />
+          <button type="submit" class="btn btn-primary tool-submit" id="lf-submit">
+            ▸ Build my copy
+          </button>
+        </div>
         <p class="field-hint">Enter the WordPress site you want moved to EmDash.</p>
       </div>
-
-      <div class="field">
-        <label for="lf-email">Your email</label>
-        <input id="lf-email" name="email" type="email" autocomplete="email"
-               placeholder="you@example.com" required />
-        <p class="field-hint">We send your rebuilt-site link here and may follow up about your migration. No spam.</p>
-      </div>
-
-      <label class="optin" for="lf-optin">
-        <input type="checkbox" id="lf-optin" name="optin" checked />
-        <span>It's OK to email me about getting my site off WordPress.</span>
-      </label>
 
       <!-- honeypot -->
       <input type="text" name="website_hp" tabindex="-1" autocomplete="off"
@@ -86,10 +79,7 @@ const faqSchema = {
         <div id="lf-turnstile" class="cf-turnstile" data-sitekey={turnstileKey} data-size="flexible"></div>
       )}
 
-      <button type="submit" class="btn btn-primary tool-submit" id="lf-submit">
-        ▸ Build my copy
-      </button>
-      <p class="tool-note">Free. This usually takes a minute or two while we rebuild your site. We email you the link when it's ready and never touch your live site.</p>
+      <p class="tool-note">Free. This usually takes a minute or two while we rebuild your site. We never touch your live site.</p>
     </form>
 
     <!-- STATUS / RESULT -->
@@ -182,7 +172,19 @@ const faqSchema = {
     .footer { border-top: 1px solid var(--steel); padding: 40px 0; margin-top: 40px; }
     .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
 
-    .faq-section { max-width: 760px; padding-top: 20px; }
+    :root {
+      --section-maxw: 1000px;
+    }
+
+    .tool-hero,
+    .tool-section,
+    .how-section,
+    .faq-section {
+      width: var(--section-maxw, 1000px);
+      max-width: 100%;
+    }
+
+    .faq-section { padding-top: 20px; }
     .faq-list { display: flex; flex-direction: column; gap: 22px; margin-top: 24px; }
     .faq-item { border: 1px solid var(--steel); padding: 20px 22px; background: rgba(255,255,255,0.015); }
     .faq-item h3 { font-size: 18px; margin-bottom: 8px; color: var(--chalk); }
@@ -190,7 +192,7 @@ const faqSchema = {
     .footer-mono { font-family: var(--font-mono); font-size: 12px; color: var(--slate); letter-spacing: 0.04em; }
     .footer-mono.dim { color: var(--slate-dim); }
 
-    .tool-hero { padding-top: 120px; max-width: 760px; }
+    .tool-hero { padding-top: 120px; }
     .eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--term-green); display: block; margin-bottom: 16px; }
     .wip-badge { font-family: var(--font-mono); font-size: 12px; line-height: 1.5; color: #f6d08a; border: 1px solid rgba(246,208,138,0.4); background: rgba(246,208,138,0.06); padding: 10px 14px; margin-bottom: 20px; border-radius: 4px; }
     /* NOTE: the build-in-progress loader CSS lives in a SEPARATE <style is:global>
@@ -202,8 +204,15 @@ const faqSchema = {
     .tool-lead { color: var(--slate); font-size: 18px; line-height: 1.6; }
     .tool-lead strong { color: var(--chalk); }
 
-    .tool-section { max-width: 640px; padding-top: 36px; }
-    .tool-form { display: flex; flex-direction: column; gap: 22px; border: 1px solid var(--steel); padding: 30px; background: rgba(255,255,255,0.015); }
+    .tool-section { padding-top: 36px; }
+    .tool-form { display: flex; flex-direction: column; gap: 16px; border: none; padding: 0; background: transparent; }
+    .input-inline-wrap { display: flex; align-items: stretch; gap: 12px; width: 100%; }
+    .input-inline-wrap input { flex: 1 1 auto; min-width: 0; }
+    .input-inline-wrap .tool-submit { margin-top: 0; width: auto; white-space: nowrap; padding: 13px 26px; flex: 0 0 auto; }
+    @media (max-width: 640px) {
+      .input-inline-wrap { flex-direction: column; gap: 10px; }
+      .input-inline-wrap .tool-submit { width: 100%; justify-content: center; }
+    }
     .field { display: flex; flex-direction: column; gap: 8px; }
     .field label { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--chalk); }
     .field input, .field select { background: #0b0405; border: 1px solid var(--steel); color: var(--chalk); padding: 13px 14px; font-family: var(--font-sans); font-size: 15px; border-radius: 0; transition: border-color .15s; width: 100%; }
@@ -279,7 +288,13 @@ const faqSchema = {
     .tool-result :global(.res-again:hover) { border-color: var(--term-green); color: var(--term-green); }
     .tool-result :global(code) { font-family: var(--font-mono); color: var(--term-green); font-size: 0.92em; word-break: break-all; }
 
-    .how-section { max-width: 760px; padding-top: 70px; }
+    .tool-result :global(.res-zip-email-wrap) { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 10px; }
+    .tool-result :global(.res-zip-email-label) { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--chalk); }
+    .tool-result :global(.res-zip-email) { width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.03); color: var(--chalk); border: 1px solid var(--steel); font-family: var(--font-sans); font-size: 14px; padding: 12px 14px; border-radius: var(--radius); transition: border-color .15s; }
+    .tool-result :global(.res-zip-email:focus) { outline: none; border-color: var(--term-green); }
+    .tool-result :global(.res-zip-email.input-error) { border-color: var(--signal-red); }
+
+    .how-section { padding-top: 70px; }
     .how-head { font-size: clamp(24px, 4vw, 34px); margin-bottom: 30px; }
     .how-steps { list-style: none; display: flex; flex-direction: column; gap: 26px; }
     .how-steps li { display: flex; gap: 18px; align-items: flex-start; }
@@ -295,7 +310,6 @@ const faqSchema = {
       .nav-links.open { max-height: 520px; }
       .nav-links a:not(.btn) { padding: 16px 20px; border-top: 1px solid var(--steel); }
       .nav-links .nav-cta { margin: 14px 20px 18px; text-align: center; }
-      .tool-form { padding: 22px; }
     }
   </style>
 
@@ -353,14 +367,12 @@ const faqSchema = {
 
       const payload = {
         url: form.url.value.trim(),
-        email: form.email.value.trim(),
         website_hp: form.website_hp.value,
         turnstile_token: tsToken,
-        optin: !!(form.optin && form.optin.checked),
       };
-      if (!payload.url || !payload.email) {
+      if (!payload.url) {
         statusEl.className = "tool-status error";
-        statusEl.textContent = "Please enter both your site URL and email.";
+        statusEl.textContent = "Please enter your WordPress site URL.";
         return;
       }
 
@@ -397,7 +409,7 @@ const faqSchema = {
           '<div class="efw-spinner" style="' + SP + '"></div>' +
           '<div class="efw-loader-text" style="display:flex;flex-direction:column;gap:5px">' +
             '<span class="lead" style="color:#f3efe9;font-weight:600;font-size:16px">Rebuilding ' + siteLabel + ' off WordPress<span class="efw-dots"></span></span>' +
-            '<span class="sub" style="color:#6f686a;font-size:12px;line-height:1.5">We\'re rendering your site, downloading your images and fonts, and rehosting everything. This usually takes a minute or two — hang tight, or we\'ll email you the link when it\'s ready.</span>' +
+            '<span class="sub" style="color:#6f686a;font-size:12px;line-height:1.5">We\'re rendering your site, downloading your images and fonts, and rehosting everything. This usually takes a minute or two — hang tight!</span>' +
           "</div>" +
         "</div>";
       // Firmly bring the loader into view near the top so it's unmistakable that
@@ -441,7 +453,6 @@ const faqSchema = {
       resultEl.hidden = false;
 
       const previewId = data.preview_id;
-      const emailLine = "We've emailed the link to <strong>" + esc(data.email) + "</strong> so you don't lose it.";
       const headline = built ? "✓ Your site has been rebuilt." : "✓ We're rebuilding your site.";
       const subline = built
         ? "Here's " + esc(siteName) + ", running without WordPress — same look, your images and fonts, hosted on fast infrastructure."
@@ -454,21 +465,25 @@ const faqSchema = {
         '<div class="res-actions">' +
           '<a class="btn btn-primary res-download" href="' + esc(replicaUrl) + '" target="_blank" rel="noopener">' + viewLabel + "</a>" +
           '<span class="res-zip-group">' +
-            '<label class="res-zip-label" for="lf-zip-target">Build a downloadable site</label>' +
+            '<label class="res-zip-label" for="lf-zip-target">Build a downloadable site (.zip)</label>' +
+            '<div class="res-zip-email-wrap">' +
+              '<label class="res-zip-email-label" for="lf-zip-email">Where should we email your download link?</label>' +
+              '<input type="email" id="lf-zip-email" class="res-zip-email" placeholder="you@example.com" autocomplete="email" required />' +
+            "</div>" +
             '<span class="res-zip-row">' +
-            '<span class="res-zip-field">' +
-            '<select class="res-zip-select" id="lf-zip-target" aria-label="Choose site format">' +
-              '<option value="emdash">EmDash (CMS)</option>' +
-              '<option value="astro">Static Astro</option>' +
-            "</select>" +
-            "</span>" +
-            '<button type="button" class="btn btn-ghost res-zip-btn" id="lf-zip-scripts" data-kind="scripts">⚙️ Build a zip I\'ll set up myself</button>' +
-            '<button type="button" class="btn btn-ghost res-zip-btn res-zip-btn-alt" id="lf-zip-bot" data-kind="bot">🤖 Build a zip for an AI bot</button>' +
+              '<span class="res-zip-field">' +
+                '<select class="res-zip-select" id="lf-zip-target" aria-label="Choose site format">' +
+                  '<option value="emdash">EmDash (CMS)</option>' +
+                  '<option value="astro">Static Astro</option>' +
+                "</select>" +
+              "</span>" +
+              '<button type="button" class="btn btn-ghost res-zip-btn" id="lf-zip-scripts" data-kind="scripts">⚙️ Build a zip I\'ll set up myself</button>' +
+              '<button type="button" class="btn btn-ghost res-zip-btn res-zip-btn-alt" id="lf-zip-bot" data-kind="bot">🤖 Build a zip for an AI bot</button>' +
             "</span>" +
           "</span>" +
         "</div>" +
-        '<p class="res-zip-hint" id="lf-zip-hint">Pick a format, then choose how you want to finish it. <strong>Set up myself</strong> gives you a ready-to-run project — install, run a couple commands, done (no AI needed). <strong>For an AI bot</strong> gives you the content plus instructions to hand your AI coding assistant. Either way your exact design and working menus are baked in.</p>' +
-        '<p class="res-expiry">' + emailLine + " Like it? Reply to that email and we'll put it on your own domain and handle any changes you want.</p>" +
+        '<p class="res-zip-hint" id="lf-zip-hint">Pick a format and enter your email, then choose how you want to finish it. <strong>Set up myself</strong> gives you a ready-to-run project — install, run a couple commands, done (no AI needed). <strong>For an AI bot</strong> gives you the content plus instructions to hand your AI coding assistant. Either way your exact design and working menus are baked in.</p>' +
+        '<p class="res-expiry">Like what you see? We can put it on your own domain and handle any changes you want.</p>' +
         '<button type="button" class="res-again" id="lf-again">↻ Rebuild another site</button>';
 
       resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -480,7 +495,7 @@ const faqSchema = {
     // Two kinds × two targets. kind='scripts' → ready-to-run project (no AI);
     // kind='bot' → content + AGENT_INSTRUCTIONS for an AI assistant. target ∈
     // {emdash, astro}. Reuses the preview row: /api/replica-offer {choice:'no',
-    // target, kind} enqueues the worker job; /api/zip-status?id&target&kind is
+    // target, kind, email} enqueues the worker job; /api/zip-status?id&target&kind is
     // polled (scoped per target+kind so the four outputs never collide).
     function wireZipButton(previewId, siteName) {
       const sel = document.getElementById("lf-zip-target");
@@ -504,25 +519,42 @@ const faqSchema = {
         const kind = btn.getAttribute("data-kind") || "scripts";
         const baseLabel = btn.textContent;
         btn.addEventListener("click", async function () {
+          const emailInput = document.getElementById("lf-zip-email");
+          const zipEmail = emailInput ? emailInput.value.trim() : "";
+          if (!zipEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(zipEmail)) {
+            if (emailInput) {
+              emailInput.classList.add("input-error");
+              emailInput.focus();
+            }
+            if (hint) {
+              hint.innerHTML = '<span style="color:#ff6b6b">✕ Please enter a valid email address so we can send you your download link.</span>';
+            }
+            return;
+          }
+          if (emailInput) emailInput.classList.remove("input-error");
+
           const target = sel ? sel.value : "emdash";
           const label = fmtLabel();
           lockButtons(true);
+          if (emailInput) emailInput.disabled = true;
           btn.classList.add("building");
           btn.innerHTML = '<span class="efw-btn-spin"></span> Building…';
-          if (hint) hint.textContent = "Packaging your " + kindLabel(kind) + " — your content, your exact design, and working menus baked into a " + label + ". This usually takes a minute or two — keep this page open.";
+          if (hint) hint.textContent = "Packaging your " + kindLabel(kind) + " — your content, your exact design, and working menus baked into a " + label + ". We'll email your link to " + zipEmail + ". This usually takes a minute or two — keep this page open.";
 
           // 1) Kick off the build (idempotent on the server, scoped by target+kind).
           try {
             const kick = await fetch(apiBase() + "/api/replica-offer", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id: previewId, choice: "no", target: target, kind: kind }),
+              body: JSON.stringify({ id: previewId, choice: "no", target: target, kind: kind, email: zipEmail }),
             });
             const kd = await kick.json().catch(() => ({}));
             if (!kick.ok || !kd.ok) {
+              if (emailInput) emailInput.disabled = false;
               return zipError(btn, hint, baseLabel, (kd && kd.error) || "Couldn't start the build. Please try again.");
             }
           } catch (_) {
+            if (emailInput) emailInput.disabled = false;
             return zipError(btn, hint, baseLabel, "Network error starting the build. Please try again.");
           }
 
@@ -541,7 +573,8 @@ const faqSchema = {
             btn.classList.remove("building");
             btn.innerHTML = "⬇ Still building — check your email";
             lockButtons(false);
-            if (hint) hint.innerHTML = "Your " + esc(label) + " is taking a little longer. We'll <strong>email you the download link</strong> the moment it's ready (good for 24 hours).";
+            if (emailInput) emailInput.disabled = false;
+            if (hint) hint.innerHTML = "Your " + esc(label) + " is taking a little longer. We'll <strong>email your download link to " + esc(zipEmail) + "</strong> the moment it's ready (good for 24 hours).";
             return;
           }
 
@@ -554,10 +587,11 @@ const faqSchema = {
           dl.textContent = "⬇ Download your " + label + " (.zip)";
           btn.replaceWith(dl);
           if (sel) sel.disabled = false;
+          if (emailInput) emailInput.disabled = false;
           document.querySelectorAll(".res-zip-btn").forEach((b) => { b.disabled = false; });
           if (hint) hint.innerHTML = kind === "bot"
-            ? "✓ Ready! We've also <strong>emailed you this link</strong> (good for <strong>24 hours</strong>). Unzip it and hand the whole folder to your AI coding assistant — open <code>AGENT_INSTRUCTIONS.md</code> for the prompt."
-            : "✓ Ready! We've also <strong>emailed you this link</strong> (good for <strong>24 hours</strong>). Unzip it, open <code>README.md</code>, and run the couple of commands — no AI needed.";
+            ? "✓ Ready! We've also <strong>emailed your link to " + esc(zipEmail) + "</strong> (good for <strong>24 hours</strong>). Unzip it and hand the whole folder to your AI coding assistant — open <code>AGENT_INSTRUCTIONS.md</code> for the prompt."
+            : "✓ Ready! We've also <strong>emailed your link to " + esc(zipEmail) + "</strong> (good for <strong>24 hours</strong>). Unzip it, open <code>README.md</code>, and run the couple of commands — no AI needed.";
         });
       });
     }

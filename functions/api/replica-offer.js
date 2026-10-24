@@ -51,12 +51,17 @@ export async function onRequestPost({ request, env }) {
   if (!row) return json({ ok: false, error: "not found" }, 404);
 
   const siteName = row.business_name || row.source_url || "a site";
-  const email = (row.email || "").toString();
+  let email = (data.email || row.email || "").toString().trim();
   const origin = new URL(request.url).origin;
   const replicaUrl = `${origin}/replica/${id}`;
 
   // ---- YES: they want us to build & host it ---------------------------------
   if (choice === "yes") {
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
+      return json({ ok: false, error: "Please provide a valid email address." }, 400);
+    if (!row.email && email) {
+      try { await env.DB.prepare(`UPDATE ec_previews SET email=? WHERE id=?`).bind(email, id).run(); } catch (_) {}
+    }
     try { await markLiked(env, id, "replica", { name: email, message }); } catch (_) {}
     await Promise.all([
       sendOfferLeadEmail(env, { siteName, sourceUrl: row.source_url, replicaUrl, leadEmail: email, leadMessage: message }),
@@ -68,7 +73,10 @@ export async function onRequestPost({ request, env }) {
   // ---- NO: build & email them a ready-to-run project (EmDash or static Astro) ----
   if (choice === "no") {
     if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
-      return json({ ok: false, error: "We don't have a valid email on file — please email james@apexbranding.design." }, 400);
+      return json({ ok: false, error: "Please enter a valid email address so we can send your download link." }, 400);
+    if (!row.email && email) {
+      try { await env.DB.prepare(`UPDATE ec_previews SET email=? WHERE id=?`).bind(email, id).run(); } catch (_) {}
+    }
     // target selects the deliverable: 'astro' → static Astro project, else EmDash.
     const target = (data.target || "emdash").toString() === "astro" ? "astro" : "emdash";
     // kind selects the finishing style: 'bot' → content + AGENT_INSTRUCTIONS for an

@@ -36,13 +36,15 @@ async function buildReplica(env, id) {
   const marker = `previews/${id}/.emailed`;
   if (!(await env.EXPORTS.head(marker))) {
     try {
-      const origin = env.SITE_ORIGIN || "https://escapefromwp.com";
-      await sendReplicaLinkEmail(env, {
-        to: row.email, siteName: row.business_name || "your site",
-        url: `${origin}/replica/${id}`, sourceUrl: row.source_url,
-      });
+      if (row.email) {
+        const origin = env.SITE_ORIGIN || "https://escapefromwp.com";
+        await sendReplicaLinkEmail(env, {
+          to: row.email, siteName: row.business_name || "your site",
+          url: `${origin}/replica/${id}`, sourceUrl: row.source_url,
+        });
+        console.log(`[${id}] replica emailed ${row.email}`);
+      }
       await env.EXPORTS.put(marker, new Date().toISOString(), { httpMetadata: { contentType: "text/plain" } });
-      console.log(`[${id}] replica emailed ${row.email}`);
     } catch (e) { console.log(`[${id}] replica email ERR ${String(e).slice(0, 160)}`); }
   }
 }
