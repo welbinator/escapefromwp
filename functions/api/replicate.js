@@ -43,6 +43,63 @@ async function usageToday(env, email, ipHash) {
   return { user: u?.n || 0, global: g?.n || 0 };
 }
 
+// --- SSRF guard: a user pastes an arbitrary URL that we then point headless
+// Chrome at, so we must make sure it resolves to a PUBLIC address and isn't an
+// internal/metadata target. Mirrors liberate.sh's "public addresses, checked
+// after DNS resolution" rule.
+function ipIsPrivate(ip) {
+  // IPv4
+  const m = ip.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (m) {
+    const [a, b] = [Number(m[1]), Number(m[2])];
+    if (a === 10) return true;                         // 10.0.0.0/8
+    if (a === 127) return true;                        // loopback
+    if (a === 0) return true;                          // 0.0.0.0/8
+    if (a === 169 && b === 254) return true;           // link-local / cloud metadata 169.254.169.254
+    if (a === 172 && b >= 16 && b <= 31) return true;  // 172.16.0.0/12
+    if (a === 192 && b === 168) return true;           // 192.168.0.0/16
+    if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT 100.64.0.0/10
+    if (a >= 224) return true;                         // multicast / reserved
+    return false;
+  }
+  // IPv6
+  const lo = ip.toLowerCase();
+  if (lo === "::1" || lo === "::") return true;
+  if (lo.startsWith("fe80") || lo.startsWith("fc") || lo.startsWith("fd")) return true; // link-local / ULA
+  if (lo.startsWith("::ffff:")) return ipIsPrivate(lo.slice(7));                         // v4-mapped
+  return false;
+}
+
+// Resolve the host via Cloudflare DNS-over-HTTPS and verify every answer is a
+// public IP. Returns { ok:true } or { ok:false, error }. Fails closed.
+async function assertPublicHost(hostname) {
+  const host = (hostname || "").toLowerCase().replace(/\.$/, "");
+  if (!host) return { ok: false, error: "Please enter a valid website URL." };
+  if (host === "localhost" || host.endsWith(".localhost") || host.endsWith(".local") ||
+      host.endsWith(".internal") || host.endsWith(".lan") || host.endsWith(".home.arpa")) {
+    return { ok: false, error: "That address isn't a public website." };
+  }
+  // Bare IP literal pasted directly — check it without DNS.
+  if (/^[0-9.]+$/.test(host) || host.includes(":")) {
+    if (ipIsPrivate(host)) return { ok: false, error: "That address isn't a public website." };
+    return { ok: true };
+  }
+  const doh = async (type) => {
+    try {
+      const r = await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(host)}&type=${type}`,
+        { headers: { accept: "application/dns-json" } });
+      const j = await r.json();
+      return (j.Answer || []).filter((a) => a.type === (type === "A" ? 1 : 28)).map((a) => a.data);
+    } catch { return null; }
+  };
+  const [a4, a6] = await Promise.all([doh("A"), doh("AAAA")]);
+  if (a4 === null && a6 === null) return { ok: false, error: "Could not reach that site." };
+  const ips = [...(a4 || []), ...(a6 || [])];
+  if (!ips.length) return { ok: false, error: "Could not resolve that website's address." };
+  for (const ip of ips) if (ipIsPrivate(ip)) return { ok: false, error: "That address isn't a public website." };
+  return { ok: true };
+}
+
 // --- Command Center push (HMAC) — mirrors functions/api/contact.js ---
 async function hmacHex(secret, msg) {
   const key = await crypto.subtle.importKey(
@@ -92,9 +149,36 @@ export async function onRequestPost({ request, env }) {
   const base = normalizeSiteUrl(rawUrl);
   if (!base) return json({ ok: false, error: "Please enter a valid website URL." }, 400);
 
+  // SSRF guard — resolve the host and reject private/internal/metadata targets
+  // before we ever point headless Chrome (or our reachability fetch) at it.
+  let hostname = "";
+  try { hostname = new URL(base).hostname; } catch { return json({ ok: false, error: "Please enter a valid website URL." }, 400); }
+  const pub = await assertPublicHost(hostname);
+  if (!pub.ok) return json({ ok: false, error: pub.error }, 400);
+
   if (!env.DB || !env.EXPORTS) return json({ ok: false, error: "Storage is not configured." }, 500);
 
   const ipHash = ip ? await sha256Hex(ip + (env.IP_SALT || "efw")) : "";
+
+  // In-flight dedupe — if this same email already has a recent build running (or
+  // done) for this exact URL, hand back that job instead of spawning another.
+  // Blunts repeat-submit abuse and saves a duplicate headless-Chrome render.
+  try {
+    const recent = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    const dupe = await env.DB.prepare(
+      `SELECT id, business_name FROM ec_previews
+       WHERE source_url = ? AND email = ? AND is_spam = 0 AND created_at > ?
+       ORDER BY created_at DESC LIMIT 1`
+    ).bind(base, email, recent).first();
+    if (dupe && dupe.id) {
+      const origin = new URL(request.url).origin;
+      return json({
+        ok: true, preview_id: dupe.id, queued: true, email, deduped: true,
+        url: `${origin}/replica/${dupe.id}`, site: dupe.business_name || base,
+      });
+    }
+  } catch (_) { /* dedupe is best-effort — never block a real build */ }
+
   const allowlist = (env.ALLOWLIST_IPS || "").split(",").map((s) => s.trim()).filter(Boolean);
   const bypass = env.LIMITS_OFF === "on" || (ip && allowlist.includes(ip));
   if (!bypass) {
