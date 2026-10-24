@@ -342,30 +342,55 @@ export function rewriteInternalLinks(html, sourceUrl) {
 //   - the HTML's references are rewritten to the local /_site/<file> path
 //   - all internal links are rewritten to root-relative paths so the menus work locally
 // Returns { html, assets: [{name,data(Uint8Array)}] } or null if nothing usable.
-export async function localizeReplica(replicaHtml, sourceUrl) {
+export async function localizeReplica(replicaHtml, sourceUrl, env) {
   if (!replicaHtml || replicaHtml.length < 500) return null;
   // Rewrite internal links to relative paths first.
   let html = rewriteInternalLinks(replicaHtml, sourceUrl);
 
   // Find every absolute reference to one of our rehosted assets.
-  const re = /https?:\/\/[^"')\s]+\/replica-asset\/[0-9a-f]{32}\/[A-Za-z0-9._-]+/g;
-  const urls = [...new Set(html.match(re) || [])];
+  const re = /https?:\/\/[^"')\s]+\/replica-asset\/([0-9a-f]{32})\/([A-Za-z0-9._-]+)/g;
+  const matches = [...html.matchAll(re)];
+  const seen = new Set();
+  const targets = [];
+  for (const m of matches) {
+    const fullUrl = m[0];
+    const previewId = m[1];
+    const file = m[2];
+    if (seen.has(fullUrl)) continue;
+    seen.add(fullUrl);
+    targets.push({ fullUrl, previewId, file });
+  }
+
   const assets = [];
   const UA = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "accept": "*/*",
   };
-  for (const u of urls) {
-    const file = u.split("/").pop();
-    try {
-      const res = await fetch(u, { headers: UA, cf: { cacheTtl: 0 } });
-      if (!res.ok) continue;
-      const buf = new Uint8Array(await res.arrayBuffer());
-      if (!buf.byteLength) continue;
-      assets.push({ name: `public/_site/${file}`, data: buf });
-      html = html.split(u).join(`/_site/${file}`);
-    } catch (_) { /* skip a failed asset, keep going */ }
+
+  // Process in concurrent batches of 25 — reading directly from R2 if env.EXPORTS is available!
+  const BATCH_SIZE = 25;
+  for (let i = 0; i < targets.length; i += BATCH_SIZE) {
+    const batch = targets.slice(i, i + BATCH_SIZE);
+    await Promise.all(batch.map(async ({ fullUrl, previewId, file }) => {
+      try {
+        let buf = null;
+        if (env && env.EXPORTS) {
+          const key = `replica-assets/${previewId}/${file}`;
+          const obj = await env.EXPORTS.get(key);
+          if (obj) buf = new Uint8Array(await obj.arrayBuffer());
+        }
+        if (!buf) {
+          const res = await fetch(fullUrl, { headers: UA, cf: { cacheTtl: 0 } });
+          if (res.ok) buf = new Uint8Array(await res.arrayBuffer());
+        }
+        if (buf && buf.byteLength) {
+          assets.push({ name: `public/_site/${file}`, data: buf });
+          html = html.split(fullUrl).join(`/_site/${file}`);
+        }
+      } catch (_) { /* skip a failed asset, keep going */ }
+    }));
   }
+
   // Any stray references to our origin that we couldn't bundle: leave them absolute
   // (still load online) rather than break them.
   return { html, assets };
@@ -1105,7 +1130,7 @@ export async function buildEmdashZip(env, { id, sourceUrl, businessName, replica
     const cleanReplica = rewriteInternalLinks(replicaHtml, sourceUrl);
     files.push({ name: "reference/your-exact-site.html", data: cleanReplica });
     try {
-      localized = await localizeReplica(replicaHtml, sourceUrl);
+      localized = await localizeReplica(replicaHtml, sourceUrl, env);
       if (localized && localized.html) {
         for (const a of localized.assets) files.push(a);
         prebuiltHome = true;

@@ -455,7 +455,7 @@ export async function buildAstroZip(env, { id, sourceUrl, businessName, replicaH
     const cleanReplica = rewriteInternalLinks(replicaHtml, sourceUrl);
     files.push({ name: "reference/your-exact-site.html", data: cleanReplica });
     try {
-      const local = await localizeReplica(replicaHtml, sourceUrl);
+      const local = await localizeReplica(replicaHtml, sourceUrl, env);
       if (local && local.html) {
         for (const a of staticHomepageFiles(local.html)) {
           // staticHomepageFiles emits public/index.html + astro.config.mjs; skip the
