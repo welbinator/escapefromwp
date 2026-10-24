@@ -805,10 +805,34 @@ import Base from "../layouts/Base.astro";
 ---
 
 <Base title="Page Not Found">
-  <h1>404 — Page not found</h1>
-  <p>The page you're looking for doesn't exist.</p>
+  <h1>404 - Page Not Found</h1>
+  <p>The page you are looking for does not exist.</p>
   <a href="/">Go to Homepage</a>
 </Base>
+`,
+  });
+
+  // src/pages/page/[slug].astro: redirects /page/home -> / and /page/[slug] -> /[slug]
+  // (so EmDash admin "Live view" buttons always find the right page)
+  files.push({
+    name: "src/pages/page/[slug].astro",
+    data: `---
+const { slug } = Astro.params;
+if (slug === "home" || slug === "front-page") {
+  return Astro.redirect("/", 302);
+}
+return Astro.redirect(\`/\${slug}\`, 302);
+---
+`,
+  });
+
+  // src/pages/post/[slug].astro: redirects /post/[slug] -> /posts/[slug]
+  files.push({
+    name: "src/pages/post/[slug].astro",
+    data: `---
+const { slug } = Astro.params;
+return Astro.redirect(\`/posts/\${slug}\`, 302);
+---
 `,
   });
 
