@@ -385,11 +385,12 @@ export default defineConfig({
   // src/live.config.ts
   files.push({
     name: "src/live.config.ts",
-    data: `import { defineLiveConfig } from "emdash/live";
+    data: `import { defineLiveCollection } from "astro:content";
+import { emdashLoader } from "emdash/runtime";
 
-export default defineLiveConfig({
-  collections: {},
-});
+export const collections = {
+  _emdash: defineLiveCollection({ loader: emdashLoader() }),
+};
 `,
   });
 
@@ -571,10 +572,22 @@ import { resolveStarterSiteIdentity } from "../utils/site-identity";
 const slug = decodeSlug(Astro.params.slug);
 if (!slug) return Astro.rewrite("/404");
 
-const { entry: page, cacheHint } = await getEmDashEntry("pages", slug);
+let page = null;
+let foundCol = "page";
+for (const col of ["page", "pages", "post", "posts"]) {
+  try {
+    const res = await getEmDashEntry(col, slug);
+    if (res && res.entry) {
+      page = res.entry;
+      foundCol = col;
+      if (Astro.cache?.enabled && res.cacheHint) Astro.cache.set(res.cacheHint);
+      break;
+    }
+  } catch (_) {}
+}
+
 if (!page) return Astro.rewrite("/404");
 
-if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
 const { siteTitle } = resolveStarterSiteIdentity(await getSiteSettings());
 
 const seo = getSeoMeta(page, {
@@ -589,7 +602,7 @@ const seo = getSeoMeta(page, {
   pageTitle={seo.ogTitle}
   description={seo.description}
   canonical={seo.canonical}
-  content={{ collection: "pages", id: page.data.id, slug }}
+  content={{ collection: foundCol, id: page.data.id, slug }}
 >
   <article>
     <h1 {...page.edit.title}>{page.data.title}</h1>
