@@ -225,9 +225,9 @@ const faqSchema = {
     .field-hint { font-family: var(--font-mono); font-size: 11px; color: var(--slate-dim); line-height: 1.5; }
     .field-hint code, .how-steps code, .tool-result code { font-family: var(--font-mono); color: var(--term-green); font-size: 0.92em; }
     .tool-submit { margin-top: 4px; width: 100%; justify-content: center; }
-    .optin { display: flex; align-items: flex-start; gap: 10px; margin: -4px 0 4px; cursor: pointer; font-size: 14px; line-height: 1.45; color: var(--chalk); }
-    .optin input { width: 17px; height: 17px; margin: 1px 0 0; flex-shrink: 0; accent-color: var(--term-green); cursor: pointer; }
-    .optin span { color: var(--mist, #b8b0b2); }
+    .optin, .tool-result :global(.optin) { display: flex; align-items: flex-start; gap: 10px; margin: 8px 0 12px; cursor: pointer; font-size: 13px; line-height: 1.45; color: var(--chalk); }
+    .optin input, .tool-result :global(.optin input) { width: 17px; height: 17px; margin: 1px 0 0; flex-shrink: 0; accent-color: var(--term-green); cursor: pointer; }
+    .optin span, .tool-result :global(.optin span) { color: var(--mist, #b8b0b2); }
     .tool-note { font-family: var(--font-mono); font-size: 11px; color: var(--slate-dim); text-align: center; }
     .cf-turnstile { margin: 2px 0; }
     .tool-alt { max-width: 640px; margin: 14px auto 0; text-align: center; font-family: var(--font-mono); font-size: 12px; color: var(--slate-dim); }
@@ -470,6 +470,10 @@ const faqSchema = {
             '<div class="res-zip-email-wrap">' +
               '<label class="res-zip-email-label" for="lf-zip-email">Where should we email your download link?</label>' +
               '<input type="email" id="lf-zip-email" class="res-zip-email" placeholder="you@example.com" autocomplete="email" required />' +
+              '<label class="optin" for="lf-zip-optin">' +
+                '<input type="checkbox" id="lf-zip-optin" name="optin" checked />' +
+                '<span>It\'s OK to email me about getting my site off WordPress.</span>' +
+              '</label>' +
             "</div>" +
             '<span class="res-zip-row">' +
               '<span class="res-zip-field">' +
@@ -521,6 +525,8 @@ const faqSchema = {
         const baseLabel = btn.textContent;
         btn.addEventListener("click", async function () {
           const emailInput = document.getElementById("lf-zip-email");
+          const optinInput = document.getElementById("lf-zip-optin");
+          const optinVal = optinInput ? optinInput.checked : true;
           const zipEmail = emailInput ? emailInput.value.trim() : "";
           if (!zipEmail || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(zipEmail)) {
             if (emailInput) {
@@ -538,6 +544,7 @@ const faqSchema = {
           const label = fmtLabel();
           lockButtons(true);
           if (emailInput) emailInput.disabled = true;
+          if (optinInput) optinInput.disabled = true;
           btn.classList.add("building");
           btn.innerHTML = '<span class="efw-btn-spin"></span> Building…';
           if (hint) hint.textContent = "Packaging your " + kindLabel(kind) + " — your content, your exact design, and working menus baked into a " + label + ". We'll email your link to " + zipEmail + ". This usually takes a minute or two — keep this page open.";
@@ -547,15 +554,17 @@ const faqSchema = {
             const kick = await fetch(apiBase() + "/api/replica-offer", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id: previewId, choice: "no", target: target, kind: kind, email: zipEmail }),
+              body: JSON.stringify({ id: previewId, choice: "no", target: target, kind: kind, email: zipEmail, optin: optinVal }),
             });
             const kd = await kick.json().catch(() => ({}));
             if (!kick.ok || !kd.ok) {
               if (emailInput) emailInput.disabled = false;
+              if (optinInput) optinInput.disabled = false;
               return zipError(btn, hint, baseLabel, (kd && kd.error) || "Couldn't start the build. Please try again.");
             }
           } catch (_) {
             if (emailInput) emailInput.disabled = false;
+            if (optinInput) optinInput.disabled = false;
             return zipError(btn, hint, baseLabel, "Network error starting the build. Please try again.");
           }
 
@@ -575,6 +584,7 @@ const faqSchema = {
             btn.innerHTML = "⬇ Still building — check your email";
             lockButtons(false);
             if (emailInput) emailInput.disabled = false;
+            if (optinInput) optinInput.disabled = false;
             if (hint) hint.innerHTML = "Your " + esc(label) + " is taking a little longer. We'll <strong>email your download link to " + esc(zipEmail) + "</strong> the moment it's ready (good for 24 hours).";
             return;
           }
@@ -589,6 +599,7 @@ const faqSchema = {
           btn.replaceWith(dl);
           if (sel) sel.disabled = false;
           if (emailInput) emailInput.disabled = false;
+          if (optinInput) optinInput.disabled = false;
           document.querySelectorAll(".res-zip-btn").forEach((b) => { b.disabled = false; });
           if (hint) hint.innerHTML = kind === "bot"
             ? "✓ Ready! We've also <strong>emailed your link to " + esc(zipEmail) + "</strong> (good for <strong>24 hours</strong>). Unzip it and hand the whole folder to your AI coding assistant — open <code>AGENT_INSTRUCTIONS.md</code> for the prompt."

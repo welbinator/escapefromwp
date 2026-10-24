@@ -22,14 +22,22 @@ async function hmacHex(secret, msg) {
   return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function notifyCC(env, { siteName, sourceUrl, replicaUrl, leadEmail, leadMessage }) {
+async function notifyCC(env, { siteName, sourceUrl, replicaUrl, leadEmail, leadMessage, tags }) {
   const secret = env.PUSH_NOTIFY_SECRET;
   if (!secret) return;
   const url = env.CC_NOTIFY_URL || "https://cc.crweb.design/api/push/notify";
   try {
     const ts = Math.floor(Date.now() / 1000);
-    const message = `🔥 Site claim: ${siteName} wants the $49/mo build (no money down) — ${leadMessage || "(no message)"} | replica: ${replicaUrl}`;
-    const body = JSON.stringify({ name: leadEmail, email: leadEmail, site: "escapefromwp.com", message, ts });
+    const message = leadMessage || `🔥 Site claim: ${siteName} wants the $49/mo build (no money down) | replica: ${replicaUrl}`;
+    const body = JSON.stringify({
+      name: leadEmail,
+      email: leadEmail,
+      site: "escapefromwp.com",
+      website: sourceUrl || "",
+      tags: tags || ["escape"],
+      message,
+      ts,
+    });
     const sig = await hmacHex(secret, `v0:${ts}:${body}`);
     await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", "X-CC-Signature": `t=${ts},v0=${sig}` }, body });
   } catch (_) { /* non-fatal */ }
@@ -83,6 +91,20 @@ export async function onRequestPost({ request, env }) {
     // AI assistant to assemble; else 'scripts' → fully-rendered, ready-to-run project.
     const kind = (data.kind || "scripts").toString() === "bot" ? "bot" : "scripts";
     const mode = target === "astro" ? "astro-zip" : "emdash-zip";
+    const optin = data.optin === undefined ? true : !!data.optin;
+    if (optin && email) {
+      try {
+        await notifyCC(env, {
+          siteName,
+          sourceUrl: row.source_url,
+          replicaUrl,
+          leadEmail: email,
+          tags: ["escape"],
+          leadMessage: `Opted in via /liberate (export: ${target}/${kind}). Site to rescue: ${row.source_url}`,
+        });
+      } catch (_) {}
+    }
+
     let queued = false;
     try {
       if (env.PREVIEW_QUEUE) { await env.PREVIEW_QUEUE.send({ id, mode, target, kind, url: row.source_url }); queued = true; }
