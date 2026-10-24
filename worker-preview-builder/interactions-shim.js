@@ -28,7 +28,7 @@ const SHIM_JS = `(function(){
   "use strict";
   if (window.__efwShim) return; window.__efwShim = true;
 
-  var OPEN_CLASSES = ["is-open","is-active","open","active","show","expanded","toggled","menu-open"];
+  var OPEN_CLASSES = ["is-open","is-active","open","active","show","expanded","toggled","menu-open","sidemenu-on"];
 
   // Some builders (ElementsKit/Elementor, offcanvas navs) reveal the mobile panel
   // via a specific class on a specific element that has NO aria-controls link back
@@ -37,6 +37,7 @@ const SHIM_JS = `(function(){
   var PANEL_MAP = [
     [".elementskit-menu-hamburger,.elementskit-menu-toggler,.elementskit-menu-close", ".elementskit-menu-offcanvas-elements"],
     [".mobile-menu-toggle,.mobile-nav-toggle", ".mobile-menu,.mobile-nav,.offcanvas,.off-canvas"],
+    ["#menu-icon, .menu-icon, a[href*='mobile-menu'], a[href*='sidemenu']", "#mobile-menu, .sidemenu, .mobile-menu"]
   ];
 
   // Resolve the element a toggle controls:
@@ -89,9 +90,11 @@ const SHIM_JS = `(function(){
     if (target){
       target.classList.toggle("is-open", open);
       target.classList.toggle("open", open);
+      target.classList.toggle("active", open);
+      target.classList.toggle("sidemenu-on", open);
+      target.classList.toggle("sidemenu-off", !open);
       // Builder offcanvas panels (ElementsKit etc.) reveal via an 'active' class.
       // Toggling it here is safe: on panels that don't use it, an extra class is inert.
-      target.classList.toggle("active", open);
       // CRITICAL: many themes reveal the panel via an aria-expanded rule on the
       // TARGET itself (e.g. nav[aria-expanded='true']{display:block}), not via a
       // class. The button's own aria-expanded only drives the icon animation. So
@@ -147,7 +150,10 @@ const SHIM_JS = `(function(){
     "button[aria-expanded]",
     ".menu-toggle", ".hamburger", ".nav-toggle", ".mobile-nav-toggle", ".menu-button",
     "[class*='menu-toggle']", "[class*='hamburger']", "[class*='dropdown-toggle']", "[class*='flyout-toggle']",
-    ".accordion-toggle", ".accordion-trigger", ".accordion-header button", ".faq-question", "[class*='accordion'] button"
+    ".accordion-toggle", ".accordion-trigger", ".accordion-header button", ".faq-question", "[class*='accordion'] button",
+    "#menu-icon", "[id*='menu-icon']", "[class*='menu-icon']",
+    "a[href='#mobile-menu']", "a[href*='mobile-menu']", "a[href='#sidemenu']", "a[href*='sidemenu']",
+    "[aria-label*='menu' i]", "[aria-label*='Menu']"
   ].join(",");
 
   // Dismiss ("close X") controls: cookie banners, modals, notices, popups. Origin
@@ -160,14 +166,16 @@ const SHIM_JS = `(function(){
     ".modal-close", ".close-modal", "[class*='modal'] [class*='close']",
     ".popup-close", "[class*='popup'] [class*='close']",
     "[class*='notice'] [class*='dismiss']", "[class*='dismiss']",
-    "[aria-label='Close']", "[aria-label='Close dialog']", "[aria-label='Dismiss']"
+    "#menu-icon-close", ".menu-icon-close",
+    "[aria-label*='Close' i]", "[aria-label*='Dismiss' i]"
   ].join(",");
 
   // Containers we allow a dismiss button to hide (nearest matching ancestor).
   var DISMISSABLE_ANCESTOR = [
     "[class*='cookiebanner']", "[class*='cookie-banner']", "[class*='cookie']",
     "[class*='consent']", "[role='dialog']", "[class*='modal']", "[class*='popup']",
-    "[class*='notice']", "[class*='banner']", "[aria-modal='true']"
+    "[class*='notice']", "[class*='banner']", "[aria-modal='true']",
+    ".sidemenu", "#mobile-menu", "[class*='offcanvas']", "[class*='off-canvas']"
   ].join(",");
 
   function wireDismiss(btn){
@@ -179,9 +187,12 @@ const SHIM_JS = `(function(){
       e.preventDefault(); e.stopPropagation();
       // Hide robustly: display:none inline wins over most theme CSS, and we also
       // add the common hidden classes some themes animate off of.
-      box.style.setProperty("display", "none", "important");
-      box.classList.add("cmplz-hidden", "efw-dismissed");
+      box.classList.remove("sidemenu-on", "is-open", "active", "open", "efw-open");
+      box.classList.add("sidemenu-off", "cmplz-hidden", "efw-dismissed");
       box.setAttribute("aria-hidden", "true");
+      if (!box.classList.contains("sidemenu") && box.id !== "mobile-menu") {
+        box.style.setProperty("display", "none", "important");
+      }
     }, false);
   }
 

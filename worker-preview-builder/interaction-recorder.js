@@ -52,7 +52,10 @@ export const RECORDER_FN = function (opts) {
     ".menu-toggle", ".hamburger", ".nav-toggle", ".mobile-nav-toggle", ".menu-button",
     "[class*='menu-toggle']", "[class*='hamburger']", "[class*='dropdown-toggle']", "[class*='flyout-toggle']",
     ".accordion-toggle", ".accordion-trigger", ".accordion-header button", ".faq-question",
-    "[class*='accordion'] button", "[role='tab']", "summary"
+    "[class*='accordion'] button", "[role='tab']", "summary",
+    "#menu-icon", "[id*='menu-icon']", "[class*='menu-icon']",
+    "a[href='#mobile-menu']", "a[href*='mobile-menu']", "a[href='#sidemenu']", "a[href*='sidemenu']",
+    "[aria-label*='menu' i]", "[aria-label*='Menu']"
   ].join(",");
 
   function allEls() { return Array.prototype.slice.call(document.querySelectorAll("*")); }
@@ -362,9 +365,9 @@ export function buildReplayScript(recording) {
     // its inner content, is a backdrop dismiss). Capture phase so it beats links.
     var CLOSE_SEL = "[class*='toggle-close'],[class*='panel-close'],[class*='close-menu']," +
       "[class*='menu-close'],[class*='offcanvas-close'],[class*='drawer-close']," +
-      "[aria-label*='close' i],[data-micromodal-close],.ct-toggle-close";
+      "[aria-label*='close' i],[data-micromodal-close],.ct-toggle-close,#menu-icon-close";
     var PANEL_SEL = "[class*='offcanvas'],[class*='off-canvas'],[class*='ct-panel']," +
-      "[class*='side-menu'],[class*='nav-drawer'],[class*='mobile-menu'],[role='dialog']";
+      "[class*='side-menu'],[class*='nav-drawer'],[class*='mobile-menu'],[role='dialog'],.sidemenu,#mobile-menu";
     document.addEventListener("click", function(e){
       if (!isOpen()) return;
       var t = e.target;
