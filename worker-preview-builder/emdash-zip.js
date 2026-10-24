@@ -181,9 +181,12 @@ function buildSeed(extract, siteName, base, replicaHtml) {
 
     // If this is the page collection, add sections repeater so homepage sections are editable
     if ((c.type === "page" || cslug === "page") && sections.length) {
-      fields.push({
+      // Put Page Sections right at the top under Title so users see them immediately
+      const titleIdx = fields.findIndex((f) => f.slug === "title");
+      const insertAt = titleIdx >= 0 ? titleIdx + 1 : 0;
+      fields.splice(insertAt, 0, {
         slug: "sections",
-        label: "Page Sections",
+        label: "Page Sections (Homepage)",
         type: "repeater",
         validation: {
           subFields: [
@@ -214,15 +217,18 @@ function buildSeed(extract, siteName, base, replicaHtml) {
       while (seen.has(uniq)) uniq = `${s}-${i++}`;
       seen.add(uniq);
 
+      const isHome = (uniq === "home" || uniq === "front-page" || (cslug === "page" && entries.length === 0));
       const data = { title: e.title || uniq };
       if (hasExcerpt && e.excerpt) data.excerpt = e.excerpt;
-      data.content = mdToPortableText(e.content_md);
+      // The homepage layout is driven by native sections, not raw content markdown.
+      // Omit raw markdown for home so the admin is clean and uncluttered.
+      data.content = isHome ? [] : mdToPortableText(e.content_md);
       if (hasImg && e.featured_image) data.featured_image = { $media: e.featured_image };
       if (hasCats && e.categories?.length) data.categories = e.categories.map((x) => slugify(x));
       if (hasTags && e.tags?.length) data.tags = e.tags.map((x) => slugify(x));
 
       // Attach sections to the home page entry
-      if ((uniq === "home" || uniq === "front-page" || (cslug === "page" && entries.length === 0)) && sections.length) {
+      if (isHome && sections.length) {
         data.sections = sections;
       }
 
