@@ -584,15 +584,42 @@ const pageCtx = createPublicPageContext({
 `,
   });
 
-  // src/pages/index.astro
+  // src/pages/index.astro: real native Astro template with extracted CSS and live EmDash variables
   if (localizedHtml && localizedHtml.length > 500) {
-    files.push({ name: "src/lib/homepage.html", data: localizedHtml });
+    // 1. Extract all inlined <style> blocks and write to public/_site/original-styles.css
+    const styles = [...localizedHtml.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map((m) => m[1]).join("\n\n");
+    if (styles.length) {
+      files.push({ name: "public/_site/original-styles.css", data: styles });
+    }
+
+    // 2. Extract body
+    const bodyMatch = localizedHtml.match(/<body([^>]*)>([\s\S]*?)<\/body>/i);
+    const bodyAttrs = bodyMatch ? bodyMatch[1] : "";
+    let body = bodyMatch ? bodyMatch[2] : localizedHtml;
+
+    // Remove inlined style tags from body (they now live in original-styles.css)
+    body = body.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
+
+    // Ensure scripts in body are marked is:inline so Astro does not bundle or hoist them
+    body = body.replace(/<script\b(?![^>]*\bis:inline\b)/gi, "<script is:inline");
+
+    // Wire extracted headings into the template as real Astro variables
+    const fieldDefs = [];
+    if (sections && sections.length) {
+      for (let i = 0; i < sections.length; i++) {
+        const s = sections[i];
+        const varName = `sec_${i}_heading`;
+        fieldDefs.push(`const ${varName} = (home?.data?.sections && home.data.sections[${i}]?.heading) || ${JSON.stringify(s.heading)};`);
+        body = body.replace(s.orig_heading, `{${varName}}`);
+      }
+    }
+
     files.push({
       name: "src/pages/index.astro",
       data: `---
 import { getEmDashEntry } from "emdash";
-import rawHtml from "../lib/homepage.html?raw";
 
+// Fetch the Home page from EmDash
 let home = null;
 for (const col of ["page", "pages"]) {
   try {
@@ -601,20 +628,23 @@ for (const col of ["page", "pages"]) {
   } catch (_) {}
 }
 
-const sections = home?.data?.sections || [];
-let html = rawHtml;
+const data = home?.data || {};
 
-// Dynamically replace any edited headings or text from EmDash in the pixel-perfect layout!
-for (const s of sections) {
-  if (s.orig_heading && s.heading && s.heading !== s.orig_heading) {
-    html = html.replaceAll(s.orig_heading, s.heading);
-  }
-  if (s.orig_text && s.text && s.text !== s.orig_text) {
-    html = html.replaceAll(s.orig_text, s.text);
-  }
-}
+${fieldDefs.join("\n")}
 ---
-<Fragment set:html={html} />
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{data.title || ${JSON.stringify(siteName)}}</title>
+    ${styles.length ? '<link rel="stylesheet" href="/_site/original-styles.css" />' : ""}
+  </head>
+  <body${bodyAttrs}>
+${body}
+  </body>
+</html>
 `,
     });
   } else {
@@ -1021,6 +1051,8 @@ export async function buildEmdashZip(env, { id, sourceUrl, businessName, replica
 
   // 1) The authoritative, spec-correct EmDash seed (collections + content + settings).
   const seed = buildSeed(extract, siteName, base, replicaHtml);
+  const homeEntry = (seed.content.page || []).find((e) => e.slug === "home" || e.slug === "front-page");
+  const sections = homeEntry?.data?.sections || [];
   files.push({ name: "seed/seed.json", data: JSON.stringify(seed, null, 2) });
 
   // 2) package.json that points EmDash at the seed.
@@ -1050,7 +1082,7 @@ export async function buildEmdashZip(env, { id, sourceUrl, businessName, replica
   }
 
   // Push all turnkey EmDash project files (astro.config.mjs, tsconfig, Base.astro, src/pages/...)
-  for (const f of emdashProjectFiles(siteName, siteSlug, localized ? localized.html : null)) {
+  for (const f of emdashProjectFiles(siteName, siteSlug, localized ? localized.html : null, sections)) {
     files.push(f);
   }
 
