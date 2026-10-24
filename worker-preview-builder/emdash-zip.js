@@ -144,14 +144,58 @@ function fieldsFor(collection) {
   return { fields, hasCats, hasTags, hasImg, hasExcerpt };
 }
 
+// Parse headings and associated paragraphs from the replica HTML so key sections
+// are exposed as editable repeater blocks in EmDash.
+export function extractSectionsFromHtml(html) {
+  if (!html) return [];
+  const headingRegex = /<(h[1-3])[^>]*>([\s\S]*?)<\/\1>([\s\S]*?)(?=<(?:h[1-3]|footer|body|$))/gi;
+  let match;
+  const sections = [];
+  const seen = new Set();
+  while ((match = headingRegex.exec(html)) !== null) {
+    const heading = match[2].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+    if (!heading || heading.length < 3 || heading.length > 140 || seen.has(heading)) continue;
+    seen.add(heading);
+    const rest = match[3];
+    const pMatch = rest.match(/<p[^>]*>([\s\S]*?)<\/p>/i);
+    const text = pMatch ? pMatch[1].replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim() : "";
+    sections.push({
+      orig_heading: heading,
+      heading: heading,
+      orig_text: text,
+      text: text,
+    });
+  }
+  return sections;
+}
+
 // Build the spec-correct EmDash seed with collections + baked-in content + settings.
-function buildSeed(extract, siteName, base) {
+function buildSeed(extract, siteName, base, replicaHtml) {
   const collections = [];
   const content = {};
+  const sections = extractSectionsFromHtml(replicaHtml);
 
   for (const c of extract.collections) {
     const cslug = emdashCollectionSlug(c.type);
     const { fields, hasImg, hasExcerpt, hasCats, hasTags } = fieldsFor(c);
+
+    // If this is the page collection, add sections repeater so homepage sections are editable
+    if ((c.type === "page" || cslug === "page") && sections.length) {
+      fields.push({
+        slug: "sections",
+        label: "Page Sections",
+        type: "repeater",
+        validation: {
+          subFields: [
+            { slug: "heading", label: "Section Heading", type: "string" },
+            { slug: "text", label: "Section Text", type: "text" },
+            { slug: "orig_heading", label: "Original Heading", type: "string" },
+            { slug: "orig_text", label: "Original Text", type: "text" },
+          ],
+        },
+      });
+    }
+
     collections.push({
       slug: cslug,
       label: c.label,
@@ -175,6 +219,11 @@ function buildSeed(extract, siteName, base) {
       if (hasImg && e.featured_image) data.featured_image = { $media: e.featured_image };
       if (hasCats && e.categories?.length) data.categories = e.categories.map((x) => slugify(x));
       if (hasTags && e.tags?.length) data.tags = e.tags.map((x) => slugify(x));
+
+      // Attach sections to the home page entry
+      if ((uniq === "home" || uniq === "front-page" || (cslug === "page" && entries.length === 0)) && sections.length) {
+        data.sections = sections;
+      }
 
       entries.push({
         id: `${cslug}-${uniq}`,
@@ -541,9 +590,31 @@ const pageCtx = createPublicPageContext({
     files.push({
       name: "src/pages/index.astro",
       data: `---
-import homepageHtml from "../lib/homepage.html?raw";
+import { getEmDashEntry } from "emdash";
+import rawHtml from "../lib/homepage.html?raw";
+
+let home = null;
+for (const col of ["page", "pages"]) {
+  try {
+    const res = await getEmDashEntry(col, "home");
+    if (res && res.entry) { home = res.entry; break; }
+  } catch (_) {}
+}
+
+const sections = home?.data?.sections || [];
+let html = rawHtml;
+
+// Dynamically replace any edited headings or text from EmDash in the pixel-perfect layout!
+for (const s of sections) {
+  if (s.orig_heading && s.heading && s.heading !== s.orig_heading) {
+    html = html.replaceAll(s.orig_heading, s.heading);
+  }
+  if (s.orig_text && s.text && s.text !== s.orig_text) {
+    html = html.replaceAll(s.orig_text, s.text);
+  }
+}
 ---
-<Fragment set:html={homepageHtml} />
+<Fragment set:html={html} />
 `,
     });
   } else {
@@ -949,7 +1020,7 @@ export async function buildEmdashZip(env, { id, sourceUrl, businessName, replica
   const files = [];
 
   // 1) The authoritative, spec-correct EmDash seed (collections + content + settings).
-  const seed = buildSeed(extract, siteName, base);
+  const seed = buildSeed(extract, siteName, base, replicaHtml);
   files.push({ name: "seed/seed.json", data: JSON.stringify(seed, null, 2) });
 
   // 2) package.json that points EmDash at the seed.
