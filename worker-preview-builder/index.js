@@ -99,11 +99,33 @@ async function buildZipJob(env, id, target, kind) {
 }
 
 export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    const id = url.searchParams.get("id");
+    const mode = url.searchParams.get("mode") || "replica";
+    const kind = url.searchParams.get("kind") || "scripts";
+    if (!id || !/^[0-9a-f]{32}$/.test(id)) {
+      return new Response("Missing or invalid id", { status: 400 });
+    }
+    try {
+      if (mode === "emdash-zip") await buildZipJob(env, id, "emdash", kind);
+      else if (mode === "astro-zip") await buildZipJob(env, id, "astro", kind);
+      else await buildReplica(env, id);
+      return new Response("OK " + mode + " for " + id);
+    } catch (e) {
+      return new Response("Error: " + (e.stack || e.message || String(e)), { status: 500 });
+    }
+  },
+
   async queue(batch, env) {
     for (const msg of batch.messages) {
-      const id = msg.body && msg.body.id;
-      const mode = (msg.body && msg.body.mode) || "replica";
-      const kind = (msg.body && msg.body.kind) || "scripts";
+      let b = msg.body;
+      if (typeof b === "string") {
+        try { b = JSON.parse(b); } catch (_) {}
+      }
+      const id = b && b.id;
+      const mode = (b && b.mode) || "replica";
+      const kind = (b && b.kind) || "scripts";
       if (!id || !/^[0-9a-f]{32}$/.test(id)) { msg.ack(); continue; }
       try {
         if (mode === "emdash-zip") await buildZipJob(env, id, "emdash", kind);

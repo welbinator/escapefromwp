@@ -490,6 +490,17 @@ export const CONSENT_NEUTRALIZER_FN = function (selectors) {
     for (var k = 0; k < all.length; k++) {
       var el = all[k];
       if (!el || !el.parentNode) continue;
+
+      // Never kill structural page chrome (headers, navbars, footers, logo containers).
+      var tag = (el.tagName || "").toUpperCase();
+      if (tag === "HEADER" || tag === "NAV" || tag === "FOOTER" || tag === "MAIN") continue;
+      var role = (el.getAttribute("role") || "").toLowerCase();
+      if (role === "banner" || role === "navigation" || role === "main") continue;
+      var elId = (el.id || "").toLowerCase();
+      var elCls = (typeof el.className === "string" ? el.className : "").toLowerCase();
+      if (/header|navbar|nav-wrap|main-nav|site-logo|site-brand|menu-wrap/.test(elId + " " + elCls)) continue;
+      if (el.querySelector("header, nav, [role='navigation'], [role='banner'], #header, #headerwrap, #main-nav, .main-nav, .site-logo, #site-logo")) continue;
+
       var s;
       try { s = getComputedStyle(el); } catch (e) { continue; }
       if (s.position !== "fixed" && s.position !== "sticky") continue;
@@ -500,7 +511,9 @@ export const CONSENT_NEUTRALIZER_FN = function (selectors) {
       if (r.width < vw * 0.55 && r.height < vh * 0.5) continue; // not a banner/overlay
       var txt = (el.textContent || "").toLowerCase();
       if (txt.length > 4000) continue; // whole-page wrapper, not a banner
-      if (/cookie|consent|gdpr|privacy|we use|tracking|accept all|opt[- ]?out/.test(txt)) {
+
+      // Never match purely on "privacy" or "we use" without cookie/consent/tracking terms!
+      if (/cookie|consent|gdpr|tracking|accept all|reject all|manage cookies|opt[- ]?out/.test(txt)) {
         kill(el); continue;
       }
       // A near-opaque full-screen fixed backdrop with little/no text = modal veil.

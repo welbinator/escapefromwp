@@ -125,12 +125,22 @@ async function rewriteCssUrls(env, id, css, cssBaseUrl, cache, selfOrigin, pageO
   const urls = [];
   css.replace(/url\(\s*["']?([^"')]+)["']?\s*\)/gi, (m, u) => { urls.push(u); return m; });
   const map = {};
+  const needed = [];
   for (const u of urls) {
     if (/^(data:)/i.test(u)) continue;
     const abs = absUrl(u, cssBaseUrl);
     if (!abs) continue;
     if (map[u] !== undefined) continue;
-    map[u] = await rehostAsset(env, id, abs, cache, selfOrigin, pageOrigin);
+    map[u] = null;
+    needed.push({ raw: u, abs });
+  }
+  // Batch in concurrent chunks so hundreds of font/bg assets don't freeze the worker
+  const CHUNK = 25;
+  for (let i = 0; i < needed.length; i += CHUNK) {
+    const chunk = needed.slice(i, i + CHUNK);
+    await Promise.all(chunk.map(async ({ raw, abs }) => {
+      map[raw] = await rehostAsset(env, id, abs, cache, selfOrigin, pageOrigin);
+    }));
   }
   return css.replace(/url\(\s*["']?([^"')]+)["']?\s*\)/gi, (m, u) => {
     if (/^(data:)/i.test(u)) return m;
@@ -268,6 +278,62 @@ export async function captureReplica(env, id, pageUrl) {
       }
     } catch (e) { console.log(`[${id}] consent neutralize skipped: ${String(e).slice(0, 80)}`); }
 
+    // --- STABILIZE AUTOPLAYING SLIDERS / CAROUSELS TO SLIDE 0 ---
+    // If a site has autoplaying sliders (Slider Pro, Swiper, Slick), they may have
+    // transitioned while we were recording toggles. Snap them back to slide 0 and
+    // ensure slide 0's text/layers are visible before stripping scripts.
+    try {
+      await page.evaluate(() => {
+        // 1) Slider Pro (Themify / jQuery)
+        if (window.jQuery) {
+          try {
+            window.jQuery(".slider-pro").each(function () {
+              var inst = window.jQuery(this).data("sliderPro");
+              if (inst) {
+                if (typeof inst.stopAutoplay === "function") inst.stopAutoplay();
+                if (typeof inst.gotoSlide === "function") inst.gotoSlide(0);
+              }
+            });
+          } catch (_) {}
+        }
+        var sps = document.querySelectorAll(".slider-pro");
+        for (var i = 0; i < sps.length; i++) {
+          var sp = sps[i];
+          var slidesWrap = sp.querySelector(".sp-slides");
+          if (slidesWrap) {
+            slidesWrap.style.transform = "translate3d(0px, 0px, 0px)";
+          }
+          var slides = sp.querySelectorAll(".sp-slide");
+          for (var j = 0; j < slides.length; j++) {
+            if (j === 0) {
+              slides[j].classList.add("sp-selected");
+              slides[j].style.left = "0px";
+              slides[j].style.opacity = "1";
+              slides[j].style.visibility = "visible";
+              slides[j].style.display = "block";
+              var dataBg = slides[j].getAttribute("data-bg");
+              if (dataBg && (!slides[j].style.backgroundImage || slides[j].style.backgroundImage === "none")) {
+                slides[j].style.backgroundImage = "url(" + dataBg + ")";
+              }
+              var hidden = slides[j].querySelectorAll("[style*='visibility: hidden'], [style*='visibility:hidden']");
+              for (var h = 0; h < hidden.length; h++) {
+                hidden[h].style.visibility = "visible";
+                hidden[h].style.opacity = "1";
+              }
+            } else {
+              slides[j].classList.remove("sp-selected");
+              slides[j].style.display = "none";
+            }
+          }
+        }
+        // 2) Swiper
+        var swipers = document.querySelectorAll(".swiper-wrapper");
+        for (var si = 0; si < swipers.length; si++) {
+          swipers[si].style.transform = "translate3d(0px, 0px, 0px)";
+        }
+      });
+    } catch (_) {}
+
     // Grab hydrated HTML (now carries the data-efw-* stamps from the recorder).
     // page.content() throws if the execution context was destroyed by a late
     // navigation/reload. Retry once after a short settle; if it still fails, fall
@@ -314,8 +380,15 @@ export async function captureReplica(env, id, pageUrl) {
     html.replace(/<(?:meta|link)\b[^>]*\b(?:content|href)=["'](https?:\/\/[^"']+\.(?:png|jpe?g|webp|gif|svg|ico))["'][^>]*>/gi,
       (m, u) => { imgUrls.add(u); return m; });
 
+    const imgArr = [...imgUrls];
     const urlMap = {};
-    for (const u of imgUrls) urlMap[u] = await rehostAsset(env, id, u, cache, selfOrigin, pageOrigin);
+    const CHUNK = 25;
+    for (let i = 0; i < imgArr.length; i += CHUNK) {
+      const chunk = imgArr.slice(i, i + CHUNK);
+      await Promise.all(chunk.map(async (u) => {
+        urlMap[u] = await rehostAsset(env, id, u, cache, selfOrigin, pageOrigin);
+      }));
+    }
     // Replace every rehosted URL throughout the HTML.
     for (const [u, rep] of Object.entries(urlMap)) {
       if (!rep) continue;
