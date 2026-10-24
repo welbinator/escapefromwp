@@ -189,6 +189,30 @@ function buildSeed(extract, siteName, base) {
   let url;
   try { url = new URL(base).origin; } catch { url = undefined; }
 
+  const menus = [];
+  if (extract.menus && Array.isArray(extract.menus.menus)) {
+    function mapItems(items) {
+      if (!Array.isArray(items)) return [];
+      return items.map((it) => {
+        const item = {
+          label: it.label || "Link",
+          url: it.path || it.url || "/",
+        };
+        if (it.children && it.children.length) {
+          item.children = mapItems(it.children);
+        }
+        return item;
+      });
+    }
+    for (const m of extract.menus.menus) {
+      menus.push({
+        slug: m.slug || "main",
+        name: m.name || "Main Menu",
+        items: mapItems(m.items),
+      });
+    }
+  }
+
   const seed = {
     $schema: "https://emdashcms.com/seed.schema.json",
     version: "1",
@@ -204,6 +228,7 @@ function buildSeed(extract, siteName, base) {
     },
     collections,
     content,
+    ...(menus.length ? { menus } : {}),
   };
   return seed;
 }
@@ -227,19 +252,40 @@ function scaffoldPackageJson(siteSlug) {
   }, null, 2);
 }
 
+// Rewrite internal links pointing to the original site to root-relative paths
+// (e.g. href="https://example.com/about/" -> href="/about/") so the site's menu
+// and navigation stay on the new site with identical slugs and no redirects.
+export function rewriteInternalLinks(html, sourceUrl) {
+  if (!html || !sourceUrl) return html;
+  try {
+    const u = new URL(sourceUrl);
+    const host = u.hostname.replace(/^www\./i, "");
+    const regex = new RegExp(`\\bhref=["'](?:https?:)?\\/\\/(?:www\\.)?${host.replace(/\\./g, "\\.")}(?::\\d+)?(\\/[^"']*)?["']`, "gi");
+    return html.replace(regex, (m, p) => {
+      const cleanPath = p || "/";
+      return `href="${cleanPath}"`;
+    });
+  } catch (_) {
+    return html;
+  }
+}
+
 // Pull the exact-copy replica HTML apart and rebundle it so the downloaded site
 // renders IDENTICALLY offline, with no dependency on escapefromwp.com:
 //   - every rehosted asset (/replica-asset/<id>/<file> on our origin) is fetched
 //     and written into the zip under public/_site/<file>
 //   - the HTML's references are rewritten to the local /_site/<file> path
+//   - all internal links are rewritten to root-relative paths so the menus work locally
 // Returns { html, assets: [{name,data(Uint8Array)}] } or null if nothing usable.
-export async function localizeReplica(replicaHtml) {
+export async function localizeReplica(replicaHtml, sourceUrl) {
   if (!replicaHtml || replicaHtml.length < 500) return null;
+  // Rewrite internal links to relative paths first.
+  let html = rewriteInternalLinks(replicaHtml, sourceUrl);
+
   // Find every absolute reference to one of our rehosted assets.
   const re = /https?:\/\/[^"')\s]+\/replica-asset\/[0-9a-f]{32}\/[A-Za-z0-9._-]+/g;
-  const urls = [...new Set(replicaHtml.match(re) || [])];
+  const urls = [...new Set(html.match(re) || [])];
   const assets = [];
-  let html = replicaHtml;
   const UA = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "accept": "*/*",
@@ -432,11 +478,12 @@ ${designSection}
    at it; if yours differs, set it). ${prebuiltHome ? "Copy \`public/\` (the pre-built homepage + \`_site/\` assets) in too, plus \`reference/\` and \`content/\` for reference." : "Also copy \`reference/\` and \`content/\` in for reference."}
 3. **Install:** \`npm install\`.
 4. **Run first setup — this is where the content imports.** \`npm run dev\`, then open
-   \`http://localhost:4321/_emdash/admin\`. The first visit launches the **setup wizard**.
-   Enter the site identity + admin user, and **choose to INCLUDE sample content** when
-   asked — that is what applies the seed's entries. Finish the wizard. Your collections
+   \`http://localhost:4321/_emdash/admin\` (⚠️ MUST use \`localhost\`, NEVER \`127.0.0.1\` — passkeys require a secure context).
+   The first visit launches the **setup wizard**. Enter the site identity + admin user, and **choose to INCLUDE sample content**
+   when asked — that is what applies the seed's entries and navigation menus. Finish the wizard. Your collections
    and all entries are now in the database. (If you skip "include content", the entries
    won't load — re-run against a fresh DB.)
+   *(Tip: you can also bypass the passkey setup locally by visiting \`http://localhost:4321/_emdash/api/auth/dev-bypass\`)*.
 5. **Verify content:** the EmDash admin should now list every collection with its entries.
 ${prebuiltHome
   ? `6. **Verify the look:** open the site root — it should already render your exact
@@ -542,9 +589,10 @@ export async function buildEmdashZip(env, { id, sourceUrl, businessName, replica
   //    its assets bundled locally — instead of asking the bot to recreate the design.
   let prebuiltHome = false;
   if (replicaHtml && replicaHtml.length > 500) {
-    files.push({ name: "reference/your-exact-site.html", data: replicaHtml });
+    const cleanReplica = rewriteInternalLinks(replicaHtml, sourceUrl);
+    files.push({ name: "reference/your-exact-site.html", data: cleanReplica });
     try {
-      const local = await localizeReplica(replicaHtml);
+      const local = await localizeReplica(replicaHtml, sourceUrl);
       if (local && local.html) {
         for (const f of staticHomepageFiles(local.html)) files.push(f);
         for (const a of local.assets) files.push(a);
@@ -575,12 +623,17 @@ npm create astro@latest my-site -- --template @emdash-cms/template-starter-cloud
 cd my-site
 
 # 2. Copy this package's seed/ (and reference/, content/) into my-site/, overwriting seed/seed.json
-# 3. Install + run, then complete first-time setup (INCLUDE content when asked)
+# 3. Install + run
 npm install
-npm run dev     # open http://localhost:4321/_emdash/admin → setup wizard
+npm run dev
+
+# 4. Open the admin setup wizard in your browser:
+# 👉 http://localhost:4321/_emdash/admin
+# ⚠️ IMPORTANT: Always use \`localhost\`, NEVER \`127.0.0.1\`!
+# EmDash uses passkeys/WebAuthn, which browsers block on numeric IP addresses.
 \`\`\`
 
-Your ${totalEntries} entries load during that setup step. Then open
+Your ${totalEntries} entries and menus load during that setup step (choose **"include sample content"**). Then open
 **AGENT_INSTRUCTIONS.md** and hand this whole folder to your AI coding assistant to
 fuse your exact design (reference/your-exact-site.html) on top.
 
@@ -606,13 +659,15 @@ cd my-site
 
 # 3. Install and run
 npm install
-npm run dev               # opens http://localhost:4321
+npm run dev
 \`\`\`
 
-- Your homepage renders immediately at \`/\`${prebuiltHome ? " from \`public/index.html\` — pixel-identical to your old site, menus working" : ""}.
-- To load your ${totalEntries} content entries into the CMS, open
-  \`http://localhost:4321/_emdash/admin\`, complete the one-time setup, and choose
-  **"include content"** — that's when EmDash imports \`seed/seed.json\`.
+- Your homepage renders immediately at \`http://localhost:4321/\`${prebuiltHome ? " from \`public/index.html\` — pixel-identical to your old site, with all menu links matching your exact original slugs" : ""}.
+- To load your ${totalEntries} content entries into the CMS, open:
+  👉 **\`http://localhost:4321/_emdash/admin\`**
+  *(⚠️ **IMPORTANT:** MUST use \`localhost\`, NEVER \`127.0.0.1\` — browser passkey security blocks \`127.0.0.1\`)*.
+  Complete the one-time setup and choose **"include content"** — that's when EmDash imports \`seed/seed.json\` (collections, posts, and navigation menus).
+  *(Shortcut: to bypass the passkey setup locally, visit \`http://localhost:4321/_emdash/api/auth/dev-bypass\`)*.
 - Deploy with \`npm run build\` then push \`dist/\` to Cloudflare Pages (see EmDash docs).
 
 That's the whole process — no AI assistant needed. If you'd rather hand it to an AI

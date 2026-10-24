@@ -20,7 +20,7 @@
 import { extractSite, normalizeSiteUrl } from "../functions/api/_lib/wp-extract.js";
 import { buildBundleFiles } from "../functions/api/_lib/build-bundle.js";
 import { zipSync } from "../functions/api/_lib/zip.js";
-import { slug, slugify, localizeReplica, staticHomepageFiles } from "./emdash-zip.js";
+import { slug, slugify, localizeReplica, staticHomepageFiles, rewriteInternalLinks } from "./emdash-zip.js";
 
 // Astro content-collection id: letters/numbers/underscore, start with a letter.
 function collectionId(wpType) {
@@ -452,9 +452,10 @@ export async function buildAstroZip(env, { id, sourceUrl, businessName, replicaH
   let prebuiltHome = false;
   let fullyRendered = false;
   if (replicaHtml && replicaHtml.length > 500) {
-    files.push({ name: "reference/your-exact-site.html", data: replicaHtml });
+    const cleanReplica = rewriteInternalLinks(replicaHtml, sourceUrl);
+    files.push({ name: "reference/your-exact-site.html", data: cleanReplica });
     try {
-      const local = await localizeReplica(replicaHtml);
+      const local = await localizeReplica(replicaHtml, sourceUrl);
       if (local && local.html) {
         for (const a of staticHomepageFiles(local.html)) {
           // staticHomepageFiles emits public/index.html + astro.config.mjs; skip the
