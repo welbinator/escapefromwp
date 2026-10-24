@@ -195,6 +195,7 @@ function buildSeed(extract, siteName, base) {
       if (!Array.isArray(items)) return [];
       return items.map((it) => {
         const item = {
+          type: "custom",
           label: it.label || "Link",
           url: it.path || it.url || "/",
         };
@@ -206,8 +207,8 @@ function buildSeed(extract, siteName, base) {
     }
     for (const m of extract.menus.menus) {
       menus.push({
-        slug: m.slug || "main",
-        name: m.name || "Main Menu",
+        name: "primary",
+        label: m.name || "Primary Navigation",
         items: mapItems(m.items),
       });
     }
@@ -236,18 +237,25 @@ function buildSeed(extract, siteName, base) {
 function scaffoldPackageJson(siteSlug) {
   return JSON.stringify({
     name: siteSlug,
-    type: "module",
     version: "0.1.0",
     private: true,
-    // EmDash discovers the seed via this pointer (docs: package.json#emdash.seed).
-    emdash: { seed: "seed/seed.json" },
+    type: "module",
+    emdash: {
+      seed: "seed/seed.json",
+    },
     scripts: {
       dev: "astro dev",
       build: "astro build",
       preview: "astro preview",
+      start: "node ./dist/server/entry.mjs",
     },
     dependencies: {
-      astro: "^5.0.0",
+      "@astrojs/node": "^11.1.5",
+      "@astrojs/react": "^7.0.0",
+      astro: "^7.3.2",
+      emdash: "^1.3.0",
+      react: "^19.0.0",
+      "react-dom": "^19.0.0",
     },
   }, null, 2);
 }
@@ -321,6 +329,375 @@ export function staticHomepageFiles(localizedHtml) {
     name: "astro.config.mjs",
     data: `import { defineConfig } from "astro/config";\n\n// The exact-copy homepage ships as public/index.html (pixel-identical to your old\n// site, assets bundled locally under public/_site/). Build the EmDash-driven routes\n// in src/pages/ for your other collections; see AGENT_INSTRUCTIONS.md.\nexport default defineConfig({\n  // output: "static" by default — fine for a content site.\n});\n`,
   });
+  return files;
+}
+
+// Complete turnkey EmDash project scaffolding (Astro 7 + EmDash + React + Node adapter).
+// Ships a runnable CMS project out of the box — zero external scaffolding needed.
+export function emdashProjectFiles(siteName, siteSlug, localizedHtml) {
+  const files = [];
+
+  // astro.config.mjs with Node/SQLite local dev setup for EmDash
+  files.push({
+    name: "astro.config.mjs",
+    data: `import node from "@astrojs/node";
+import react from "@astrojs/react";
+import { defineConfig } from "astro/config";
+import emdash, { local } from "emdash/astro";
+import { sqlite } from "emdash/db";
+
+export default defineConfig({
+  output: "server",
+  adapter: node({
+    mode: "standalone",
+  }),
+  image: {
+    layout: "constrained",
+    responsiveStyles: true,
+  },
+  integrations: [
+    react(),
+    emdash({
+      database: sqlite({ url: "file:./data.db" }),
+      storage: local({
+        directory: "./uploads",
+        baseUrl: "/_emdash/api/media/file",
+      }),
+    }),
+  ],
+  devToolbar: { enabled: false },
+});
+`,
+  });
+
+  // tsconfig.json
+  files.push({
+    name: "tsconfig.json",
+    data: JSON.stringify({
+      extends: "astro/tsconfigs/strict",
+      compilerOptions: {
+        jsx: "react-jsx",
+        jsxImportSource: "react",
+      },
+    }, null, 2),
+  });
+
+  // src/live.config.ts
+  files.push({
+    name: "src/live.config.ts",
+    data: `import { defineLiveConfig } from "emdash/live";
+
+export default defineLiveConfig({
+  collections: {},
+});
+`,
+  });
+
+  // src/utils/site-identity.ts
+  files.push({
+    name: "src/utils/site-identity.ts",
+    data: `export function resolveStarterSiteIdentity(settings) {
+  return {
+    siteTitle: (settings && settings.title) || ${JSON.stringify(siteName)},
+    siteTagline: (settings && settings.tagline) || "",
+    siteLogo: (settings && settings.logo) || null,
+  };
+}
+`,
+  });
+
+  // src/layouts/Base.astro
+  files.push({
+    name: "src/layouts/Base.astro",
+    data: `---
+import { getMenuWithCacheHint, getSiteSettingsWithCacheHint } from "emdash";
+import { EmDashHead, EmDashBodyStart, EmDashBodyEnd } from "emdash/ui";
+import { createPublicPageContext } from "emdash/page";
+import { resolveStarterSiteIdentity } from "../utils/site-identity";
+
+interface Props {
+  title?: string;
+  pageTitle?: string | null;
+  description?: string | null;
+  image?: string | null;
+  canonical?: string | null;
+  content?: { collection: string; id: string; slug?: string | null };
+}
+
+const { title = ${JSON.stringify(siteName)}, pageTitle, description, image, canonical, content } = Astro.props;
+const [settingsResult, menuResult] = await Promise.all([
+  getSiteSettingsWithCacheHint(),
+  getMenuWithCacheHint("primary"),
+]);
+if (Astro.cache?.enabled) {
+  Astro.cache.set(settingsResult.cacheHint);
+  Astro.cache.set(menuResult.cacheHint);
+}
+
+const { siteTitle, siteTagline, siteLogo } = resolveStarterSiteIdentity(settingsResult.data);
+const fullTitle = title === siteTitle ? title : \`\${title} — \${siteTitle}\`;
+const pageDescription = description ?? siteTagline;
+const menu = menuResult.data;
+
+const pageCtx = createPublicPageContext({
+  Astro,
+  kind: content ? "content" : "custom",
+  pageType: "website",
+  title: fullTitle,
+  pageTitle: pageTitle ?? title,
+  description: pageDescription,
+  canonical,
+  image,
+  content,
+  siteName: siteTitle,
+});
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{fullTitle}</title>
+    <EmDashHead page={pageCtx} />
+    <style>
+      :root {
+        --font-sans: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;
+      }
+      body {
+        margin: 0;
+        font-family: var(--font-sans);
+        color: #1e293b;
+        line-height: 1.6;
+        background: #fff;
+      }
+      header {
+        border-bottom: 1px solid #e2e8f0;
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      .brand {
+        font-weight: 700;
+        font-size: 1.25rem;
+        color: #0f172a;
+        text-decoration: none;
+      }
+      nav {
+        display: flex;
+        gap: 1.25rem;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      nav a {
+        color: #475569;
+        text-decoration: none;
+        font-size: 0.95rem;
+        font-weight: 500;
+      }
+      nav a:hover {
+        color: #0f172a;
+      }
+      main {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+      }
+      article h1 {
+        margin-top: 0;
+        font-size: 2.25rem;
+        color: #0f172a;
+      }
+    </style>
+  </head>
+  <body>
+    <EmDashBodyStart page={pageCtx} />
+    <header>
+      <a class="brand" href="/">
+        {siteLogo ? <img src={siteLogo.url} alt={siteLogo.alt || siteTitle} style="height:40px;width:auto;" /> : siteTitle}
+      </a>
+      <nav>
+        {menu?.items?.map((item: any) => (
+          <a href={item.url} target={item.target}>{item.label}</a>
+        ))}
+      </nav>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <EmDashBodyEnd page={pageCtx} />
+  </body>
+</html>
+`,
+  });
+
+  // src/pages/index.astro
+  if (localizedHtml && localizedHtml.length > 500) {
+    files.push({ name: "src/lib/homepage.html", data: localizedHtml });
+    files.push({
+      name: "src/pages/index.astro",
+      data: `---
+import homepageHtml from "../lib/homepage.html?raw";
+---
+<Fragment set:html={homepageHtml} />
+`,
+    });
+  } else {
+    files.push({
+      name: "src/pages/index.astro",
+      data: `---
+import Base from "../layouts/Base.astro";
+---
+<Base title=${JSON.stringify(siteName)}>
+  <h1>${siteName}</h1>
+  <p>Your EmDash CMS site is ready. Visit <a href="/_emdash/admin">/_emdash/admin</a> to manage your content.</p>
+</Base>
+`,
+    });
+  }
+
+  // src/pages/[slug].astro (for CMS pages)
+  files.push({
+    name: "src/pages/[slug].astro",
+    data: `---
+import { getEmDashEntry, getSeoMeta, decodeSlug, getSiteSettings } from "emdash";
+import { PortableText } from "emdash/ui";
+import Base from "../layouts/Base.astro";
+import { resolveStarterSiteIdentity } from "../utils/site-identity";
+
+const slug = decodeSlug(Astro.params.slug);
+if (!slug) return Astro.rewrite("/404");
+
+const { entry: page, cacheHint } = await getEmDashEntry("pages", slug);
+if (!page) return Astro.rewrite("/404");
+
+if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+const { siteTitle } = resolveStarterSiteIdentity(await getSiteSettings());
+
+const seo = getSeoMeta(page, {
+  siteTitle,
+  siteUrl: Astro.url.origin,
+  path: Astro.url.pathname.replace(/\\/$/, ""),
+});
+---
+
+<Base
+  title={seo.title}
+  pageTitle={seo.ogTitle}
+  description={seo.description}
+  canonical={seo.canonical}
+  content={{ collection: "pages", id: page.data.id, slug }}
+>
+  <article>
+    <h1 {...page.edit.title}>{page.data.title}</h1>
+    <PortableText value={page.data.content} />
+  </article>
+</Base>
+`,
+  });
+
+  // src/pages/posts/[slug].astro (for CMS posts)
+  files.push({
+    name: "src/pages/posts/[slug].astro",
+    data: `---
+import { getEmDashEntry, getSeoMeta, decodeSlug, getSiteSettings } from "emdash";
+import { Image, PortableText } from "emdash/ui";
+import Base from "../../layouts/Base.astro";
+import { resolveStarterSiteIdentity } from "../../utils/site-identity";
+
+const slug = decodeSlug(Astro.params.slug);
+if (!slug) return Astro.rewrite("/404");
+
+const { entry: post, cacheHint } = await getEmDashEntry("posts", slug);
+if (!post) return Astro.rewrite("/404");
+
+if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+const { siteTitle } = resolveStarterSiteIdentity(await getSiteSettings());
+
+const seo = getSeoMeta(post, {
+  siteTitle,
+  siteUrl: Astro.url.origin,
+  path: Astro.url.pathname.replace(/\\/$/, ""),
+});
+---
+
+<Base
+  title={seo.title}
+  pageTitle={seo.ogTitle}
+  description={seo.description}
+  canonical={seo.canonical}
+  image={seo.ogImage}
+  content={{ collection: "posts", id: post.data.id, slug }}
+>
+  <article>
+    {post.data.featured_image && (
+      <div {...post.edit.featured_image}>
+        <Image image={post.data.featured_image} />
+      </div>
+    )}
+    <h1 {...post.edit.title}>{post.data.title}</h1>
+    <PortableText value={post.data.content} />
+  </article>
+</Base>
+`,
+  });
+
+  // src/pages/posts/index.astro (for posts list)
+  files.push({
+    name: "src/pages/posts/index.astro",
+    data: `---
+import { getEmDashCollection } from "emdash";
+import { Image } from "emdash/ui";
+import Base from "../../layouts/Base.astro";
+
+const { entries: posts, cacheHint } = await getEmDashCollection("posts", {
+  orderBy: { published_at: "desc" },
+  limit: 20,
+});
+if (Astro.cache?.enabled) Astro.cache.set(cacheHint);
+---
+
+<Base title="All Posts">
+  <h1>Posts</h1>
+  {posts.length === 0 ? (
+    <p>No posts yet.</p>
+  ) : (
+    <ul>
+      {posts.map((post: any) => (
+        <li>
+          <a href={\`/posts/\${post.slug || post.id}\`}>
+            {post.data.featured_image && (
+              <div {...post.edit.featured_image}><Image image={post.data.featured_image} /></div>
+            )}
+            <h2 {...post.edit.title}>{post.data.title}</h2>
+          </a>
+          {post.data.excerpt && <p {...post.edit.excerpt}>{post.data.excerpt}</p>}
+        </li>
+      ))}
+    </ul>
+  )}
+</Base>
+`,
+  });
+
+  // src/pages/404.astro
+  files.push({
+    name: "src/pages/404.astro",
+    data: `---
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="Page Not Found">
+  <h1>404 — Page not found</h1>
+  <p>The page you're looking for doesn't exist.</p>
+  <a href="/">Go to Homepage</a>
+</Base>
+`,
+  });
+
   return files;
 }
 
@@ -465,46 +842,36 @@ Total: **${totalEntries} entries.**
 
 ${designSection}
 
-## Step-by-step (follow in order — do NOT seed before scaffolding)
-1. **Scaffold a real EmDash project** from the official template (this gives you the
-   correct Astro config, adapter, and \`src/live.config.ts\` wiring — don't hand-write it):
+## Step-by-step
+1. **Install dependencies:**
+   \`\`\`bash
+   npm install
    \`\`\`
-   npm create astro@latest my-site -- --template @emdash-cms/template-starter-cloudflare
-   cd my-site
+2. **Start the local dev server:**
+   \`\`\`bash
+   npm run dev
    \`\`\`
-   (Use \`@emdash-cms/template-starter\` for a non-Cloudflare/Node target.)
-2. **Drop in the content + design.** Copy this package's \`seed/seed.json\` over the
-   template's \`seed/seed.json\` (the template already points \`package.json#emdash.seed\`
-   at it; if yours differs, set it). ${prebuiltHome ? "Copy \`public/\` (the pre-built homepage + \`_site/\` assets) in too, plus \`reference/\` and \`content/\` for reference." : "Also copy \`reference/\` and \`content/\` in for reference."}
-3. **Install:** \`npm install\`.
-4. **Run first setup — this is where the content imports.** \`npm run dev\`, then open
+3. **Run first setup — this is where the content imports.** Open
    \`http://localhost:4321/_emdash/admin\` (⚠️ MUST use \`localhost\`, NEVER \`127.0.0.1\` — passkeys require a secure context).
    The first visit launches the **setup wizard**. Enter the site identity + admin user, and **choose to INCLUDE sample content**
    when asked — that is what applies the seed's entries and navigation menus. Finish the wizard. Your collections
    and all entries are now in the database. (If you skip "include content", the entries
    won't load — re-run against a fresh DB.)
-   *(Tip: you can also bypass the passkey setup locally by visiting \`http://localhost:4321/_emdash/api/auth/dev-bypass\`)*.
-5. **Verify content:** the EmDash admin should now list every collection with its entries.
+   *(Tip: you can also bypass the passkey setup locally by visiting \`http://localhost:4321/_emdash/api/setup/dev-bypass?redirect=/_emdash/admin\`)*.
+4. **Verify content:** the EmDash admin should now list every collection with its entries and menus.
 ${prebuiltHome
-  ? `6. **Verify the look:** open the site root — it should already render your exact
-   homepage from \`public/index.html\`. If it doesn't, make sure \`public/\` was copied in.
-7. **Make it EmDash-driven (optional but recommended):** port \`public/index.html\` into
-   \`src/layouts/Base.astro\` + \`src/pages/index.astro\` **verbatim**, then swap the
-   hardcoded text/images for the seeded collection data via EmDash's content API +
-   \`<PortableText />\`. The rendered page must stay visually identical to the original.
-   **Carry the two \`data-efw\` interaction scripts into \`Base.astro\` (end of \`<body>\`)
-   and mark them \`is:inline\` — see "🔌 keep the interaction scripts" above — or the
-   mobile menu breaks on the ported site.**
-8. **Other routes:** add one route per collection (e.g. \`src/pages/[slug].astro\`),
-   reusing the SAME header/footer/styles **and the same \`Base.astro\` layout (which now
-   carries the interaction scripts)** from \`public/index.html\` so every page matches
-   AND its menu works.`
-  : `6. **Study the exact look:** open \`reference/your-exact-site.html\`. Extract design
+  ? `5. **Verify the look:** open \`http://localhost:4321/\` — it already renders your exact
+   homepage with all original styles and interactive menus intact.
+6. **Inner page templates:** \`src/pages/[slug].astro\` and \`src/pages/posts/[slug].astro\` are
+   already provided, rendering content entries with the dynamic EmDash menu.
+7. **Other routes:** add one route per collection (e.g. \`src/pages/[slug].astro\`),
+   reusing the SAME header/footer/styles from your exact site.`
+  : `5. **Study the exact look:** open \`reference/your-exact-site.html\`. Extract design
    tokens — fonts, colors, spacing, header/footer, section layouts.
-7. **Build the layout + homepage:** create \`src/layouts/Base.astro\` and rebuild
+6. **Build the layout + homepage:** create \`src/layouts/Base.astro\` and rebuild
    \`src/pages/index.astro\` to match the reference, pulling text/images from the seeded
    collections via EmDash's content API + \`<PortableText />\`.
-8. **Templates:** add one route per collection (e.g. \`src/pages/[slug].astro\`) styled
+7. **Templates:** add one route per collection (e.g. \`src/pages/[slug].astro\`) styled
    to match the reference.`}${menuNote}
 9. **Redirects:** add old→new 301s to \`public/_redirects\` before going live. No 404s.
 10. **Deploy:** Cloudflare Pages + D1 + R2 (EmDash's standard target), or your host.
@@ -584,21 +951,23 @@ export async function buildEmdashZip(env, { id, sourceUrl, businessName, replica
   }
 
   // 4) Exact-look reference HTML + PRE-BUILT, pixel-identical homepage.
-  //    The whole point: the downloaded site must LOOK like the original out of the
-  //    box, so we ship the exact copy as the live homepage (public/index.html) with
-  //    its assets bundled locally — instead of asking the bot to recreate the design.
   let prebuiltHome = false;
+  let localized = null;
   if (replicaHtml && replicaHtml.length > 500) {
     const cleanReplica = rewriteInternalLinks(replicaHtml, sourceUrl);
     files.push({ name: "reference/your-exact-site.html", data: cleanReplica });
     try {
-      const local = await localizeReplica(replicaHtml, sourceUrl);
-      if (local && local.html) {
-        for (const f of staticHomepageFiles(local.html)) files.push(f);
-        for (const a of local.assets) files.push(a);
+      localized = await localizeReplica(replicaHtml, sourceUrl);
+      if (localized && localized.html) {
+        for (const a of localized.assets) files.push(a);
         prebuiltHome = true;
       }
     } catch (_) { /* fall back to reference-only if localization fails */ }
+  }
+
+  // Push all turnkey EmDash project files (astro.config.mjs, tsconfig, Base.astro, src/pages/...)
+  for (const f of emdashProjectFiles(siteName, siteSlug, localized ? localized.html : null)) {
+    files.push(f);
   }
 
   // 5) Instructions + README.
@@ -607,71 +976,45 @@ export async function buildEmdashZip(env, { id, sourceUrl, businessName, replica
   // an agent read one and missed the other (reported by a real agent), so it's inlined.
   files.push({ name: "AGENT_INSTRUCTIONS.md", data: agentInstructions(siteName, host, stats, totalEntries, menuData, prebuiltHome) });
   const readmeBot =
-`# ${siteName} — your EmDash content package
+`# ${siteName} — your EmDash CMS project
 
-Everything from **${host}**, packaged for **EmDash CMS** — with your content already
-structured as an EmDash seed so it loads itself, plus an exact copy of your old site
-to match the design.
+Everything from **${host}**, packaged as a complete, ready-to-run **EmDash CMS** site.
+Your content and navigation are pre-seeded, and your exact design is already built as the live homepage.
 
-## The short version
-EmDash applies its seed **once, during first-time setup**. So the workflow is:
-scaffold a real EmDash project, drop in this \`seed/seed.json\`, then run setup.
-
-\`\`\`
-# 1. Scaffold the real EmDash template (correct wiring out of the box)
-npm create astro@latest my-site -- --template @emdash-cms/template-starter-cloudflare
-cd my-site
-
-# 2. Copy this package's seed/ (and reference/, content/) into my-site/, overwriting seed/seed.json
-# 3. Install + run
+## Run it (2 commands)
+\`\`\`bash
 npm install
 npm run dev
-
-# 4. Open the admin setup wizard in your browser:
-# 👉 http://localhost:4321/_emdash/admin
-# ⚠️ IMPORTANT: Always use \`localhost\`, NEVER \`127.0.0.1\`!
-# EmDash uses passkeys/WebAuthn, which browsers block on numeric IP addresses.
 \`\`\`
 
-Your ${totalEntries} entries and menus load during that setup step (choose **"include sample content"**). Then open
-**AGENT_INSTRUCTIONS.md** and hand this whole folder to your AI coding assistant to
-fuse your exact design (reference/your-exact-site.html) on top.
+- **Website:** 👉 \`http://localhost:4321\` (renders your exact site with all styling and menus working).
+- **CMS Admin:** 👉 \`http://localhost:4321/_emdash/admin\` (⚠️ MUST use \`localhost\`, NEVER \`127.0.0.1\`).
+  Complete first-time setup and choose **"Include sample content"** to import all ${totalEntries} entries and menus.
+  *(Shortcut: bypass passkey setup locally via \`http://localhost:4321/_emdash/api/setup/dev-bypass?redirect=/_emdash/admin\`)*.
 
-No WordPress required.
+See **AGENT_INSTRUCTIONS.md** if you're working with an AI coding assistant.
 `;
   const readmeScripts =
-`# ${siteName} — your EmDash site (set up yourself, no AI)
+`# ${siteName} — your EmDash site (ready to run, no extra setup)
 
-Everything from **${host}**, packaged as a ready-to-run **EmDash CMS** site —
-your content baked into a seed, and your exact design${prebuiltHome ? " already built as the live homepage" : " included as a reference"}.
-Your mobile menu, dropdowns, and accordions already work (the interaction scripts
-are baked into the homepage) — no WordPress, no jQuery.
+Everything from **${host}**, packaged as a complete, ready-to-run **EmDash CMS** site.
+Your content and navigation are pre-seeded into EmDash, and your exact design${prebuiltHome ? " is already built as the live homepage" : " is included as reference"}.
+Your mobile menu, dropdowns, and accordions already work (the interaction scripts are baked in) — no WordPress, no jQuery.
 
-## Run it — a few commands
-\`\`\`
-# 1. Scaffold the real EmDash starter (correct wiring out of the box)
-npm create astro@latest my-site -- --template @emdash-cms/template-starter-cloudflare
-
-# 2. Copy THIS folder's contents into my-site/ (overwrite seed/seed.json;
-#    keep public/index.html + public/_site/ so the design & menus come along)
-cp -r ./* my-site/        # or drag the files in
-cd my-site
-
-# 3. Install and run
+## Run it — just 2 commands!
+\`\`\`bash
 npm install
 npm run dev
 \`\`\`
 
-- Your homepage renders immediately at \`http://localhost:4321/\`${prebuiltHome ? " from \`public/index.html\` — pixel-identical to your old site, with all menu links matching your exact original slugs" : ""}.
-- To load your ${totalEntries} content entries into the CMS, open:
-  👉 **\`http://localhost:4321/_emdash/admin\`**
+- **Your homepage:** Renders immediately at 👉 **\`http://localhost:4321/\`** — pixel-identical to your old site, with all menu links matching your exact original slugs.
+- **Your CMS Dashboard:** Open 👉 **\`http://localhost:4321/_emdash/admin\`**
   *(⚠️ **IMPORTANT:** MUST use \`localhost\`, NEVER \`127.0.0.1\` — browser passkey security blocks \`127.0.0.1\`)*.
-  Complete the one-time setup and choose **"include content"** — that's when EmDash imports \`seed/seed.json\` (collections, posts, and navigation menus).
-  *(Shortcut: to bypass the passkey setup locally, visit \`http://localhost:4321/_emdash/api/auth/dev-bypass\`)*.
-- Deploy with \`npm run build\` then push \`dist/\` to Cloudflare Pages (see EmDash docs).
+  Complete the quick one-time setup and choose **"Include sample content"** — that's when EmDash imports all ${totalEntries} content entries, collections, and navigation menus.
+  *(Shortcut: to bypass passkey setup during local dev, open \`http://localhost:4321/_emdash/api/setup/dev-bypass?redirect=/_emdash/admin\`)*.
+- **Deploy:** When ready, run \`npm run build\` and deploy to Cloudflare Pages (see EmDash docs).
 
-That's the whole process — no AI assistant needed. If you'd rather hand it to an AI
-coding assistant, \`AGENT_INSTRUCTIONS.md\` has a prompt for that too.
+That's it! No scaffolding templates or file-copying required.
 `;
   files.push({ name: "README.md", data: k0 === "bot" ? readmeBot : readmeScripts });
 
