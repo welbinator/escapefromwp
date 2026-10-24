@@ -1,0 +1,125 @@
+---
+import Layout from "../layouts/Layout.astro";
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+const updated = "October 23, 2026";
+---
+
+<Layout
+  title="Privacy Policy — Escape From WP"
+  description="How Escape From WP handles the information you give us: your email, the URL you submit, basic anti-abuse data, and the third-party services involved."
+>
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a href={`${base}/`} class="wordmark">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></a>
+      <a href={`${base}/liberate/`} class="nav-link">Liberate a site →</a>
+    </div>
+  </header>
+
+  <main class="legal-wrap">
+    <section class="legal">
+      <span class="eyebrow">◦ Legal · Privacy</span>
+      <h1>Privacy Policy</h1>
+      <p class="legal-updated">Last updated: {updated}</p>
+
+      <p>
+        Escape From WP (<strong>escapefromwp.com</strong>) is a free tool that copies a public
+        website you submit and rebuilds it as a self-contained EmDash or static site. This policy
+        explains what we collect, why, and who else is involved. We keep it short because we keep
+        the data minimal.
+      </p>
+
+      <h2>What we collect</h2>
+      <ul>
+        <li>
+          <strong>Your email address.</strong> You give it to us so we can email you the download
+          link when your rebuilt site is ready. If you opt in, we also use it to follow up about
+          moving off WordPress. You can ask us to delete it at any time.
+        </li>
+        <li>
+          <strong>The website URL you submit.</strong> We fetch that public site, render its pages,
+          and download its images and fonts to build your copy. We only process sites you confirm
+          you own or have the right to copy.
+        </li>
+        <li>
+          <strong>Basic anti-abuse data.</strong> To stop spam and abuse we record a one-way hashed
+          form of your IP address (not the raw IP) and rate-limit how many builds come from the same
+          source. We do not use this to track you across other websites.
+        </li>
+      </ul>
+
+      <h2>Cookies &amp; analytics</h2>
+      <p>
+        We use Google Analytics to understand, in aggregate, how the site is used (page views,
+        rough traffic sources). This sets analytics cookies. We do not sell your data or run
+        advertising trackers.
+      </p>
+
+      <h2>Bot protection — Cloudflare Turnstile</h2>
+      <p>
+        To tell real visitors from bots, our forms are protected by
+        <strong>Cloudflare Turnstile</strong>. Turnstile runs silently in the background and may
+        collect information about your device and browser to make that determination. Cloudflare
+        processes this on our behalf. Your use of Turnstile on this site is governed by Cloudflare's
+        <a
+          href="https://www.cloudflare.com/turnstile-privacy-policy/"
+          target="_blank"
+          rel="noopener noreferrer">Turnstile Privacy Addendum</a>
+        and Cloudflare's
+        <a
+          href="https://www.cloudflare.com/privacypolicy/"
+          target="_blank"
+          rel="noopener noreferrer">Privacy Policy</a>.
+      </p>
+
+      <h2>Other services we rely on</h2>
+      <ul>
+        <li><strong>Cloudflare</strong> — hosting, storage, and the build pipeline for your copied site.</li>
+        <li><strong>WordPress.com / rendering infrastructure</strong> — used to capture and render the public site you submit.</li>
+        <li><strong>Our email provider</strong> — used only to send you the download link and any follow-up you opted into.</li>
+      </ul>
+
+      <h2>How long we keep things</h2>
+      <p>
+        Download links and the rebuilt copy are temporary and expire. We don't keep an archive of
+        copied sites. Your email stays on file only as long as needed to deliver your download and,
+        if you opted in, to follow up — until you ask us to remove it.
+      </p>
+
+      <h2>Your choices</h2>
+      <p>
+        Want your email removed, or have a question about your data? Email us at
+        <a href="mailto:james@apexbranding.design">james@apexbranding.design</a> and we'll take care of it.
+      </p>
+
+      <h2>Changes</h2>
+      <p>
+        If this policy changes, we'll update the date at the top of this page.
+      </p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <span class="wordmark small">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
+      <span class="footer-mono">◦ WordPress migration &amp; rescue · escapefromwp.com</span>
+      <span class="footer-mono dim">© {new Date().getFullYear()} — All units accounted for.</span>
+    </div>
+  </footer>
+</Layout>
+
+<style>
+  .legal-wrap { max-width: 760px; margin: 0 auto; padding: 120px 20px 80px; }
+  .legal .eyebrow {
+    font-family: var(--font-mono); font-size: 12px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--signal-red); display: block; margin-bottom: 14px;
+  }
+  .legal h1 { font-size: clamp(32px, 6vw, 48px); line-height: 1.05; margin: 0 0 8px; color: var(--chalk); }
+  .legal-updated { font-family: var(--font-mono); font-size: 13px; color: var(--steel-2, #8a8f98); margin: 0 0 32px; }
+  .legal h2 { font-size: 20px; margin: 36px 0 10px; color: var(--chalk); }
+  .legal p, .legal li { font-size: 16px; line-height: 1.7; color: var(--ash, #c7ccd1); }
+  .legal ul { padding-left: 20px; margin: 0 0 8px; }
+  .legal li { margin-bottom: 10px; }
+  .legal a { color: var(--signal-red); text-decoration: underline; text-underline-offset: 3px; }
+  .legal a:hover { opacity: .85; }
+  .nav-link { font-family: var(--font-mono); font-size: 13px; color: var(--chalk); text-decoration: none; }
+</style>
