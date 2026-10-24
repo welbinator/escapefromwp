@@ -192,8 +192,6 @@ function buildSeed(extract, siteName, base, replicaHtml) {
           subFields: [
             { slug: "heading", label: "Section Heading", type: "string" },
             { slug: "text", label: "Section Text", type: "text" },
-            { slug: "orig_heading", label: "Original Heading", type: "string" },
-            { slug: "orig_text", label: "Original Text", type: "text" },
           ],
         },
       });
@@ -227,9 +225,12 @@ function buildSeed(extract, siteName, base, replicaHtml) {
       if (hasCats && e.categories?.length) data.categories = e.categories.map((x) => slugify(x));
       if (hasTags && e.tags?.length) data.tags = e.tags.map((x) => slugify(x));
 
-      // Attach sections to the home page entry
+      // Attach sections to the home page entry (clean heading + text only)
       if (isHome && sections.length) {
-        data.sections = sections;
+        data.sections = sections.map((s) => ({
+          heading: s.heading,
+          text: s.text,
+        }));
       }
 
       entries.push({
