@@ -201,6 +201,7 @@ function buildSeed(extract, siteName, base, replicaHtml) {
       label: c.label,
       labelSingular: c.labelSingular && c.labelSingular !== c.label ? c.labelSingular : depluralize(c.label),
       fields,
+      supports: ["drafts", "revisions", "preview", "search", "seo"],
     });
 
     const entries = [];
