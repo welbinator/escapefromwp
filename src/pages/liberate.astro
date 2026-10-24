@@ -167,14 +167,14 @@ const faqSchema = {
     .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
 
     :root {
-      --section-maxw: 1000px;
+      --section-maxw: 1200px;
     }
 
     .hero-section,
     .how-section,
     .faq-section {
-      width: var(--section-maxw, 1000px);
-      max-width: 100%;
+      width: 100%;
+      max-width: var(--section-maxw, 1200px);
     }
 
     .hero-section {
@@ -183,7 +183,8 @@ const faqSchema = {
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding: 90px 24px 50px;
+      padding-top: 90px;
+      padding-bottom: 50px;
     }
 
     .faq-section { padding-top: 20px; }
