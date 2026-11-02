@@ -41,12 +41,27 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     </p>
   </section>
 
-  <!-- EVIDENCE LIST -->
+  <!-- EVIDENCE GRID -->
   <section class="wrap">
     <div class="ev-grid">
       {evidence.map((e, i) => (
-        <article class="ev-card rise">
-          <a class="ev-media" href={`${base}/evidence/${getSlug(e)}`} aria-hidden="true" tabindex="-1">
+        <article
+          class="ev-card rise is-clickable"
+          data-ev
+          data-title={e.title}
+          data-type={TYPE_LABEL[e.type] || "Case file"}
+          data-date={e.date ? fmtDate(e.date) : ""}
+          data-source={e.source}
+          data-summary={e.summary}
+          data-url={e.url}
+          data-slug={`${base}/evidence/${getSlug(e)}`}
+          data-image={e.image ? `${base}${e.image}` : ""}
+          data-exhibit={String(i + 1).padStart(2, "0")}
+          tabindex="0"
+          role="button"
+          aria-label={`Read: ${e.title}`}
+        >
+          <div class="ev-media" aria-hidden="true">
             {e.image
               ? <img src={`${base}${e.image}`} alt={`${e.title} — featured image`} loading="lazy" />
               : (
@@ -56,19 +71,17 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
                   <span class="ev-nomedia-src">◦ {e.source}</span>
                 </div>
               )}
-          </a>
+          </div>
           <div class="ev-body">
             <div class="ev-tags">
               <span class="ev-type">{TYPE_LABEL[e.type] || "Case file"}</span>
               {e.date && <span class="ev-date">{fmtDate(e.date)}</span>}
             </div>
-            <h2 class="ev-title">
-              <a href={`${base}/evidence/${getSlug(e)}`}>{e.title}</a>
-            </h2>
-            <p class="ev-summary">{e.summary}</p>
+            <h2 class="ev-title">{e.title}</h2>
+            <p class="ev-summary">{e.summary.slice(0, 140)}{e.summary.length > 140 ? "…" : ""}</p>
             <div class="ev-foot">
               <span class="ev-src">◦ {e.source}</span>
-              <a class="ev-link" href={`${base}/evidence/${getSlug(e)}`}>Read more ↗</a>
+              <span class="ev-link">Read more ↗</span>
             </div>
           </div>
         </article>
@@ -78,16 +91,46 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
   <!-- CTA -->
   <section class="wrap breakout-cta rise">
-    <h2 class="section-title">Seen enough? Plan your way out.</h2>
-    <a href={`${base}/#breakout`} class="btn btn-primary">▸ Plan your escape</a>
+    <h2 class="section-title">Seen enough?</h2>
+    <p class="section-lead" style="max-width:48ch;margin:0 auto 28px;">
+      See what your site looks like off WordPress — free, no commitment. Or get a free assessment and we'll give you a plain-English plan.
+    </p>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;">
+      <a href={`${base}/liberate`} class="btn btn-ghost">▸ See a free preview</a>
+      <a href={`${base}/#breakout`} class="btn btn-primary">▸ Get a free assessment</a>
+    </div>
   </section>
+
+  <!-- EVIDENCE MODAL -->
+  <div class="modal-overlay" id="ev-modal" aria-hidden="true">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="ev-modal-title">
+      <button class="modal-close" id="ev-modal-close" aria-label="Close">✕</button>
+      <div class="modal-body">
+        <div class="modal-meta">
+          <span class="ev-type" id="ev-modal-type"></span>
+          <span class="ev-date" id="ev-modal-date"></span>
+        </div>
+        <h2 class="modal-title" id="ev-modal-title">—</h2>
+        <p class="modal-source" id="ev-modal-source"></p>
+        <div class="modal-summary" id="ev-modal-summary"></div>
+        <div class="modal-links" id="ev-modal-links"></div>
+        <div class="modal-cta">
+          <p class="modal-cta-lead">Ready to get off WordPress?</p>
+          <div class="modal-cta-btns">
+            <a href="liberate" class="btn btn-ghost" style="font-size:13px;padding:10px 16px;">▸ See a free preview</a>
+            <a href="/#breakout" class="btn btn-primary" style="font-size:13px;padding:10px 16px;">▸ Get a free assessment</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- FOOTER -->
   <footer class="footer">
     <div class="wrap footer-inner">
       <span class="wordmark small">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
       <span class="footer-mono">◦ WordPress migration &amp; rescue · escapefromwp.com</span>
-      <span class="footer-mono dim">© {new Date().getFullYear()} — All units accounted for.</span>
+      <span class="footer-mono dim">© {new Date().getFullYear()} — Your site deserves better.</span>
     </div>
   </footer>
 
@@ -146,11 +189,13 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
       display: flex; flex-direction: column;
       transition: border-color .15s, transform .15s;
     }
-    .ev-card:hover { border-color: var(--term-green); transform: translateY(-2px); }
+    .ev-card.is-clickable { cursor: pointer; }
+    .ev-card.is-clickable:hover { border-color: var(--term-green); transform: translateY(-2px); }
+    .ev-card.is-clickable:focus-visible { outline: 2px solid var(--term-green); outline-offset: 2px; }
 
-    /* MEDIA — image when present, "case file" tile when not */
+    /* MEDIA */
     .ev-media {
-      display: block; position: relative; aspect-ratio: 1200 / 630; overflow: hidden;
+      position: relative; aspect-ratio: 1200 / 630; overflow: hidden;
       border-bottom: 1px solid var(--steel); background: #0b0405;
     }
     .ev-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -186,9 +231,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
       border: 1px solid var(--steel); padding: 3px 8px;
     }
     .ev-date { font-family: var(--font-mono); font-size: 11px; color: var(--slate-dim); letter-spacing: 0.04em; }
-    .ev-title { font-size: 20px; line-height: 1.2; }
-    .ev-title a { color: var(--chalk); transition: color .15s; }
-    .ev-title a:hover { color: var(--term-green); }
+    .ev-title { font-size: 20px; line-height: 1.2; color: var(--chalk); }
     .ev-summary { color: var(--slate); font-size: 15px; line-height: 1.55; flex: 1; }
     .ev-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 4px; flex-wrap: wrap; }
     .ev-src { font-family: var(--font-mono); font-size: 11px; color: var(--slate-dim); }
@@ -196,11 +239,51 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
       font-family: var(--font-mono); font-size: 12px; color: var(--chalk);
       border-bottom: 1px solid var(--steel); transition: color .15s, border-color .15s;
     }
-    .ev-link:hover { color: var(--term-green); border-color: var(--term-green); }
+    .ev-card.is-clickable:hover .ev-link { color: var(--term-green); border-color: var(--term-green); }
 
     .breakout-cta { text-align: center; padding: 40px 0 90px; display: flex; flex-direction: column; align-items: center; gap: 22px; }
 
-    /* RESPONSIVE (match home page) */
+    /* MODAL */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 200; display: none;
+      align-items: center; justify-content: center; padding: 24px;
+      background: rgba(0,0,0,0.78); backdrop-filter: blur(4px);
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      position: relative; width: 70vw; max-width: 780px; max-height: 86vh; overflow-y: auto;
+      background: #0b0405; border: 1px solid var(--term-green);
+      box-shadow: 0 0 0 1px rgba(78,227,107,0.15);
+    }
+    .modal-close {
+      position: absolute; top: 12px; right: 12px; z-index: 2;
+      background: rgba(0,0,0,0.6); border: 1px solid var(--steel); color: var(--chalk);
+      width: 38px; height: 38px; cursor: pointer; font-size: 16px; line-height: 1;
+      font-family: var(--font-mono); transition: border-color .15s, color .15s;
+    }
+    .modal-close:hover { border-color: var(--signal-red); color: var(--signal-red); }
+    .modal-body { padding: 32px clamp(22px, 4vw, 44px) 36px; display: flex; flex-direction: column; gap: 14px; }
+    .modal-meta { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .modal-title { font-size: clamp(22px, 3.5vw, 36px); line-height: 1.1; }
+    .modal-source { font-family: var(--font-mono); font-size: 12px; color: var(--term-green); letter-spacing: 0.04em; }
+    .modal-summary { color: var(--slate); font-size: 16px; line-height: 1.72; margin-top: 4px; }
+    .modal-links { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 6px; }
+    .modal-links a {
+      font-family: var(--font-mono); font-size: 13px; color: var(--chalk);
+      border: 1px solid var(--steel); padding: 10px 16px; transition: border-color .15s, color .15s;
+    }
+    .modal-links a:hover { border-color: var(--term-green); color: var(--term-green); }
+    .modal-cta {
+      margin-top: 24px; padding-top: 20px;
+      border-top: 1px solid var(--steel);
+    }
+    .modal-cta-lead {
+      font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--slate); margin-bottom: 14px;
+    }
+    .modal-cta-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    /* RESPONSIVE */
     @media (max-width: 900px) {
       .nav-toggle { display: flex; }
       .nav-links {
@@ -214,12 +297,14 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
       .nav-links a:not(.btn) { padding: 16px 20px; border-top: 1px solid var(--steel); }
       .nav-links .nav-cta { margin: 14px 20px 18px; text-align: center; }
     }
-    @media (max-width: 480px) {
+    @media (max-width: 640px) {
+      .modal-box { width: 92vw; max-height: 90vh; }
       .ev-grid { grid-template-columns: 1fr; }
     }
   </style>
 
-  <script is:inline>
+  <script is:inline define:vars={{ base }}>
+    // --- nav toggle ---
     const navToggle = document.querySelector(".nav-toggle");
     const navMenu = document.getElementById("nav-menu");
     if (navToggle && navMenu) {
@@ -234,5 +319,64 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
         })
       );
     }
+
+    const esc = (s) => (s == null ? "" : String(s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"));
+
+    // --- MODAL ---
+    const overlay  = document.getElementById("ev-modal");
+    const mType    = document.getElementById("ev-modal-type");
+    const mDate    = document.getElementById("ev-modal-date");
+    const mTitle   = document.getElementById("ev-modal-title");
+    const mSource  = document.getElementById("ev-modal-source");
+    const mSummary = document.getElementById("ev-modal-summary");
+    const mLinks   = document.getElementById("ev-modal-links");
+    let lastFocused = null;
+
+    function openModal(d) {
+      lastFocused = document.activeElement;
+      mType.textContent    = d.type || "";
+      mDate.textContent    = d.date || "";
+      mTitle.textContent   = d.title || "";
+      mSource.textContent  = "◦ Source: " + (d.source || "");
+      mSummary.textContent = d.summary || "";
+
+      let links = "";
+      if (d.url)  links += `<a href="${esc(d.url)}" target="_blank" rel="noopener">▸ Read the source ↗</a>`;
+      if (d.slug) links += `<a href="${esc(d.slug)}">View full page</a>`;
+      mLinks.innerHTML = links;
+
+      overlay.classList.add("open");
+      overlay.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+      document.getElementById("ev-modal-close").focus();
+    }
+
+    function closeModal() {
+      overlay.classList.remove("open");
+      overlay.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+      if (lastFocused) lastFocused.focus();
+    }
+
+    document.getElementById("ev-modal-close").addEventListener("click", closeModal);
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) closeModal(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && overlay.classList.contains("open")) closeModal(); });
+
+    function wireCard(el) {
+      const open = () => openModal({
+        type:    el.dataset.type,
+        date:    el.dataset.date,
+        title:   el.dataset.title,
+        source:  el.dataset.source,
+        summary: el.dataset.summary,
+        url:     el.dataset.url,
+        slug:    el.dataset.slug,
+      });
+      el.addEventListener("click", open);
+      el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+    }
+
+    document.querySelectorAll("[data-ev]").forEach(wireCard);
   </script>
 </Layout>
