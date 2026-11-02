@@ -1,6 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import { stories, STORY_TYPE_LABEL, fmtStoryDate } from "../data/stories.js";
+import { stories, STORY_TYPE_LABEL, fmtStoryDate, storySlug } from "../data/stories.js";
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 ---
 <Layout
@@ -56,6 +56,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
           data-summary={s.summary}
           data-story-text={s.story}
           data-url={s.url}
+          data-slug={`${base}/stories/${storySlug(s)}`}
           data-likes={s.likes ?? ""}
           data-shares={s.shares ?? ""}
           tabindex="0"
@@ -330,9 +331,10 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
       mType.textContent    = d.type;
       mDate.textContent    = d.date || "";
       mText.textContent    = d.storyText;  // pre-line CSS handles newlines
-      mLinks.innerHTML     = d.url
-        ? `<a href="${esc(d.url)}" target="_blank" rel="noopener">▸ Read the original post ↗</a>`
-        : "";
+      mLinks.innerHTML     = [
+        d.url  ? `<a href="${esc(d.url)}" target="_blank" rel="noopener">▸ Read the original post ↗</a>` : "",
+        d.slug ? `<a href="${esc(d.slug)}">View full page</a>` : "",
+      ].join("");
       overlay.classList.add("open");
       overlay.setAttribute("aria-hidden","false");
       document.body.style.overflow = "hidden";
@@ -361,6 +363,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
         date:      el.dataset.date,
         storyText: el.dataset.storyText,
         url:       el.dataset.url,
+        slug:      el.dataset.slug,
       });
       el.addEventListener("click", open);
       el.addEventListener("keydown", e => {

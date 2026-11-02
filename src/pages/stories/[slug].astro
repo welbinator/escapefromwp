@@ -1,0 +1,257 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { stories, STORY_TYPE_LABEL, fmtStoryDate, storySlug } from "../../data/stories.js";
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+export function getStaticPaths() {
+  return stories.map((s) => ({
+    params: { slug: storySlug(s) },
+    props:  { entry: s },
+  }));
+}
+
+const { entry: s } = Astro.props;
+const typeLabel = STORY_TYPE_LABEL[s.type] || "Post";
+
+const sourceVerb =
+  s.type === "tweet"  ? "View the post on X"
+  : s.type === "thread" ? "Read the thread on X"
+  : s.type === "video"  ? "Watch the video"
+  : s.type === "blog"   ? "Read the full post"
+  : "View the original";
+
+const more = stories.filter((x) => storySlug(x) !== storySlug(s)).slice(0, 3);
+---
+<Layout
+  title={`${s.author} (${s.handle}) — Success Stories | Escape From WP`}
+  description={s.summary}
+>
+  <!-- NAV -->
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a href={`${base}/`} class="wordmark">
+        ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span>
+      </a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-menu">
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+      <nav class="nav-links" id="nav-menu">
+        <a href={`${base}/#prison`}>Why leave</a>
+        <a href={`${base}/#plan`}>How it works</a>
+        <a href={`${base}/#tiers`}>Pricing</a>
+        <a href={`${base}/liberate`}>Free preview</a>
+        <a href={`${base}/evidence`}>Evidence</a>
+        <a href={`${base}/stories`} class="active">Stories</a>
+        <a href={`${base}/escapees`}>Who we've helped</a>
+        <a href={`${base}/#breakout`} class="btn btn-primary nav-cta">Get started</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- POST -->
+  <article class="wrap post">
+    <a href={`${base}/stories`} class="post-back">← Back to stories</a>
+
+    <div class="post-tags">
+      <span class="story-type-badge">{typeLabel}</span>
+      {s.date && <span class="post-date">{fmtStoryDate(s.date)}</span>}
+    </div>
+
+    <!-- author block -->
+    <div class="post-author-row">
+      <div class="post-avatar" aria-hidden="true">
+        {s.handle.replace("@","").slice(0,2).toUpperCase()}
+      </div>
+      <div>
+        <h1 class="post-author-name">{s.author}</h1>
+        <p class="post-handle">{s.handle} · {s.source}</p>
+      </div>
+    </div>
+
+    <!-- story body -->
+    <div class="post-body">
+      <p class="post-story">{s.story}</p>
+    </div>
+
+    {(s.likes != null || s.shares != null) && (
+      <div class="post-stats">
+        {s.likes  != null && <span class="post-stat">♥ {s.likes} likes</span>}
+        {s.shares != null && <span class="post-stat">↺ {s.shares} shares</span>}
+      </div>
+    )}
+
+    <div class="post-actions">
+      {s.url && (
+        <a class="btn btn-primary" href={s.url} target="_blank" rel="noopener">
+          ▸ {sourceVerb} ↗
+        </a>
+      )}
+      <a class="btn btn-ghost" href={`${base}/#breakout`}>Get a free assessment</a>
+    </div>
+  </article>
+
+  <!-- MORE STORIES -->
+  {more.length > 0 && (
+    <section class="wrap more-section">
+      <h2 class="more-head">More stories</h2>
+      <div class="more-grid">
+        {more.map((m) => (
+          <a class="more-card" href={`${base}/stories/${storySlug(m)}`}>
+            <span class="more-type">{STORY_TYPE_LABEL[m.type] || "Post"}</span>
+            <span class="more-author">{m.author}</span>
+            <span class="more-handle">{m.handle}</span>
+            <span class="more-summary">{m.summary.slice(0, 100)}…</span>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <!-- CTA -->
+  <section class="wrap breakout-cta rise">
+    <h2 class="section-title">Your story could be next.</h2>
+    <p class="section-lead" style="max-width:520px;margin:0 auto 28px;">
+      See what your site looks like off WordPress in about 2 minutes — free, no commitment.
+    </p>
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+      <a href={`${base}/liberate`} class="btn btn-primary">▸ See a free preview</a>
+      <a href={`${base}/#breakout`} class="btn btn-ghost">Get a free assessment</a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <span class="wordmark small">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
+      <span class="footer-mono">◦ WordPress migration &amp; rescue · escapefromwp.com</span>
+      <span class="footer-mono dim">© {new Date().getFullYear()} — Your site deserves better.</span>
+    </div>
+  </footer>
+
+  <style>
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(11,4,5,0.72); backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--steel);
+    }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; }
+    .wordmark { font-family: var(--font-mono); font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: var(--chalk); }
+    .wordmark .wp { color: var(--signal-red); }
+    .wordmark.small { font-size: 13px; }
+    .nav-links { display: flex; align-items: center; gap: 24px; }
+    .nav-links a:not(.btn) {
+      font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--slate); transition: color .15s;
+    }
+    .nav-links a:not(.btn):hover { color: var(--term-green); }
+    .nav-links .active { color: var(--term-green); }
+    .nav-cta { padding: 9px 16px; }
+    .nav-toggle {
+      display: none; background: none; border: 1px solid var(--steel);
+      width: 40px; height: 36px; cursor: pointer; padding: 0;
+      flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    }
+    .nav-toggle-bar { display: block; width: 20px; height: 2px; background: var(--chalk); transition: transform .2s, opacity .2s; }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(2) { opacity: 0; }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    .footer { border-top: 1px solid var(--steel); padding: 40px 0; }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+    .footer-mono { font-family: var(--font-mono); font-size: 12px; color: var(--slate); letter-spacing: 0.04em; }
+    .footer-mono.dim { color: var(--slate-dim); }
+
+    /* POST */
+    .post { max-width: 760px; padding-top: 120px; padding-bottom: 20px; }
+    .post-back {
+      font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.04em;
+      color: var(--slate); transition: color .15s; display: inline-block; margin-bottom: 28px;
+    }
+    .post-back:hover { color: var(--term-green); }
+
+    .post-tags { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+    .story-type-badge {
+      font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--term-green); border: 1px solid var(--steel); padding: 3px 8px;
+    }
+    .post-date { font-family: var(--font-mono); font-size: 11px; color: var(--slate-dim); letter-spacing: 0.04em; }
+
+    .post-author-row {
+      display: flex; align-items: center; gap: 16px; margin-bottom: 32px;
+      padding-bottom: 24px; border-bottom: 1px solid var(--steel);
+    }
+    .post-avatar {
+      width: 52px; height: 52px; flex-shrink: 0;
+      background: rgba(78,227,107,0.12); border: 1px solid rgba(78,227,107,0.3);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-mono); font-weight: 700; font-size: 16px; color: var(--term-green);
+    }
+    .post-author-name { font-size: clamp(22px,3.5vw,36px); line-height: 1.05; margin-bottom: 4px; }
+    .post-handle { font-family: var(--font-mono); font-size: 12px; color: var(--slate); }
+
+    .post-body { margin-bottom: 28px; }
+    .post-story {
+      color: var(--slate); font-size: 18px; line-height: 1.8;
+      white-space: pre-line;
+    }
+
+    .post-stats {
+      display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 28px;
+      padding: 14px 0; border-top: 1px solid var(--steel); border-bottom: 1px solid var(--steel);
+    }
+    .post-stat { font-family: var(--font-mono); font-size: 12px; color: var(--slate-dim); }
+
+    .post-actions { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
+
+    /* MORE */
+    .more-section { padding: 50px 0 10px; border-top: 1px solid var(--steel); margin-top: 20px; }
+    .more-head { font-size: 22px; margin-bottom: 22px; }
+    .more-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); }
+    .more-card {
+      border: 1px solid var(--steel); background: rgba(255,255,255,0.015);
+      padding: 16px; display: flex; flex-direction: column; gap: 7px;
+      transition: border-color .15s, transform .15s;
+    }
+    .more-card:hover { border-color: var(--term-green); transform: translateY(-2px); }
+    .more-type { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--term-green); }
+    .more-author { font-size: 16px; font-weight: 600; color: var(--chalk); }
+    .more-handle { font-family: var(--font-mono); font-size: 11px; color: var(--slate-dim); }
+    .more-summary { font-size: 13px; color: var(--slate); line-height: 1.5; margin-top: 4px; }
+
+    .breakout-cta { text-align: center; padding: 50px 0 90px; display: flex; flex-direction: column; align-items: center; gap: 22px; }
+    .section-title { font-size: clamp(24px,4vw,34px); }
+
+    @media (max-width: 900px) {
+      .nav-toggle { display: flex; }
+      .nav-links {
+        position: absolute; top: 62px; left: 0; right: 0;
+        flex-direction: column; align-items: stretch; gap: 0;
+        background: rgba(11,4,5,0.97); backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--steel);
+        max-height: 0; overflow: hidden; transition: max-height .25s ease;
+      }
+      .nav-links.open { max-height: 520px; }
+      .nav-links a:not(.btn) { padding: 16px 20px; border-top: 1px solid var(--steel); }
+      .nav-links .nav-cta { margin: 14px 20px 18px; text-align: center; }
+    }
+  </style>
+
+  <script is:inline>
+    const navToggle = document.querySelector(".nav-toggle");
+    const navMenu   = document.getElementById("nav-menu");
+    if (navToggle && navMenu) {
+      navToggle.addEventListener("click", () => {
+        const open = navMenu.classList.toggle("open");
+        navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+      navMenu.querySelectorAll("a").forEach(a =>
+        a.addEventListener("click", () => {
+          navMenu.classList.remove("open");
+          navToggle.setAttribute("aria-expanded", "false");
+        })
+      );
+    }
+  </script>
+</Layout>
