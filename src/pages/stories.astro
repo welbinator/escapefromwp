@@ -1,0 +1,371 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { stories, STORY_TYPE_LABEL, fmtStoryDate } from "../data/stories.js";
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+---
+<Layout
+  title="Success Stories — People Who Left WordPress | Escape From WP"
+  description="Real stories from across the web — developers, agencies, and business owners who left WordPress and never looked back. Tweets, posts, and blog entries from the WordPress escapee community."
+>
+  <!-- NAV -->
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a href={`${base}/`} class="wordmark">
+        ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span>
+      </a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-menu">
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+      <nav class="nav-links" id="nav-menu">
+        <a href={`${base}/#prison`}>Why leave</a>
+        <a href={`${base}/#plan`}>How it works</a>
+        <a href={`${base}/#tiers`}>Pricing</a>
+        <a href={`${base}/liberate`}>Free preview</a>
+        <a href={`${base}/evidence`}>Evidence</a>
+        <a href={`${base}/stories`} class="active">Stories</a>
+        <a href={`${base}/escapees`}>Who we've helped</a>
+        <a href={`${base}/#breakout`} class="btn btn-primary nav-cta">Get started</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- PAGE HEADER -->
+  <section class="wrap page-head">
+    <span class="eyebrow rise">◦ Success stories</span>
+    <h1 class="page-title rise">People who got out.</h1>
+    <p class="section-lead rise">
+      Not our clients — just people across the internet sharing their WordPress exit stories.
+      Developers, agencies, small business owners. All found their way out.
+    </p>
+  </section>
+
+  <!-- STORIES GRID -->
+  <section class="wrap">
+    <div class="stories-grid">
+      {stories.map((s, i) => (
+        <article
+          class="story-card rise is-clickable"
+          data-story
+          data-author={s.author}
+          data-handle={s.handle}
+          data-source={s.source}
+          data-type={STORY_TYPE_LABEL[s.type] || "Post"}
+          data-date={s.date ? fmtStoryDate(s.date) : ""}
+          data-summary={s.summary}
+          data-story-text={s.story}
+          data-url={s.url}
+          data-likes={s.likes ?? ""}
+          data-shares={s.shares ?? ""}
+          tabindex="0"
+          role="button"
+          aria-label={`Read story from ${s.author}`}
+        >
+          <div class="story-head">
+            <div class="story-avatar" aria-hidden="true">
+              {s.handle.replace("@", "").slice(0, 2).toUpperCase()}
+            </div>
+            <div class="story-meta">
+              <span class="story-author">{s.author}</span>
+              <span class="story-handle">{s.handle}</span>
+            </div>
+            <span class="story-source-badge">{STORY_TYPE_LABEL[s.type] || "Post"}</span>
+          </div>
+          <blockquote class="story-quote">{s.summary}</blockquote>
+          <div class="story-foot">
+            <span class="story-date">{s.date ? fmtStoryDate(s.date) : ""}</span>
+            <div class="story-stats">
+              {s.likes != null && <span class="story-stat">♥ {s.likes}</span>}
+              {s.shares != null && <span class="story-stat">↺ {s.shares}</span>}
+            </div>
+            <span class="story-read">Read the full story ↗</span>
+          </div>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="wrap stories-cta rise">
+    <h2 class="section-title">Your story could be next.</h2>
+    <p class="section-lead" style="max-width:48ch;margin:0 auto 28px;">
+      See what your site looks like off WordPress — free, no commitment. Or get a free assessment and we'll give you a plain-English plan.
+    </p>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;">
+      <a href={`${base}/liberate`} class="btn btn-ghost">▸ See a free preview</a>
+      <a href={`${base}/#breakout`} class="btn btn-primary">▸ Get a free assessment</a>
+    </div>
+  </section>
+
+  <!-- STORY MODAL -->
+  <div class="modal-overlay" id="story-modal" aria-hidden="true">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="story-modal-author">
+      <button class="modal-close" id="story-modal-close" aria-label="Close">✕</button>
+      <div class="modal-body">
+        <div class="modal-story-head">
+          <div class="story-avatar large" id="story-modal-avatar" aria-hidden="true">—</div>
+          <div>
+            <h2 class="modal-author" id="story-modal-author">—</h2>
+            <p class="modal-handle" id="story-modal-handle"></p>
+          </div>
+          <span class="story-source-badge" id="story-modal-type"></span>
+        </div>
+        <p class="modal-story-date" id="story-modal-date"></p>
+        <div class="modal-story-text" id="story-modal-text"></div>
+        <div class="modal-links" id="story-modal-links"></div>
+        <div class="modal-cta">
+          <p class="modal-cta-lead">Ready to write your own story?</p>
+          <div class="modal-cta-btns">
+            <a href={`${base}/liberate`} class="btn btn-ghost" style="font-size:13px;padding:10px 16px;">▸ See a free preview</a>
+            <a href={`${base}/#breakout`} class="btn btn-primary" style="font-size:13px;padding:10px 16px;">▸ Get a free assessment</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <span class="wordmark small">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
+      <span class="footer-mono">◦ WordPress migration &amp; rescue · escapefromwp.com</span>
+      <span class="footer-mono dim">© {new Date().getFullYear()} — Your site deserves better.</span>
+    </div>
+  </footer>
+
+  <style>
+    /* NAV */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(11,4,5,0.72); backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--steel);
+    }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 62px; }
+    .wordmark { font-family: var(--font-mono); font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: var(--chalk); }
+    .wordmark .wp { color: var(--signal-red); }
+    .wordmark.small { font-size: 13px; }
+    .nav-links { display: flex; align-items: center; gap: 24px; }
+    .nav-links a:not(.btn) {
+      font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--slate); transition: color .15s;
+    }
+    .nav-links a:not(.btn):hover { color: var(--term-green); }
+    .nav-links .active { color: var(--term-green); }
+    .nav-cta { padding: 9px 16px; }
+
+    .nav-toggle {
+      display: none; background: none; border: 1px solid var(--steel);
+      width: 40px; height: 36px; cursor: pointer; padding: 0;
+      flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    }
+    .nav-toggle-bar { display: block; width: 20px; height: 2px; background: var(--chalk); transition: transform .2s, opacity .2s; }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(2) { opacity: 0; }
+    .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* FOOTER */
+    .footer { border-top: 1px solid var(--steel); padding: 40px 0; }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+    .footer-mono { font-family: var(--font-mono); font-size: 12px; color: var(--slate); letter-spacing: 0.04em; }
+    .footer-mono.dim { color: var(--slate-dim); }
+
+    /* PAGE HEAD */
+    .page-head { padding-top: 140px; padding-bottom: 24px; }
+    .page-title { font-size: clamp(38px, 7vw, 72px); margin-bottom: 20px; line-height: 1.02; }
+
+    /* STORY CARDS */
+    .stories-grid {
+      display: grid; gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      padding-bottom: 40px;
+    }
+    .story-card {
+      border: 1px solid var(--steel); background: rgba(255,255,255,0.015);
+      padding: 22px 22px 20px;
+      display: flex; flex-direction: column; gap: 14px;
+      transition: border-color .15s, transform .15s;
+    }
+    .story-card.is-clickable { cursor: pointer; }
+    .story-card.is-clickable:hover { border-color: var(--term-green); transform: translateY(-2px); }
+    .story-card.is-clickable:focus-visible { outline: 2px solid var(--term-green); outline-offset: 2px; }
+
+    .story-head { display: flex; align-items: center; gap: 12px; }
+    .story-avatar {
+      width: 42px; height: 42px; flex-shrink: 0;
+      background: rgba(78,227,107,0.12); border: 1px solid rgba(78,227,107,0.3);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-mono); font-weight: 700; font-size: 13px; color: var(--term-green);
+      letter-spacing: 0.04em;
+    }
+    .story-avatar.large { width: 52px; height: 52px; flex-shrink: 0; font-size: 16px; }
+    .story-meta { flex: 1; min-width: 0; }
+    .story-author { display: block; font-size: 15px; font-weight: 600; color: var(--chalk); }
+    .story-handle { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--slate); margin-top: 2px; }
+    .story-source-badge {
+      flex-shrink: 0; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--term-green); border: 1px solid var(--steel);
+      padding: 3px 8px;
+    }
+
+    .story-quote {
+      font-size: 15px; line-height: 1.62; color: var(--slate);
+      margin: 0; padding: 0; border: none;
+      flex: 1;
+    }
+    .story-foot {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; flex-wrap: wrap; margin-top: 4px;
+      border-top: 1px solid var(--steel); padding-top: 12px;
+    }
+    .story-date { font-family: var(--font-mono); font-size: 11px; color: var(--slate-dim); }
+    .story-stats { display: flex; gap: 12px; }
+    .story-stat { font-family: var(--font-mono); font-size: 11px; color: var(--slate-dim); }
+    .story-read {
+      font-family: var(--font-mono); font-size: 12px; color: var(--chalk);
+      border-bottom: 1px solid var(--steel); transition: color .15s, border-color .15s;
+    }
+    .story-card.is-clickable:hover .story-read { color: var(--term-green); border-color: var(--term-green); }
+
+    /* CTA */
+    .stories-cta { text-align: center; padding: 40px 0 90px; display: flex; flex-direction: column; align-items: center; gap: 22px; }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 200; display: none;
+      align-items: center; justify-content: center; padding: 24px;
+      background: rgba(0,0,0,0.78); backdrop-filter: blur(4px);
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      position: relative; width: 70vw; max-width: 780px; max-height: 86vh; overflow-y: auto;
+      background: #0b0405; border: 1px solid var(--term-green);
+      box-shadow: 0 0 0 1px rgba(78,227,107,0.15);
+    }
+    .modal-close {
+      position: absolute; top: 12px; right: 12px; z-index: 2;
+      background: rgba(0,0,0,0.6); border: 1px solid var(--steel); color: var(--chalk);
+      width: 38px; height: 38px; cursor: pointer; font-size: 16px;
+      font-family: var(--font-mono); transition: border-color .15s, color .15s;
+    }
+    .modal-close:hover { border-color: var(--signal-red); color: var(--signal-red); }
+    .modal-body { padding: 32px clamp(22px,4vw,44px) 36px; display: flex; flex-direction: column; gap: 14px; }
+    .modal-story-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .modal-author { font-size: clamp(20px,3vw,28px); line-height: 1.1; }
+    .modal-handle { font-family: var(--font-mono); font-size: 12px; color: var(--term-green); margin-top: 3px; }
+    .modal-story-date { font-family: var(--font-mono); font-size: 12px; color: var(--slate-dim); }
+    .modal-story-text {
+      color: var(--slate); font-size: 16px; line-height: 1.78;
+      white-space: pre-line; /* preserves tweet line breaks */
+    }
+    .modal-links { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 6px; }
+    .modal-links a {
+      font-family: var(--font-mono); font-size: 13px; color: var(--chalk);
+      border: 1px solid var(--steel); padding: 10px 16px; transition: border-color .15s, color .15s;
+    }
+    .modal-links a:hover { border-color: var(--term-green); color: var(--term-green); }
+    .modal-cta { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--steel); }
+    .modal-cta-lead {
+      font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--slate); margin-bottom: 14px;
+    }
+    .modal-cta-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+      .nav-toggle { display: flex; }
+      .nav-links {
+        position: absolute; top: 62px; left: 0; right: 0;
+        flex-direction: column; align-items: stretch; gap: 0;
+        background: rgba(11,4,5,0.97); backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--steel);
+        max-height: 0; overflow: hidden; transition: max-height .25s ease;
+      }
+      .nav-links.open { max-height: 520px; }
+      .nav-links a:not(.btn) { padding: 16px 20px; border-top: 1px solid var(--steel); }
+      .nav-links .nav-cta { margin: 14px 20px 18px; text-align: center; }
+    }
+    @media (max-width: 640px) {
+      .modal-box { width: 92vw; max-height: 90vh; }
+      .stories-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+
+  <script is:inline>
+    // nav toggle
+    const navToggle = document.querySelector(".nav-toggle");
+    const navMenu   = document.getElementById("nav-menu");
+    if (navToggle && navMenu) {
+      navToggle.addEventListener("click", () => {
+        const open = navMenu.classList.toggle("open");
+        navToggle.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+      navMenu.querySelectorAll("a").forEach(a =>
+        a.addEventListener("click", () => {
+          navMenu.classList.remove("open");
+          navToggle.setAttribute("aria-expanded", "false");
+        })
+      );
+    }
+
+    const esc = s => s == null ? "" : String(s)
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+    const overlay  = document.getElementById("story-modal");
+    const mAvatar  = document.getElementById("story-modal-avatar");
+    const mAuthor  = document.getElementById("story-modal-author");
+    const mHandle  = document.getElementById("story-modal-handle");
+    const mType    = document.getElementById("story-modal-type");
+    const mDate    = document.getElementById("story-modal-date");
+    const mText    = document.getElementById("story-modal-text");
+    const mLinks   = document.getElementById("story-modal-links");
+    let lastFocused = null;
+
+    function openModal(d) {
+      lastFocused = document.activeElement;
+      const initials = d.handle.replace("@","").slice(0,2).toUpperCase();
+      mAvatar.textContent  = initials;
+      mAuthor.textContent  = d.author;
+      mHandle.textContent  = d.handle + " · " + d.source;
+      mType.textContent    = d.type;
+      mDate.textContent    = d.date || "";
+      mText.textContent    = d.storyText;  // pre-line CSS handles newlines
+      mLinks.innerHTML     = d.url
+        ? `<a href="${esc(d.url)}" target="_blank" rel="noopener">▸ Read the original post ↗</a>`
+        : "";
+      overlay.classList.add("open");
+      overlay.setAttribute("aria-hidden","false");
+      document.body.style.overflow = "hidden";
+      document.getElementById("story-modal-close").focus();
+    }
+
+    function closeModal() {
+      overlay.classList.remove("open");
+      overlay.setAttribute("aria-hidden","true");
+      document.body.style.overflow = "";
+      if (lastFocused) lastFocused.focus();
+    }
+
+    document.getElementById("story-modal-close").addEventListener("click", closeModal);
+    overlay.addEventListener("click", e => { if (e.target === overlay) closeModal(); });
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape" && overlay.classList.contains("open")) closeModal();
+    });
+
+    document.querySelectorAll("[data-story]").forEach(el => {
+      const open = () => openModal({
+        author:    el.dataset.author,
+        handle:    el.dataset.handle,
+        source:    el.dataset.source,
+        type:      el.dataset.type,
+        date:      el.dataset.date,
+        storyText: el.dataset.storyText,
+        url:       el.dataset.url,
+      });
+      el.addEventListener("click", open);
+      el.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); }
+      });
+    });
+  </script>
+</Layout>
