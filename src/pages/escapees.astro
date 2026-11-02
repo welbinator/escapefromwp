@@ -6,40 +6,40 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 // `story` = the full write-up shown in the detail modal. `rescued_url` optional (the old WP site).
 const escapees = [
   {
+    name: "Brewhemia",
+    url: "https://brewhemia.com",
+    prisoner_no: "0001",
+    crime: "A busy coffee shop on WordPress — slow site, and a page builder that made simple updates a chore.",
+    served: "Several years on WordPress (Themify builder)",
+    logo: "/images/escapees/brewhemia.webp",
+    story: "Brewhemia is a coffee-and-cocktail house in Cedar Rapids, IA. Running a café is already a full-time job — the last thing they needed was a slow website that required tech skills to update. The Themify builder made every menu change a chore. We rebuilt the site on a fast, static stack. Menu, hours, events, contact form — all of it loads instantly, and simple updates are actually simple now.",
+  },
+  {
     name: "Matthew Peiper",
     url: "https://matthewpeiper.com",
-    prisoner_no: "0001",
-    crime: "Artist portfolio locked in the Etch page-builder — busted out onto a static, plugin-free stack.",
-    served: "Time on WordPress (Etch builder)",
+    prisoner_no: "0002",
+    crime: "Artist portfolio stuck on WordPress and a page builder that made every edit a hassle.",
+    served: "Several years on WordPress (Etch builder)",
     logo: "/images/escapees/matthewpeiper.webp",
-    story: "An artist portfolio doing time inside WordPress's Etch page-builder — slow to load, a maintenance headache, and locked to one editor. We broke it out onto a static, plugin-free stack: the same design, now loading in a fraction of the time with nothing to update or patch. Zero plugins, zero database, served straight from the edge.",
+    story: "Matthew had an artist portfolio that did the job, but the WordPress and Etch page builder combo made simple edits take way longer than they should. The site was also slow — not a great look for a designer. We rebuilt it as a clean static site: same design, same content, loads in a fraction of a second. Nothing to update, nothing to maintain. He just runs it.",
   },
   {
     name: "Walnut Grove Assembly of God",
     url: "https://walnutgroveassemblyofgod.church",
-    prisoner_no: "0002",
-    crime: "A Spirit-filled church in Ivanhoe, CA, doing time on a plugin-heavy WordPress build — broke free onto a fast, secure static site.",
-    served: "Years on WordPress",
-    logo: "/images/escapees/walnutgrove.webp",
-    story: "A Spirit-filled church in Ivanhoe, CA, serving years on a plugin-heavy WordPress build. Every plugin was another lock and another thing that could break. We moved them to a fast, secure static site — no login to get hacked, no plugins to update, and pages that load instantly for their congregation.",
-  },
-  {
-    name: "Brewhemia",
-    url: "https://brewhemia.com",
     prisoner_no: "0003",
-    crime: "A Cedar Rapids coffee-and-cocktail house serving time on a WordPress/Themify build — broke free onto a fast, static, plugin-free stack.",
-    served: "Years on WordPress (Themify)",
-    logo: "/images/escapees/brewhemia.webp",
-    story: "A Cedar Rapids coffee-and-cocktail house doing time on a WordPress/Themify build. The Themify builder made every edit a wrestling match and dragged the whole site down. We broke them free onto a fast, static, plugin-free stack — the menu, the hours, the vibe, all loading instantly and costing a fraction to run.",
+    crime: "A small church with a WordPress site that needed constant maintenance — time the staff didn't have.",
+    served: "Several years on WordPress",
+    logo: "/images/escapees/walnutgrove.webp",
+    story: "A church in Ivanhoe, CA running a WordPress site their small staff had to maintain. Plugin updates, security warnings, the occasional thing breaking — it was a distraction from actual ministry work. We moved them to a fast, secure static site. No login for hackers to find, no plugins to update, pages that load instantly. The staff just uses it.",
   },
   {
     name: "James Welbes",
     url: "https://jameswelbes.com",
     prisoner_no: "0004",
-    crime: "A designer's own portfolio doing time on a WordPress build — broke free onto a fast, static Astro site served from the edge.",
-    served: "Years on WordPress",
+    crime: "A web designer's own portfolio — still on WordPress.",
+    served: "Several years on WordPress",
     logo: "/images/escapees/jameswelbes.webp",
-    story: "A designer's own portfolio — the one site that should practice what it preaches — was itself doing time on WordPress. It broke free onto a fast, static Astro site served from the edge. No database, no plugins, no monthly patch cycle. Just clean code and instant loads.",
+    story: "It would have been embarrassing to help other businesses leave WordPress while my own portfolio was still on it. So I moved it too. Same design, now on a static site that loads in milliseconds and costs basically nothing to run. No database, no plugins, no monthly patch cycle.",
   },
 ];
 
@@ -47,8 +47,8 @@ const monogram = (name) =>
   name.replace(/^REPLACE ME —\s*/i, "").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "??";
 ---
 <Layout
-  title="Previous Prisoners — Escape From WP"
-  description="Sites that broke out of WordPress. Real migrations, released and running free on a faster, safer stack."
+  title="Who We've Helped — Escape From WP"
+  description="Real businesses that moved off WordPress. See their sites and their stories."
 >
   <!-- NAV -->
   <header class="nav">
@@ -62,23 +62,25 @@ const monogram = (name) =>
         <span class="nav-toggle-bar"></span>
       </button>
       <nav class="nav-links" id="nav-menu">
-        <a href={`${base}/#prison`}>The Prison</a>
-        <a href={`${base}/#plan`}>The Plan</a>
-        <a href={`${base}/liberate`}>Liberate</a>
+        <a href={`${base}/#prison`}>Why leave</a>
+        <a href={`${base}/#plan`}>How it works</a>
+        <a href={`${base}/#tiers`}>Pricing</a>
+        <a href={`${base}/liberate`}>Free preview</a>
         <a href={`${base}/evidence`}>Evidence</a>
-        <a href={`${base}/escapees`} class="active">Previous Prisoners</a>
-        <a href={`${base}/#breakout`} class="btn btn-primary nav-cta">Plan your escape</a>
+        <a href={`${base}/escapees`} class="active">Who we've helped</a>
+        <a href={`${base}/#breakout`} class="btn btn-primary nav-cta">Get started</a>
       </nav>
     </div>
   </header>
 
   <!-- PAGE HEADER -->
   <section class="wrap page-head">
-    <span class="eyebrow danger rise">◦ Release records · declassified</span>
-    <h1 class="page-title rise">Previous prisoners.</h1>
+    <span class="eyebrow danger rise">◦ Client work</span>
+    <h1 class="page-title rise">Real businesses, off WordPress.</h1>
     <p class="section-lead rise">
-      Every site below did time in WordPress — then broke out. Now they run free on a
-      faster, safer, plugin-free stack. These are their release records.
+      These are actual clients who were dealing with slow sites, constant maintenance, and
+      the general headache of running a business <em>and</em> being their own IT department.
+      Click any card to read their story.
     </p>
   </section>
 
@@ -123,11 +125,11 @@ const monogram = (name) =>
 
   <!-- SUBMIT YOUR OWN -->
   <section class="wrap submit-section rise" id="report">
-    <span class="eyebrow danger">◦ Report a breakout</span>
-    <h2 class="section-title">Did you break a site out of WordPress?</h2>
+    <span class="eyebrow danger">◦ Submit a site</span>
+    <h2 class="section-title">Did you move a site off WordPress?</h2>
     <p class="section-lead">
-      Rescued a site from WordPress — yours or a client's? Add it to the release records.
-      Submissions are reviewed before they go public.
+      If you've moved a client's site — or your own — off WordPress and it's running better,
+      we'd love to add it here. Submissions are reviewed before they go public.
     </p>
 
     <form class="submit-form" id="escapee-form" novalidate>
@@ -178,8 +180,15 @@ const monogram = (name) =>
 
   <!-- CTA -->
   <section class="wrap breakout-cta rise">
-    <h2 class="section-title">Your site could be next out the gate.</h2>
-    <a href={`${base}/#breakout`} class="btn btn-primary">▸ Plan your escape</a>
+    <h2 class="section-title">Your site could be next.</h2>
+    <p class="section-lead" style="max-width:48ch;margin:0 auto 28px;">
+      Free assessment. No commitment. We'll tell you exactly what moving off WordPress
+      would look like for your site — before you spend a dollar.
+    </p>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;">
+      <a href={`${base}/liberate`} class="btn btn-ghost">▸ See a free preview first</a>
+      <a href={`${base}/#breakout`} class="btn btn-primary">▸ Get a free assessment</a>
+    </div>
   </section>
 
   <!-- DETAIL MODAL -->
@@ -194,6 +203,13 @@ const monogram = (name) =>
           <span class="modal-served" id="modal-served"></span>
           <div class="modal-story" id="modal-story"></div>
           <div class="modal-links" id="modal-links"></div>
+          <div class="modal-cta">
+            <p class="modal-cta-lead">Want the same for your site?</p>
+            <div class="modal-cta-btns">
+              <a href="liberate" class="btn btn-ghost" style="font-size:13px;padding:10px 16px;">▸ See a free preview</a>
+              <a href="/#breakout" class="btn btn-primary" style="font-size:13px;padding:10px 16px;">▸ Get a free assessment</a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -377,6 +393,16 @@ const monogram = (name) =>
     }
     .modal-links a:hover { border-color: var(--term-green); color: var(--term-green); }
     .modal-links a.rescued:hover { border-color: var(--signal-red); color: var(--signal-red); }
+
+    .modal-cta {
+      margin-top: 24px; padding-top: 20px;
+      border-top: 1px solid var(--steel);
+    }
+    .modal-cta-lead {
+      font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--slate); margin-bottom: 14px;
+    }
+    .modal-cta-btns { display: flex; gap: 12px; flex-wrap: wrap; }
 
     /* RESPONSIVE (match home page) */
     @media (max-width: 900px) {

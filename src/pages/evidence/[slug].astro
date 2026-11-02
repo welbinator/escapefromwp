@@ -39,19 +39,20 @@ const more = evidence.filter((x) => getSlug(x) !== getSlug(e)).slice(0, 3);
         <span class="nav-toggle-bar"></span>
       </button>
       <nav class="nav-links" id="nav-menu">
-        <a href={`${base}/#prison`}>The Prison</a>
-        <a href={`${base}/#plan`}>The Plan</a>
-        <a href={`${base}/liberate`}>Liberate</a>
+        <a href={`${base}/#prison`}>Why leave</a>
+        <a href={`${base}/#plan`}>How it works</a>
+        <a href={`${base}/#tiers`}>Pricing</a>
+        <a href={`${base}/liberate`}>Free preview</a>
         <a href={`${base}/evidence`} class="active">Evidence</a>
-        <a href={`${base}/escapees`}>Previous Prisoners</a>
-        <a href={`${base}/#breakout`} class="btn btn-primary nav-cta">Plan your escape</a>
+        <a href={`${base}/escapees`}>Who we've helped</a>
+        <a href={`${base}/#breakout`} class="btn btn-primary nav-cta">Get started</a>
       </nav>
     </div>
   </header>
 
   <!-- POST -->
   <article class="wrap post">
-    <a href={`${base}/evidence`} class="post-back">← Back to the evidence room</a>
+    <a href={`${base}/evidence`} class="post-back">← Back to evidence</a>
 
     <div class="post-tags">
       <span class="ev-type">{typeLabel}</span>
@@ -95,8 +96,14 @@ const more = evidence.filter((x) => getSlug(x) !== getSlug(e)).slice(0, 3);
 
   <!-- CTA -->
   <section class="wrap breakout-cta rise">
-    <h2 class="section-title">Seen enough? Plan your way out.</h2>
-    <a href={`${base}/#breakout`} class="btn btn-primary">▸ Plan your escape</a>
+    <h2 class="section-title">Ready to get out for real?</h2>
+    <p class="section-lead" style="max-width:520px;margin:0 auto 28px;">
+      See what your site looks like off WordPress in about 2 minutes — free. Or skip straight to a migration quote.
+    </p>
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
+      <a href={`${base}/liberate`} class="btn btn-primary">▸ See a free preview</a>
+      <a href={`${base}/#breakout`} class="btn btn-ghost">Get a free assessment</a>
+    </div>
   </section>
 
   <!-- FOOTER -->
@@ -104,7 +111,7 @@ const more = evidence.filter((x) => getSlug(x) !== getSlug(e)).slice(0, 3);
     <div class="wrap footer-inner">
       <span class="wordmark small">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
       <span class="footer-mono">◦ WordPress migration &amp; rescue · escapefromwp.com</span>
-      <span class="footer-mono dim">© {new Date().getFullYear()} — All units accounted for.</span>
+      <span class="footer-mono dim">© {new Date().getFullYear()} — Your site deserves better.</span>
     </div>
   </footer>
 

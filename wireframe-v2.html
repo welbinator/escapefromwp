@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Escape From WP — Full Site Wireframe v2</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0b0405;
+    --chalk: #f3efe9;
+    --slate: #8a8088;
+    --slate-dim: #5a5258;
+    --steel: #2a2228;
+    --steel-lit: #3d3640;
+    --graphite: #120c0d;
+    --graphite-2: #1a1215;
+    --green: #4ee36b;
+    --green-dim: rgba(78,227,107,0.12);
+    --red: #e32735;
+    --mono: 'Courier New', monospace;
+    --sans: system-ui, -apple-system, sans-serif;
+    --radius: 3px;
+  }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--chalk); font-family: var(--sans); line-height: 1.6; }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 28px; }
+  h1,h2,h3 { letter-spacing: -0.03em; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--slate); display: block; }
+  .section-num { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: var(--slate-dim); display: block; margin-bottom: 16px; }
+  .section-lead { color: var(--slate); font-size: 17px; max-width: 60ch; line-height: 1.7; margin-top: 16px; }
+  .hair { border: none; border-top: 1px solid var(--steel); }
+  .btn { display: inline-flex; align-items: center; font-family: var(--mono); font-size: 13px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 13px 22px; border-radius: var(--radius); cursor: pointer; transition: all .15s; }
+  .btn-primary { background: var(--red); color: var(--chalk); border: 1px solid var(--red); }
+  .btn-primary:hover { background: #c72030; border-color: #c72030; }
+  .btn-ghost { background: transparent; color: var(--chalk); border: 1px solid var(--steel); }
+  .btn-ghost:hover { border-color: var(--green); color: var(--green); }
+  .btn-green { background: var(--green); color: #06230f; border: 1px solid var(--green); }
+  .btn-green:hover { background: #3ecf5e; }
+
+  /* ── REVIEW BANNER ── */
+  .review-banner {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+    background: #1a1000; border-bottom: 2px solid #f5a623;
+    font-family: var(--mono); font-size: 11px; color: #f5a623;
+    padding: 8px 20px; display: flex; justify-content: space-between; align-items: center;
+    gap: 20px;
+  }
+  .review-banner a { color: #f5a623; text-decoration: underline; margin: 0 6px; }
+
+  /* Page nav */
+  .page-tabs {
+    position: fixed; top: 37px; left: 0; right: 0; z-index: 9998;
+    background: #0f0a0b; border-bottom: 1px solid #2a2228;
+    display: flex; gap: 0; overflow-x: auto;
+  }
+  .page-tab {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 10px 18px; color: var(--slate-dim); border-right: 1px solid var(--steel);
+    white-space: nowrap; cursor: pointer; transition: color .15s, background .15s;
+  }
+  .page-tab:hover { color: var(--chalk); background: rgba(255,255,255,0.03); }
+  .page-tab.active { color: var(--green); background: rgba(78,227,107,0.06); }
+
+  /* Page sections */
+  .page-section { display: none; padding-top: 80px; }
+  .page-section.active { display: block; }
+
+  /* ── NAV ── */
+  .site-nav {
+    background: rgba(11,4,5,0.92); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--steel); height: 62px;
+    display: flex; align-items: center;
+  }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; }
+  .wordmark { font-family: var(--mono); font-weight: 700; font-size: 15px; letter-spacing: 0.06em; }
+  .wordmark .wp { color: var(--red); }
+  .nav-links { display: flex; align-items: center; gap: 24px; }
+  .nav-link { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--slate); }
+  .nav-link:hover { color: var(--green); }
+  .wf-new { font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--green); border: 1px dashed var(--green); padding: 1px 5px; margin-left: 5px; vertical-align: middle; }
+  .wf-gone { font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--red); border: 1px dashed var(--red); padding: 1px 5px; margin-left: 5px; vertical-align: middle; }
+
+  /* ── ANNOTATION ── */
+  .ann {
+    display: inline-block; font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em;
+    text-transform: uppercase; padding: 3px 8px; margin-bottom: 14px;
+    border-radius: 2px;
+  }
+  .ann-new { background: rgba(78,227,107,0.15); color: var(--green); border: 1px dashed var(--green); }
+  .ann-changed { background: rgba(245,166,35,0.12); color: #f5a623; border: 1px dashed #f5a623; }
+  .ann-gone { background: rgba(227,39,53,0.12); color: var(--red); border: 1px dashed var(--red); }
+  .ann-same { background: rgba(255,255,255,0.04); color: var(--slate-dim); border: 1px dashed var(--steel); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 88vh; display: flex; align-items: center;
+    background: linear-gradient(135deg, #0b0405 0%, #16090c 60%, #0b0405 100%);
+    border-bottom: 1px solid var(--steel); position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: repeating-linear-gradient(to bottom, transparent 0 3px, rgba(78,227,107,0.02) 3px 4px);
+    pointer-events: none;
+  }
+  .hero-inner { position: relative; z-index: 2; padding: 80px 0 70px; }
+  .hero h1 {
+    font-size: clamp(44px, 7.5vw, 92px); line-height: 0.96;
+    max-width: 18ch; margin: 16px 0 22px; letter-spacing: -0.04em;
+  }
+  .hero h1 .wp-out { color: var(--red); }
+  .hero-sub { color: var(--slate); font-size: clamp(16px, 1.8vw, 20px); max-width: 52ch; line-height: 1.65; }
+  .url-bar {
+    display: flex; max-width: 560px; margin-top: 34px;
+    border: 1px solid var(--steel); border-radius: var(--radius); overflow: hidden;
+    background: rgba(255,255,255,0.03);
+  }
+  .url-bar input {
+    flex: 1; background: transparent; border: none; outline: none;
+    color: var(--chalk); font-family: var(--mono); font-size: 14px; padding: 14px 16px;
+  }
+  .url-bar input::placeholder { color: var(--slate-dim); }
+  .url-bar button {
+    background: var(--green); color: #06230f; border: none; cursor: pointer;
+    font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
+    padding: 0 22px; white-space: nowrap; text-transform: uppercase;
+  }
+  .hero-note { font-family: var(--mono); font-size: 11px; color: var(--slate-dim); margin-top: 10px; letter-spacing: 0.04em; }
+  .hero-cta-row { display: flex; gap: 14px; margin-top: 28px; flex-wrap: wrap; align-items: center; }
+  .hero-divider { color: var(--slate-dim); font-family: var(--mono); font-size: 12px; }
+  .hero-stats { display: flex; gap: 36px; flex-wrap: wrap; margin-top: 50px; border-top: 1px solid var(--steel); padding-top: 20px; }
+  .hero-stat { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: var(--slate-dim); text-transform: uppercase; }
+  .hero-stat strong { color: var(--green); font-size: 13px; display: block; margin-bottom: 2px; }
+
+  /* ── SECTIONS ── */
+  .section { padding: 80px 0; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; margin-top: 44px; background: var(--steel); border: 1px solid var(--steel); }
+  .card { background: var(--graphite); padding: 28px 24px 32px; }
+  .card-code { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--red); display: block; margin-bottom: 14px; }
+  .card h3 { font-size: 19px; margin-bottom: 10px; line-height: 1.2; }
+  .card p { color: var(--slate); font-size: 14px; line-height: 1.62; }
+
+  .steps { margin-top: 44px; border-top: 1px solid var(--steel); }
+  .step { display: grid; grid-template-columns: 110px 1fr; gap: 28px; padding: 30px 0; border-bottom: 1px solid var(--steel); }
+  .step-n { font-family: var(--mono); font-size: 38px; font-weight: 700; color: #1e191a; -webkit-text-stroke: 1px var(--steel); line-height: 1; }
+  .step h3 { font-size: 21px; margin-bottom: 9px; }
+  .step p { color: var(--slate); font-size: 15px; line-height: 1.62; }
+
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: 44px; background: var(--steel); border: 1px solid var(--steel); }
+  .stat-cell { background: var(--graphite); padding: 34px 28px 38px; }
+  .stat-num { font-family: var(--mono); font-size: 52px; font-weight: 700; color: var(--green); display: block; line-height: 1; letter-spacing: -0.02em; }
+  .stat-label { display: block; font-size: 16px; font-weight: 600; margin: 12px 0 10px; }
+  .stat-p { color: var(--slate); font-size: 14px; line-height: 1.62; }
+
+  .tiers-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 44px; }
+  .tier { border: 1px solid var(--steel); background: rgba(255,255,255,0.015); padding: 28px 26px 32px; display: flex; flex-direction: column; gap: 13px; }
+  .tier-featured { border-color: var(--green); background: rgba(78,227,107,0.04); }
+  .tier-tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--slate); align-self: flex-start; border: 1px solid var(--steel); padding: 2px 8px; }
+  .tier-tag-green { color: var(--green); border-color: var(--green); }
+  .tier h3 { font-size: 22px; }
+  .tier-price { font-family: var(--mono); font-size: 38px; font-weight: 700; color: var(--chalk); line-height: 1; }
+  .tier-price sub { font-size: 16px; font-weight: 400; color: var(--slate); vertical-align: middle; }
+  .tier p { color: var(--slate); font-size: 14.5px; line-height: 1.62; flex: 1; }
+  .tier .btn { width: 100%; justify-content: center; margin-top: 6px; }
+
+  .breakout-section { background: var(--graphite); border-top: 1px solid var(--steel); padding: 80px 0; }
+  .breakout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
+  .breakout-grid h2 { font-size: clamp(28px, 4vw, 46px); line-height: 1.05; margin: 14px 0 18px; }
+  .breakout-list { list-style: none; margin-top: 26px; display: grid; gap: 11px; font-family: var(--mono); font-size: 13px; color: var(--green); letter-spacing: 0.02em; }
+  .contact-form { background: var(--bg); border: 1px solid var(--steel); border-radius: var(--radius); padding: 30px; display: grid; gap: 16px; }
+  .field { display: grid; gap: 7px; }
+  .field label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--slate); }
+  .field input, .field textarea { background: var(--graphite-2); border: 1px solid var(--steel); border-radius: var(--radius); color: var(--chalk); font-family: var(--sans); font-size: 15px; padding: 12px 14px; }
+  .field textarea { resize: vertical; }
+
+  .escapees-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 44px; }
+  .escapee-card { border: 1px solid var(--steel); background: rgba(255,255,255,0.015); overflow: hidden; display: flex; flex-direction: column; }
+  .escapee-img { height: 160px; background: var(--graphite); border-bottom: 1px solid var(--steel); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 11px; color: var(--slate-dim); letter-spacing: 0.1em; }
+  .escapee-body { padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+  .escapee-tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--green); }
+  .escapee-name { font-size: 20px; }
+  .escapee-quote { color: var(--slate); font-size: 14px; line-height: 1.62; font-style: italic; }
+  .escapee-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
+  .escapee-detail { font-family: var(--mono); font-size: 11px; color: var(--slate-dim); }
+
+  .ev-grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); margin-top: 44px; }
+  .ev-card { border: 1px solid var(--steel); background: rgba(255,255,255,0.015); display: flex; flex-direction: column; }
+  .ev-tile { aspect-ratio: 1200/630; border-bottom: 1px solid var(--steel); background: var(--graphite); padding: 18px; display: flex; flex-direction: column; justify-content: flex-end; gap: 6px; }
+  .ev-num { font-family: var(--mono); font-size: 10px; letter-spacing: 0.22em; color: var(--red); }
+  .ev-type-label { font-size: 26px; font-weight: 700; line-height: 1.05; }
+  .ev-src { font-family: var(--mono); font-size: 11px; color: var(--green); }
+  .ev-body { padding: 18px 18px 20px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+  .ev-title-link { font-size: 19px; line-height: 1.2; }
+  .ev-summary { color: var(--slate); font-size: 14px; line-height: 1.6; }
+  .ev-plain { background: rgba(78,227,107,0.04); border: 1px solid rgba(78,227,107,0.15); padding: 10px 14px; margin-top: 4px; }
+  .ev-plain-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--green); display: block; margin-bottom: 5px; }
+  .ev-plain p { font-size: 13px; color: var(--slate); line-height: 1.55; }
+  .ev-foot { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 10px; }
+  .ev-cta { font-family: var(--mono); font-size: 12px; color: var(--green); }
+
+  .liberate-tool { background: var(--graphite); border: 1px solid var(--steel); border-radius: var(--radius); padding: 36px; max-width: 600px; display: grid; gap: 14px; }
+  .tool-input-row { display: flex; gap: 0; border: 1px solid var(--steel); border-radius: var(--radius); overflow: hidden; background: rgba(255,255,255,0.02); }
+  .tool-input-row input { flex: 1; background: transparent; border: none; outline: none; color: var(--chalk); font-family: var(--mono); font-size: 14px; padding: 14px 16px; }
+  .tool-input-row input::placeholder { color: var(--slate-dim); }
+  .tool-input-row button { background: var(--red); color: var(--chalk); border: none; cursor: pointer; font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.04em; padding: 0 22px; text-transform: uppercase; white-space: nowrap; }
+
+  .faq-list { margin-top: 44px; border-top: 1px solid var(--steel); }
+  .faq-item { border-bottom: 1px solid var(--steel); padding: 22px 0; }
+  .faq-q { font-size: 18px; font-weight: 600; margin-bottom: 10px; }
+  .faq-a { color: var(--slate); font-size: 15px; line-height: 1.65; }
+
+  .footer { border-top: 1px solid var(--steel); padding: 36px 0; }
+  .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .footer-mono { font-family: var(--mono); font-size: 12px; color: var(--slate-dim); }
+
+  .page-cta-section { text-align: center; padding: 60px 0 90px; display: flex; flex-direction: column; align-items: center; gap: 22px; }
+  .page-cta-section h2 { font-size: clamp(24px, 4vw, 38px); }
+  .page-cta-section p { color: var(--slate); font-size: 17px; max-width: 48ch; }
+  .page-cta-section .cta-row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+</style>
+</head>
+<body>
+
+<!-- REVIEW BANNER -->
+<div class="review-banner">
+  <span>⚠ WIREFRAME v2 — Full site rewrite · For review before any live changes</span>
+  <span>
+    Pages:
+    <a href="#" onclick="showPage('home');return false;">Home</a>
+    <a href="#" onclick="showPage('liberate');return false;">Liberate</a>
+    <a href="#" onclick="showPage('evidence');return false;">Evidence</a>
+    <a href="#" onclick="showPage('escapees');return false;">Escapees</a>
+  </span>
+</div>
+
+<!-- PAGE TABS -->
+<div class="page-tabs">
+  <div class="page-tab active" onclick="showPage('home')">Homepage</div>
+  <div class="page-tab" onclick="showPage('liberate')">Liberate</div>
+  <div class="page-tab" onclick="showPage('evidence')">Evidence</div>
+  <div class="page-tab" onclick="showPage('escapees')">Escapees</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     HOMEPAGE
+     ════════════════════════════════════════════════════ -->
+<div class="page-section active" id="page-home">
+
+  <!-- NAV -->
+  <nav class="site-nav">
+    <div class="wrap nav-inner">
+      <span class="wordmark">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
+      <div class="nav-links">
+        <span class="nav-link">Why leave <span class="wf-changed">renamed</span></span>
+        <span class="nav-link">How it works <span class="wf-changed">renamed</span></span>
+        <span class="nav-link">Pricing <span class="wf-new">new</span></span>
+        <span class="nav-link">Free preview <span class="wf-changed">renamed</span></span>
+        <span class="nav-link">Evidence</span>
+        <span class="nav-link">Who we've helped <span class="wf-changed">renamed</span></span>
+        <a href="#" class="btn btn-primary" style="padding:9px 16px;font-size:11px;">Get started</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero-inner">
+      <div class="ann ann-changed">✏ Full rewrite — new copy, new CTA, DIYer focus</div>
+      <span class="eyebrow">◦ For business owners who built their own site</span>
+      <h1>Your website shouldn't be this much work.</h1>
+      <p class="hero-sub">
+        You set it up yourself — that was brave. But now you're dealing with update alerts, security warnings, and random crashes that have nothing to do with running your business. We move your site off WordPress and handle everything for $49/month.
+      </p>
+
+      <div class="url-bar">
+        <input type="text" placeholder="yoursite.com — see it off WordPress free" />
+        <button>▸ Try free</button>
+      </div>
+      <p class="hero-note">◦ No account · No credit card · Takes about 2 minutes</p>
+
+      <div class="hero-cta-row">
+        <span class="hero-divider">— or —</span>
+        <a href="#" class="btn btn-ghost">▸ See how it works</a>
+      </div>
+
+      <div class="hero-stats">
+        <div class="hero-stat"><strong>$49/mo</strong>Flat monthly rate</div>
+        <div class="hero-stat"><strong>90+</strong>PageSpeed score</div>
+        <div class="hero-stat"><strong>0</strong>Plugins to patch</div>
+        <div class="hero-stat"><strong>99.99%</strong>Uptime</div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hair" />
+
+  <!-- THE PROBLEM -->
+  <section class="section">
+    <div class="wrap">
+      <div class="ann ann-changed">✏ Same concept, completely rewritten — plain language, no jargon codes</div>
+      <span class="section-num">// 01 — Why you're here</span>
+      <h2 style="font-size:clamp(30px,5vw,56px);margin-bottom:14px;">WordPress was built for developers.<br>Your business is not.</h2>
+      <p class="section-lead">It was designed by tech people, for tech people. You figured it out anyway — and now you're paying for it.</p>
+      <div class="grid-4">
+        <div class="card">
+          <span class="card-code">01</span>
+          <h3>Updates that break things</h3>
+          <p>WordPress sends update notifications almost every week. Ignore them and your site becomes a target. Run them and things break. There's no winning.</p>
+        </div>
+        <div class="card">
+          <span class="card-code">02</span>
+          <h3>You're now the IT department</h3>
+          <p>Nobody told you that buying WordPress hosting meant you'd also handle security patches, plugin conflicts, and server errors. But here you are.</p>
+        </div>
+        <div class="card">
+          <span class="card-code">03</span>
+          <h3>One bad plugin from hacked</h3>
+          <p>43% of hacked websites run WordPress — not because the owners were careless, but because every plugin is another unlocked door. The more plugins, the more doors.</p>
+        </div>
+        <div class="card">
+          <span class="card-code">04</span>
+          <h3>Hosting fees that never stop climbing</h3>
+          <p>You started at $10/month. Now it's $30, maybe $40. And you're still doing all your own maintenance. That's not hosting — that's renting a house and doing your own plumbing.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hair" />
+
+  <!-- HOW IT WORKS -->
+  <section class="section">
+    <div class="wrap">
+      <div class="ann ann-changed">✏ Rewritten — "We do everything, you do nothing" framing</div>
+      <span class="section-num">// 02 — How we get you out</span>
+      <h2 style="font-size:clamp(30px,5vw,56px);margin-bottom:14px;">We handle everything.<br>You do nothing.</h2>
+      <p class="section-lead">No technical steps on your end. No software to install. No server to configure. We do the whole move.</p>
+      <div class="steps">
+        <div class="step">
+          <span class="step-n">01</span>
+          <div>
+            <h3>You tell us your URL</h3>
+            <p>That's the hardest step. Paste your website address and tell us what's been driving you crazy — we'll handle the rest.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-n">02</span>
+          <div>
+            <h3>We rebuild your site</h3>
+            <p>We copy your site exactly — same look, same pages, same content. You won't notice a visual difference. Your visitors definitely won't.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-n">03</span>
+          <div>
+            <h3>We move it to your domain</h3>
+            <p>We put it on fast, reliable servers and switch your domain over on a schedule you approve. No downtime. Your visitors never see a thing.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-n">04</span>
+          <div>
+            <h3>We keep it running</h3>
+            <p>No updates to run. No security scares. No plugins to patch. You just run your business. We handle anything that comes up.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hair" />
+
+  <!-- WHAT YOU GET -->
+  <section class="section">
+    <div class="wrap">
+      <div class="ann ann-changed">✏ Rewritten — framed as "life after" not technical specs</div>
+      <span class="section-num">// 03 — What changes</span>
+      <h2 style="font-size:clamp(30px,5vw,56px);margin-bottom:14px;">A website that runs itself.</h2>
+      <p class="section-lead">Same site. Same content. Same brand. Just none of the WordPress nonsense.</p>
+      <div class="grid-3">
+        <div class="stat-cell">
+          <span class="stat-num">90+</span>
+          <span class="stat-label">PageSpeed score</span>
+          <p class="stat-p">Your site loads in under a second. Google rewards fast sites with better search rankings — and visitors don't leave before your page finishes loading.</p>
+        </div>
+        <div class="stat-cell">
+          <span class="stat-num">$0</span>
+          <span class="stat-label">Monthly maintenance</span>
+          <p class="stat-p">No plugins to patch. No updates to run. Nothing to break at 2am. The architecture is fundamentally different — there's simply nothing to maintain.</p>
+        </div>
+        <div class="stat-cell">
+          <span class="stat-num">99.99%</span>
+          <span class="stat-label">Uptime</span>
+          <p class="stat-p">Your site is served from a global network — not one server that can crash. No traffic spike can knock it offline.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hair" />
+
+  <!-- PRICING -->
+  <section class="section">
+    <div class="wrap">
+      <div class="ann ann-new">★ New section — pricing front and center</div>
+      <span class="section-num">// 04 — What it costs</span>
+      <h2 style="font-size:clamp(30px,5vw,56px);margin-bottom:14px;">Simple pricing. No surprises.</h2>
+      <p class="section-lead">One flat monthly fee covers migration, hosting, and everything that comes after. No contracts, no upsells, no "premium" tier for features you actually need.</p>
+      <div class="tiers-grid">
+        <div class="tier">
+          <span class="tier-tag">Free</span>
+          <h3>Try it first</h3>
+          <div class="tier-price">$0</div>
+          <p>Paste your WordPress URL and see a live preview of your site rebuilt off WordPress. No account, no credit card. Takes 2 minutes. Just to see what it could look like.</p>
+          <a href="#" class="btn btn-ghost">▸ See a free preview</a>
+        </div>
+        <div class="tier tier-featured">
+          <span class="tier-tag tier-tag-green">Most popular</span>
+          <h3>We handle everything</h3>
+          <div class="tier-price">$49<sub>/month</sub></div>
+          <p>We migrate your site, connect your domain, and host it going forward. You never think about servers again. Flat monthly rate — cancel anytime, no questions asked.</p>
+          <a href="#" class="btn btn-primary">▸ Get started</a>
+        </div>
+        <div class="tier">
+          <span class="tier-tag">Custom</span>
+          <h3>Bigger sites</h3>
+          <div class="tier-price">Quote</div>
+          <p>Online store? Membership area? Lots of pages, custom forms, or something specific? We still handle everything — the price just depends on what you've got.</p>
+          <a href="#" class="btn btn-ghost">▸ Get a quote</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hair" />
+
+  <!-- SOCIAL PROOF PLACEHOLDER -->
+  <section class="section">
+    <div class="wrap">
+      <div class="ann ann-changed">✏ Concept unchanged — but needs more relatable examples (see Escapees page)</div>
+      <span class="section-num">// 05 — Who we've helped</span>
+      <h2 style="font-size:clamp(30px,5vw,56px);margin-bottom:14px;">Real businesses, off WordPress.</h2>
+      <p class="section-lead">These are actual sites we've migrated — same design, faster load, nothing left to maintain.</p>
+      <div style="border:1px dashed #f5a623;padding:24px;margin-top:36px;font-family:var(--mono);font-size:13px;color:#f5a623;line-height:1.7;">
+        ⚠ REVIEW NOTE: The current Escapees page shows Matthew Peiper (artist portfolio) and Walnut Grove Assembly of God — these are professional builds that a DIY business owner won't relate to. Before going live, we should add 2–3 examples of the actual target audience: a yoga studio, a plumber, a local restaurant, a photographer, a realtor. Even placeholder tiles with "Type: Local service business" would be more convincing to the target audience than polished portfolio sites. See the Escapees wireframe tab for the proposed layout.
+      </div>
+    </div>
+  </section>
+
+  <hr class="hair" />
+
+  <!-- CONTACT -->
+  <section class="breakout-section" id="contact">
+    <div class="wrap breakout-grid">
+      <div>
+        <div class="ann ann-changed">✏ Rewritten — plain language, no "extraction" jargon</div>
+        <span class="eyebrow">◦ Free assessment</span>
+        <h2>Ready to stop dealing with WordPress?</h2>
+        <p class="section-lead">Tell us about your site. We'll take a look and come back with a plain-English plan — what it takes, what it'll cost, and how long it takes. No tech jargon, no obligation.</p>
+        <ul class="breakout-list">
+          <li>◦ Free — no obligation</li>
+          <li>◦ Response within one business day</li>
+          <li>◦ Your domain and search rankings stay intact</li>
+          <li>◦ Flat $49/month after we're done</li>
+        </ul>
+      </div>
+      <div class="contact-form">
+        <div class="field"><label>Your name</label><input type="text" placeholder="Jane Smith" /></div>
+        <div class="field"><label>Email</label><input type="email" placeholder="jane@yourbusiness.com" /></div>
+        <div class="field"><label>Your WordPress site URL</label><input type="text" placeholder="yourbusiness.com" /></div>
+        <div class="field"><label>What's been the biggest headache?</label><textarea rows="4" placeholder="Slow? Getting hacked? Tired of updates? Just sick of it?"></textarea></div>
+        <a href="#" class="btn btn-primary" style="justify-content:center;">▸ Get my free assessment</a>
+        <p style="font-family:var(--mono);font-size:11px;color:var(--slate-dim);text-align:center;">No tech jargon · No obligation · Reply within 1 business day</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <span class="wordmark" style="font-size:13px;">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
+      <span class="footer-mono">◦ WordPress migration &amp; hosting · escapefromwp.com</span>
+      <span class="footer-mono">© 2026 — All rights reserved.</span>
+    </div>
+  </footer>
+
+</div><!-- /page-home -->
+
+
+<!-- ════════════════════════════════════════════════════
+     LIBERATE PAGE
+     ════════════════════════════════════════════════════ -->
+<div class="page-section" id="page-liberate">
+
+  <nav class="site-nav">
+    <div class="wrap nav-inner">
+      <span class="wordmark">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
+      <div class="nav-links">
+        <span class="nav-link">Why leave</span>
+        <span class="nav-link">How it works</span>
+        <span class="nav-link">Pricing</span>
+        <span class="nav-link" style="color:var(--green);">Free preview</span>
+        <span class="nav-link">Evidence</span>
+        <span class="nav-link">Who we've helped</span>
+        <a href="#" class="btn btn-primary" style="padding:9px 16px;font-size:11px;">Get started</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="section" style="padding-top:120px;">
+    <div class="wrap">
+      <div class="ann ann-changed">✏ Full rewrite — no EmDash jargon, plain-language framing, tool stays as-is</div>
+      <span class="eyebrow">◦ Free preview tool</span>
+      <h1 style="font-size:clamp(36px,6vw,72px);margin:16px 0 22px;letter-spacing:-0.04em;">See your site off WordPress.<br>Free, in 2 minutes.</h1>
+      <p class="section-lead" style="max-width:56ch;">Paste your WordPress URL below. We'll build a live copy on fast, secure servers — same look, same content, no WordPress — so you can see exactly what your site could look like before you commit to anything.</p>
+
+      <div style="margin-top:40px;display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start;">
+        <div class="liberate-tool">
+          <div>
+            <label style="font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);display:block;margin-bottom:8px;">Your WordPress site URL</label>
+            <div class="tool-input-row">
+              <input type="text" placeholder="yourbusiness.com" />
+              <button>▸ Show me</button>
+            </div>
+          </div>
+          <p style="font-family:var(--mono);font-size:11px;color:var(--slate-dim);line-height:1.7;">We only read your public pages — same as any visitor. We never log in or touch your server. Your live site keeps running untouched.</p>
+        </div>
+
+        <div style="display:grid;gap:16px;padding-top:4px;">
+          <div style="display:flex;gap:14px;align-items:flex-start;">
+            <span style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--red);line-height:1;min-width:32px;">01</span>
+            <div><strong style="font-size:15px;display:block;margin-bottom:4px;">Paste your URL</strong><span style="color:var(--slate);font-size:14px;">That's all. We do everything from there.</span></div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:flex-start;">
+            <span style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--red);line-height:1;min-width:32px;">02</span>
+            <div><strong style="font-size:15px;display:block;margin-bottom:4px;">We build your preview</strong><span style="color:var(--slate);font-size:14px;">We copy your design, images, and content — takes about 2 minutes.</span></div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:flex-start;">
+            <span style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--red);line-height:1;min-width:32px;">03</span>
+            <div><strong style="font-size:15px;display:block;margin-bottom:4px;">You see it live</strong><span style="color:var(--slate);font-size:14px;">Click through your site as it would look off WordPress. Same design, way faster.</span></div>
+          </div>
+          <div style="display:flex;gap:14px;align-items:flex-start;">
+            <span style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--red);line-height:1;min-width:32px;">04</span>
+            <div><strong style="font-size:15px;display:block;margin-bottom:4px;">Like what you see?</strong><span style="color:var(--slate);font-size:14px;">We'll move your real site over, connect your domain, and handle everything for $49/month.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hair" />
+
+  <!-- FAQ -->
+  <section class="section">
+    <div class="wrap" style="max-width:760px;">
+      <div class="ann ann-changed">✏ Rewritten — plain language, no EmDash/Astro jargon in the questions</div>
+      <h2 style="font-size:clamp(24px,4vw,36px);margin-bottom:8px;">Common questions</h2>
+      <div class="faq-list">
+        <div class="faq-item">
+          <div class="faq-q">Does this change my live WordPress site?</div>
+          <div class="faq-a">No. We never log in to your site or touch your server. We only read your public pages the way any visitor would — your live WordPress site keeps running completely untouched the whole time.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Why does the preview look like my site?</div>
+          <div class="faq-a">We open your site in a real browser and capture everything — your layout, images, fonts, colors. The result looks identical because it's built from exactly what your visitors see today, just running on completely different (and much faster) technology underneath.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Is this actually free?</div>
+          <div class="faq-a">Yes. The preview is free — no account, no credit card. If you like what you see and want us to actually move your real site and host it, that's $49/month. But the preview costs nothing and doesn't commit you to anything.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">What happens after I see the preview?</div>
+          <div class="faq-a">Nothing automatically. If you want to move forward, use the contact form and we'll handle the full migration — moving your real domain, your content, everything. If you're not ready, the preview just stays there for you to look at.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">Will my search rankings survive the move?</div>
+          <div class="faq-a">Yes. We map every URL from your old site to the same URL on the new one, and set up the proper redirects so Google knows nothing has moved. In practice, most sites improve their rankings after the move because the new site loads significantly faster.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="page-cta-section">
+    <h2>Already seen enough?</h2>
+    <p>Skip the preview and get straight to a migration quote. We'll take a look at your site and come back with a plain-English plan.</p>
+    <div class="cta-row">
+      <a href="#" class="btn btn-primary">▸ Get a free assessment</a>
+    </div>
+  </section>
+
+  <footer class="footer"><div class="wrap footer-inner"><span class="wordmark" style="font-size:13px;">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span><span class="footer-mono">◦ WordPress migration &amp; hosting · escapefromwp.com</span></div></footer>
+</div><!-- /page-liberate -->
+
+
+<!-- ════════════════════════════════════════════════════
+     EVIDENCE PAGE
+     ════════════════════════════════════════════════════ -->
+<div class="page-section" id="page-evidence">
+
+  <nav class="site-nav">
+    <div class="wrap nav-inner">
+      <span class="wordmark">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
+      <div class="nav-links">
+        <span class="nav-link">Why leave</span><span class="nav-link">How it works</span><span class="nav-link">Pricing</span><span class="nav-link">Free preview</span><span class="nav-link" style="color:var(--green);">Evidence</span><span class="nav-link">Who we've helped</span>
+        <a href="#" class="btn btn-primary" style="padding:9px 16px;font-size:11px;">Get started</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="section" style="padding-top:120px;">
+    <div class="wrap">
+      <div class="ann ann-changed">✏ Rewritten — framed for a non-technical business owner, not a developer</div>
+      <span class="eyebrow">◦ The evidence file</span>
+      <h1 style="font-size:clamp(36px,6vw,72px);margin:16px 0 22px;letter-spacing:-0.04em;">Still not sure? Read what's happening to WordPress sites right now.</h1>
+      <p class="section-lead">These aren't worst-case scenarios. This is a normal week for anyone still running a WordPress site.</p>
+    </div>
+  </section>
+
+  <section style="padding-bottom:80px;">
+    <div class="wrap">
+      <div class="ann ann-new" style="margin-bottom:20px;">★ New element: plain-language "What this means for you" callout on every card</div>
+      <div class="ev-grid">
+
+        <!-- CARD EXAMPLE 1 -->
+        <article class="ev-card">
+          <div class="ev-tile"><span class="ev-num">EXHIBIT 01</span><div class="ev-type-label">Blog article</div><span class="ev-src">◦ Search Engine Journal</span></div>
+          <div class="ev-body">
+            <div class="ev-title-link">WordPress 7.1.4: Yet Another Security Release</div>
+            <p class="ev-summary">WordPress 7.1.4 is a security release — the fourth patch in the 7.1 cycle alone. The WordPress team is asking all sites to update immediately.</p>
+            <div class="ev-plain">
+              <span class="ev-plain-label">What this means for you</span>
+              <p>If you have a WordPress site and you're not keeping up with updates, your site is exposed. If you are keeping up, you're spending time on maintenance every single week. There is no version of WordPress that doesn't require constant attention.</p>
+            </div>
+            <div class="ev-foot">
+              <span style="font-family:var(--mono);font-size:11px;color:var(--slate-dim);">Oct 29, 2026</span>
+              <a href="#" class="ev-cta">Read more ↗</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- CARD EXAMPLE 2 -->
+        <article class="ev-card">
+          <div class="ev-tile"><span class="ev-num">EXHIBIT 03</span><div class="ev-type-label">Blog article</div><span class="ev-src">◦ Patchstack</span></div>
+          <div class="ev-body">
+            <div class="ev-title-link">Stolen UpdraftCentral keys are backdooring WordPress sites</div>
+            <p class="ev-summary">Attackers holding valid UpdraftCentral keys are silently installing backdoor plugins on sites running UpdraftPlus — WordPress's most popular backup plugin, with 4M+ installs.</p>
+            <div class="ev-plain">
+              <span class="ev-plain-label">What this means for you</span>
+              <p>UpdraftPlus is one of the most common WordPress plugins. If you have it installed (and many sites do, for backups), attackers may have had access to your site without you ever knowing. A plugin you installed to protect your site became the way in.</p>
+            </div>
+            <div class="ev-foot">
+              <span style="font-family:var(--mono);font-size:11px;color:var(--slate-dim);">Oct 19, 2026</span>
+              <a href="#" class="ev-cta">Read more ↗</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- PLACEHOLDER CARDS -->
+        <article class="ev-card">
+          <div class="ev-tile"><span class="ev-num">EXHIBIT 02</span><div class="ev-type-label">Post</div><span class="ev-src">◦ php.net</span></div>
+          <div class="ev-body">
+            <div class="ev-title-link">Another emergency PHP security release</div>
+            <p class="ev-summary">The PHP security team issued an urgent patch bulletin — the kind that lands on a regular cadence. WordPress is built on PHP.</p>
+            <div class="ev-plain"><span class="ev-plain-label">What this means for you</span><p>Even when WordPress itself is fine, the language it runs on can have holes. A problem with PHP means every WordPress site on that server is potentially exposed — and your host may not patch it immediately.</p></div>
+            <div class="ev-foot"><span style="font-family:var(--mono);font-size:11px;color:var(--slate-dim);">Oct 20, 2026</span><a href="#" class="ev-cta">Read more ↗</a></div>
+          </div>
+        </article>
+
+        <article class="ev-card">
+          <div class="ev-tile"><span class="ev-num">EXHIBIT 06</span><div class="ev-type-label">Post on X</div><span class="ev-src">◦ @bradvin</span></div>
+          <div class="ev-body">
+            <div class="ev-title-link">A critical Elementor flaw let attackers create admin accounts from one link</div>
+            <p class="ev-summary">Elementor 4.3.0/4.3.1 carries a bug rated 8.8/10. If a logged-in admin opens a crafted link, an attacker silently creates a new admin account on your site.</p>
+            <div class="ev-plain"><span class="ev-plain-label">What this means for you</span><p>Elementor is one of the most popular WordPress page builders. If you built your site with it, you were exposed to a flaw that could hand someone else the keys to your site — just from clicking a link in an email.</p></div>
+            <div class="ev-foot"><span style="font-family:var(--mono);font-size:11px;color:var(--slate-dim);">Oct 1, 2026</span><a href="#" class="ev-cta">Read more ↗</a></div>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- EVIDENCE CTA -->
+  <section class="page-cta-section">
+    <h2>Ready to get out?</h2>
+    <p>See what your site looks like off WordPress — free, in 2 minutes. Or jump straight to a migration quote.</p>
+    <div class="cta-row">
+      <a href="#" class="btn btn-primary">▸ See a free preview</a>
+      <a href="#" class="btn btn-ghost">Get a migration quote</a>
+    </div>
+  </section>
+
+  <footer class="footer"><div class="wrap footer-inner"><span class="wordmark" style="font-size:13px;">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span><span class="footer-mono">◦ WordPress migration &amp; hosting · escapefromwp.com</span></div></footer>
+</div><!-- /page-evidence -->
+
+
+<!-- ════════════════════════════════════════════════════
+     ESCAPEES / WHO WE'VE HELPED
+     ════════════════════════════════════════════════════ -->
+<div class="page-section" id="page-escapees">
+
+  <nav class="site-nav">
+    <div class="wrap nav-inner">
+      <span class="wordmark">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
+      <div class="nav-links">
+        <span class="nav-link">Why leave</span><span class="nav-link">How it works</span><span class="nav-link">Pricing</span><span class="nav-link">Free preview</span><span class="nav-link">Evidence</span><span class="nav-link" style="color:var(--green);">Who we've helped</span>
+        <a href="#" class="btn btn-primary" style="padding:9px 16px;font-size:11px;">Get started</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="section" style="padding-top:120px;">
+    <div class="wrap">
+      <div class="ann ann-changed">✏ Page renamed + rewritten — less "release record" theater, more proof it works for real businesses</div>
+      <span class="eyebrow">◦ Client work</span>
+      <h1 style="font-size:clamp(36px,6vw,72px);margin:16px 0 22px;letter-spacing:-0.04em;">Real businesses, off WordPress.</h1>
+      <p class="section-lead">Every site below was running on WordPress. Now they're faster, more secure, and maintenance-free. Same design — none of the headaches.</p>
+    </div>
+  </section>
+
+  <section style="padding-bottom:80px;">
+    <div class="wrap">
+      <div class="ann ann-changed" style="margin-bottom:20px;">✏ Layout stays, copy changed — removed "prisoner/release record" theme, added plain descriptions + before/after context</div>
+      <div style="border:1px dashed #f5a623;padding:24px;margin-bottom:30px;font-family:var(--mono);font-size:13px;color:#f5a623;line-height:1.7;">
+        ⚠ REVIEW NOTE: Current examples are Matthew Peiper (artist) and Walnut Grove AoG (church). These are good, but a DIY business owner might not relate. Ideally, before going live, we add at least one example that's clearly a "regular small business" — yoga studio, hair salon, local service company. Even a placeholder card with "[Local Business — Coming Soon]" signals to visitors that this is for people like them, not just creative professionals.
+      </div>
+
+      <div class="escapees-grid">
+
+        <div class="escapee-card">
+          <div class="escapee-img">[ Site screenshot / thumbnail ]</div>
+          <div class="escapee-body">
+            <span class="escapee-tag">Café &amp; cocktail bar</span>
+            <div class="escapee-name">Brewhemia</div>
+            <div class="escapee-quote">"Running a coffee shop is already a full-time job. The WordPress site was a second one. Now it runs itself — menus, events, contact form, all of it."</div>
+            <div class="escapee-foot">
+              <span class="escapee-detail">brewhemia.com</span>
+              <a href="#" class="btn btn-ghost" style="padding:8px 14px;font-size:11px;">Visit site ↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="escapee-card">
+          <div class="escapee-img">[ Site screenshot / thumbnail ]</div>
+          <div class="escapee-body">
+            <span class="escapee-tag">Artist portfolio</span>
+            <div class="escapee-name">Matthew Peiper</div>
+            <div class="escapee-quote">"Was running on WordPress with the Etch page builder. Moved to a hand-built static site — loads in under a second, nothing to update."</div>
+            <div class="escapee-foot">
+              <span class="escapee-detail">matthewpeiper.com</span>
+              <a href="#" class="btn btn-ghost" style="padding:8px 14px;font-size:11px;">Visit site ↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="escapee-card">
+          <div class="escapee-img">[ Site screenshot / thumbnail ]</div>
+          <div class="escapee-body">
+            <span class="escapee-tag">Church / Community org</span>
+            <div class="escapee-name">Walnut Grove Assembly of God</div>
+            <div class="escapee-quote">"WordPress was becoming a full-time job for a small staff team. The new site runs itself."</div>
+            <div class="escapee-foot">
+              <span class="escapee-detail">wgag.org</span>
+              <a href="#" class="btn btn-ghost" style="padding:8px 14px;font-size:11px;">Visit site ↗</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ESCAPEES CTA -->
+  <section class="page-cta-section">
+    <h2>Your site could be next.</h2>
+    <p>See what it looks like off WordPress — free, no commitment. Or tell us about your site and we'll come back with a plan.</p>
+    <div class="cta-row">
+      <a href="#" class="btn btn-primary">▸ See a free preview</a>
+      <a href="#" class="btn btn-ghost">Get a migration quote</a>
+    </div>
+  </section>
+
+  <footer class="footer"><div class="wrap footer-inner"><span class="wordmark" style="font-size:13px;">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span><span class="footer-mono">◦ WordPress migration &amp; hosting · escapefromwp.com</span></div></footer>
+</div><!-- /page-escapees -->
+
+
+<script>
+  function showPage(name) {
+    document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    const tabs = document.querySelectorAll('.page-tab');
+    const names = ['home','liberate','evidence','escapees'];
+    tabs[names.indexOf(name)].classList.add('active');
+    window.scrollTo(0,0);
+  }
+</script>
+
+<!-- Annotation label inline style fix -->
+<style>
+  .wf-changed { font-family: var(--mono); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: #f5a623; border: 1px dashed #f5a623; padding: 1px 5px; margin-left: 5px; vertical-align: middle; }
+</style>
+
+</body>
+</html>

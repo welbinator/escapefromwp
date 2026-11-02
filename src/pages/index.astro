@@ -3,23 +3,23 @@ import Layout from "../layouts/Layout.astro";
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 const prison = [
-  { code: "SEC-01", t: "Constant target", d: "43% of the web runs WordPress, so it's the #1 target on the internet. Every plugin is a door someone else installed on your house." },
-  { code: "SEC-02", t: "Plugin dependency hell", d: "One abandoned plugin, one bad update, and the whole site goes down. You're renting stability from strangers." },
-  { code: "SEC-03", t: "Bloat & slow loads", d: "Page builders ship 2MB of CSS to render a headline. Google notices. So do the visitors who bounce before it loads." },
-  { code: "SEC-04", t: "Maintenance tax", d: "Core, themes, plugins, PHP versions — endless updates that break things, forever, just to stay in place." },
+  { code: "01", t: "Updates that break things", d: "WordPress sends update notifications almost every week. Ignore them and your site becomes a target. Run them and things break. There's no winning." },
+  { code: "02", t: "You're now the IT department", d: "Nobody told you that buying WordPress hosting meant you'd also handle security patches, plugin conflicts, and server errors. But here you are." },
+  { code: "03", t: "One bad plugin from hacked", d: "43% of hacked websites run WordPress — not because the owners were careless, but because every plugin is another unlocked door. The more plugins, the more doors." },
+  { code: "04", t: "Hosting fees that never stop climbing", d: "You started at $10/month. Now it's $30, maybe $40. And you're still doing all your own maintenance. That's not hosting — that's renting a house and doing your own plumbing." },
 ];
 
 const steps = [
-  { n: "01", t: "Recon", d: "I audit your current site — content, structure, forms, SEO, every URL. Nothing gets left behind in the old cell." },
-  { n: "02", t: "Rebuild", d: "Your site is rebuilt on a modern static/headless stack — hand-built, no page-builder bloat, pixel-faithful or better." },
-  { n: "03", t: "Redirect", d: "Every old URL maps to its new home. Search rankings carry over. No 404s, no lost traffic, no broken links." },
-  { n: "04", t: "Extract", d: "We cut over on a schedule you approve. The old WordPress install goes dark. You're out." },
+  { n: "01", t: "You tell us your URL", d: "That's the hardest step. Paste your website address and tell us what's been driving you crazy — we'll handle the rest." },
+  { n: "02", t: "We rebuild your site", d: "We copy your site exactly — same look, same pages, same content. You won't notice a visual difference. Your visitors definitely won't." },
+  { n: "03", t: "We move it to your domain", d: "We put it on fast, reliable servers and switch your domain over on a schedule you approve. No downtime. Your visitors never see a thing." },
+  { n: "04", t: "We keep it running", d: "No updates to run. No security scares. No plugins to patch. You just run your business. We handle anything that comes up." },
 ];
 
 const outside = [
-  { stat: "90+", label: "PageSpeed scores", d: "Static pages load in milliseconds, not seconds. Real Core Web Vitals wins, not a caching band-aid." },
-  { stat: "0", label: "Plugins to patch", d: "No plugin surface means almost nothing to hack. No admin login for bots to hammer. Nothing to update at 2am." },
-  { stat: "99.99%", label: "Uptime on a global CDN", d: "Served from hundreds of edge locations worldwide. No single server to crash, no traffic spike that can knock you offline." },
+  { stat: "90+", label: "PageSpeed score", d: "Your site loads in under a second. Google rewards fast sites with better search rankings — and visitors don't leave before your page finishes loading." },
+  { stat: "$0", label: "Monthly maintenance", d: "No plugins to patch. No updates to run. Nothing to break at 2am. The architecture is fundamentally different — there's simply nothing to maintain." },
+  { stat: "99.99%", label: "Uptime", d: "Your site is served from a global network — not one server that can crash. No traffic spike can knock it offline." },
 ];
 ---
 <Layout>
@@ -35,13 +35,13 @@ const outside = [
         <span class="nav-toggle-bar"></span>
       </button>
       <nav class="nav-links" id="nav-menu">
-        <a href="#prison">The Prison</a>
-        <a href="#plan">The Plan</a>
-        <a href="#outside">The Outside</a>
-        <a href={`${base}/liberate`}>Liberate</a>
+        <a href="#prison">Why leave</a>
+        <a href="#plan">How it works</a>
+        <a href="#tiers">Pricing</a>
+        <a href={`${base}/liberate`}>Free preview</a>
         <a href={`${base}/evidence`}>Evidence</a>
-        <a href={`${base}/escapees`}>Previous Prisoners</a>
-        <a href="#breakout" class="btn btn-primary nav-cta">Plan your escape</a>
+        <a href={`${base}/escapees`}>Who we've helped</a>
+        <a href="#breakout" class="btn btn-primary nav-cta">Get started</a>
       </nav>
     </div>
   </header>
@@ -51,32 +51,30 @@ const outside = [
     <div class="hero-img" style={`background-image:url('${base}/images/hero-1600.webp')`}></div>
     <div class="hero-scan"></div>
     <div class="wrap hero-content">
-      <span class="eyebrow danger rise">◦ Containment status: WordPress</span>
+      <span class="eyebrow danger rise">◦ For small business owners who built their own site</span>
       <h1 class="hero-title rise">
-        <span class="wp-out">WordPress</span> is a prison.<br />We'll get you out.
+        Your website<br />shouldn't be this<br />much work.
       </h1>
       <p class="hero-sub rise">
-        Escape From WP is a migration service for people who are done with plugin bloat,
-        security holes, and update hell. We break your site out of WordPress and
-        rebuild it on something modern, secure, and fast. Then we bolt the door behind you.
+        You built a WordPress site to help your business — not to spend weekends
+        dealing with updates, security warnings, and things that randomly break.
+        We move your site off WordPress completely. Same look. Same content.
+        No more maintenance headaches.
       </p>
       <div class="hero-cta rise">
-        <a href="#breakout" class="btn btn-primary">▸ Plan your escape</a>
-        <a href="#prison" class="btn btn-ghost">Why escape?</a>
-      </div>
-      <div class="hero-readout rise">
-        <span>LAT 40.71°N</span><span>LONG 74.00°W</span><span class="ok">◦ EXTRACTION ROUTE: OPEN</span>
+        <a href="#breakout" class="btn btn-primary">▸ Get started — free assessment</a>
+        <a href="#prison" class="btn btn-ghost">See why people leave</a>
       </div>
     </div>
   </section>
 
   <!-- THE PRISON -->
   <section id="prison" class="wrap">
-    <span class="section-num rise">// 01 — THE PRISON</span>
-    <h2 class="section-title rise">WordPress is a walled city.</h2>
+    <span class="section-num rise">// 01 — Why people leave</span>
+    <h2 class="section-title rise">WordPress was built for developers. Your business isn't.</h2>
     <p class="section-lead rise">
-      It was fine when you moved in. Then came the plugins, the updates, the
-      vulnerabilities, the slow crawl. Here's what's actually holding your site captive.
+      You didn't sign up to be a webmaster. But WordPress comes with a full-time
+      maintenance job baked in. Here's what people are dealing with.
     </p>
     <div class="grid-4">
       {prison.map((p) => (
@@ -93,10 +91,11 @@ const outside = [
 
   <!-- THE PLAN -->
   <section id="plan" class="wrap">
-    <span class="section-num rise">// 02 — THE PLAN</span>
-    <h2 class="section-title rise">The extraction, in four moves.</h2>
+    <span class="section-num rise">// 02 — How it works</span>
+    <h2 class="section-title rise">We handle everything. You do nothing.</h2>
     <p class="section-lead rise">
-      No downtime surprises. No lost rankings. A clean, scheduled breakout.
+      There's no complicated process on your end. You give us your site URL,
+      we do the work, and you get a faster, worry-free website on the other side.
     </p>
     <div class="steps">
       {steps.map((s) => (
@@ -115,11 +114,11 @@ const outside = [
 
   <!-- THE OUTSIDE -->
   <section id="outside" class="wrap">
-    <span class="section-num rise">// 03 — THE OUTSIDE</span>
-    <h2 class="section-title rise">Life outside the wall.</h2>
+    <span class="section-num rise">// 03 — What changes</span>
+    <h2 class="section-title rise">A website that runs itself.</h2>
     <p class="section-lead rise">
-      Same site, same content, same brand — rebuilt on a stack that's faster
-      and almost nothing to attack.
+      Same look. Same content. Just without the maintenance, the security worries,
+      and the hosting bills that keep going up.
     </p>
     <div class="grid-3">
       {outside.map((o) => (
@@ -134,26 +133,58 @@ const outside = [
 
   <hr class="hair" />
 
-  <!-- THE BREAKOUT / CONTACT -->
+  <!-- THE OPTIONS / TIERS -->
+  <section id="tiers" class="wrap">
+    <span class="section-num rise">// 04 — Pricing</span>
+    <h2 class="section-title rise">Simple, flat pricing.</h2>
+    <p class="section-lead rise">
+      Start free. See your site rebuilt before you spend a dollar.
+    </p>
+    <div class="tiers-grid">
+      <div class="tier-card rise">
+        <span class="tier-tag">Free</span>
+        <h3 class="tier-title">See it first</h3>
+        <p class="tier-price">$0</p>
+        <p class="tier-desc">Paste your WordPress URL and we'll show you exactly what your site looks like off WordPress — before you commit to anything. Takes about 2 minutes.</p>
+        <a href={`${base}/liberate`} class="btn btn-ghost tier-cta">▸ Try the free preview</a>
+      </div>
+      <div class="tier-card tier-featured rise">
+        <span class="tier-tag tag-green">Most popular</span>
+        <h3 class="tier-title">We do everything</h3>
+        <p class="tier-price">$49<span class="tier-mo">/month</span></p>
+        <p class="tier-desc">We migrate your site, set it up on your domain, and keep it running. No WordPress. No plugins. No maintenance. Just a fast website that works. Cancel anytime.</p>
+        <a href="#breakout" class="btn btn-primary tier-cta">▸ Get started</a>
+      </div>
+      <div class="tier-card rise">
+        <span class="tier-tag">Custom</span>
+        <h3 class="tier-title">Bigger sites</h3>
+        <p class="tier-price">Quote</p>
+        <p class="tier-desc">Online stores, membership sites, large blogs, or anything complex. Get in touch and we'll talk through what you've got and what makes sense.</p>
+        <a href="#breakout" class="btn btn-ghost tier-cta">▸ Get a quote</a>
+      </div>
+    </div>
+  </section>
+
+  <hr class="hair" />
   <section id="breakout" class="breakout">
     <div class="wrap breakout-inner">
       <div class="breakout-left rise">
-        <span class="eyebrow">◦ Extraction request</span>
-        <h2 class="section-title">Start the breakout.</h2>
+        <span class="eyebrow">◦ Free assessment</span>
+        <h2 class="section-title">Let's see what you've got.</h2>
         <p class="section-lead">
-          Tell me about the site you want out of WordPress. I'll come back with a plain
-          assessment — what it takes, what it costs, and what you gain. No obligation,
-          no sales theater.
+          Tell us your website URL and what's been driving you crazy.
+          We'll come back with a plain-English answer and a flat monthly price.
+          No tech jargon, no sales pressure.
         </p>
         <ul class="breakout-list">
-          <li>◦ Free migration assessment</li>
-          <li>◦ Your current URL keeps its rankings</li>
-          <li>◦ Fixed quote before any work starts</li>
+          <li>◦ Free assessment — no commitment required</li>
+          <li>◦ Your domain name and Google rankings stay intact</li>
+          <li>◦ Flat $49/month after migration</li>
         </ul>
       </div>
       <form class="breakout-form rise" id="escape-form">
         <div class="field">
-          <label for="name">Name / Callsign</label>
+          <label for="name">Your name</label>
           <input id="name" name="name" type="text" required autocomplete="name" />
         </div>
         <div class="field">
@@ -161,12 +192,12 @@ const outside = [
           <input id="email" name="email" type="email" required autocomplete="email" />
         </div>
         <div class="field">
-          <label for="site">Site to extract (URL)</label>
+          <label for="site">Your WordPress site URL</label>
           <input id="site" name="site" type="text" placeholder="yoursite.com" />
         </div>
         <div class="field">
-          <label for="message">What's the situation?</label>
-          <textarea id="message" name="message" rows="4" placeholder="Slow? Hacked? Just sick of WordPress?"></textarea>
+          <label for="message">What's been the biggest headache?</label>
+          <textarea id="message" name="message" rows="4" placeholder="Slow? Got hacked? Just tired of the updates and maintenance?"></textarea>
         </div>
         <div class="field" aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;height:0;overflow:hidden">
           <label for="website_hp">Website</label>
@@ -183,7 +214,7 @@ const outside = [
     <div class="wrap footer-inner">
       <span class="wordmark small">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
       <span class="footer-mono">◦ WordPress migration &amp; rescue · escapefromwp.com</span>
-      <span class="footer-mono dim">© {new Date().getFullYear()} — All units accounted for.</span>
+      <span class="footer-mono dim">© {new Date().getFullYear()} — Your site deserves better.</span>
       <a class="footer-mono dim footer-privacy" href="/privacy/">Privacy</a>
     </div>
   </footer>
@@ -339,6 +370,31 @@ const outside = [
       display: block; line-height: 1; letter-spacing: -0.02em; text-shadow: 0 0 24px rgba(78,227,107,.28); }
     .stat-label { display: block; font-size: 15px; font-weight: 600; margin: 14px 0 12px; letter-spacing: -0.01em; }
 
+    /* TIERS */
+    .tiers-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 48px; }
+    .tier-card {
+      border: 1px solid var(--steel); background: rgba(255,255,255,0.015);
+      padding: 30px 26px 34px; display: flex; flex-direction: column; gap: 12px;
+      transition: border-color .15s;
+    }
+    .tier-card:hover { border-color: var(--steel-lit); }
+    .tier-featured { border-color: var(--term-green); background: rgba(78,227,107,0.04); }
+    .tier-featured:hover { border-color: var(--term-green); }
+    .tier-tag {
+      font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--slate); align-self: flex-start;
+      border: 1px solid var(--steel); padding: 3px 8px;
+    }
+    .tag-green { color: var(--term-green); border-color: var(--term-green); }
+    .tier-title { font-size: 22px; line-height: 1.1; }
+    .tier-price {
+      font-family: var(--font-mono); font-size: 38px; font-weight: 700;
+      color: var(--chalk); line-height: 1; letter-spacing: -0.02em;
+    }
+    .tier-mo { font-size: 16px; font-weight: 400; color: var(--slate); }
+    .tier-desc { color: var(--slate); font-size: 14.5px; line-height: 1.62; flex: 1; }
+    .tier-cta { margin-top: 8px; text-align: center; justify-content: center; }
+
     /* BREAKOUT / CONTACT */
     .breakout { background:
       radial-gradient(120% 100% at 100% 0%, rgba(227,39,53,0.06), transparent 55%),
@@ -373,6 +429,7 @@ const outside = [
     /* RESPONSIVE */
     @media (max-width: 900px) {
       .grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .tiers-grid { grid-template-columns: 1fr; }
       .breakout-inner { grid-template-columns: 1fr; gap: 40px; }
       .nav-toggle { display: flex; }
       .nav-links {

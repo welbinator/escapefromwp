@@ -9,6 +9,16 @@
 // }
 export const evidence = [
   {
+    title: "WordPress 7.1.4: Yet Another Security Release",
+    url: "https://www.searchenginejournal.com/wordpress-announces-another-security-release-version-7-1-4/594798/",
+    source: "Search Engine Journal",
+    type: "article",
+    date: "2026-10-29",
+    summary:
+      "WordPress 7.1.4 is a security release, making it the fourth maintenance/security patch in the 7.1 cycle alone. The WordPress team is asking all sites to update immediately. If you're running WordPress, this is your life: another week, another mandatory update or you're exposed. A static site has no CMS to patch.",
+    image: null,
+  },
+  {
     title: "Another emergency PHP security release — and WordPress runs on PHP",
     url: "https://www.php.net/archive/2026.php#2026-10-20-1",
     source: "php.net",

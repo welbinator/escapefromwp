@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Escape From WP — Homepage Wireframe</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0b0405; --chalk: #f3efe9; --slate: #8a8088; --slate-dim: #5a5258;
+    --steel: #2a2228; --graphite: #120c0d; --green: #4ee36b; --red: #e32735;
+    --mono: 'Courier New', monospace; --sans: system-ui, sans-serif;
+    --radius: 3px;
+  }
+  body { background: var(--bg); color: var(--chalk); font-family: var(--sans); line-height: 1.6; }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 28px; }
+  .tag { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--red); }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--slate); }
+  .section-num { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: var(--slate-dim); display: block; margin-bottom: 14px; }
+  h1, h2, h3 { letter-spacing: -0.03em; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 13px 22px; border-radius: var(--radius); cursor: pointer; transition: all .15s; }
+  .btn-primary { background: var(--red); color: var(--chalk); border: 1px solid var(--red); }
+  .btn-primary:hover { background: #c72030; }
+  .btn-ghost { background: transparent; color: var(--chalk); border: 1px solid var(--steel); }
+  .btn-ghost:hover { border-color: var(--green); color: var(--green); }
+  .hair { border: none; border-top: 1px solid var(--steel); }
+  section { padding: 80px 0; }
+  .section-lead { color: var(--slate); font-size: 17px; max-width: 60ch; line-height: 1.7; margin-top: 16px; }
+
+  /* ── WIREFRAME LABEL ── */
+  .wf-banner {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 999;
+    background: #2a1a00; border-top: 2px solid #f5a623;
+    font-family: var(--mono); font-size: 12px; color: #f5a623;
+    padding: 10px 20px; display: flex; justify-content: space-between; align-items: center;
+  }
+
+  /* ── NAV ── */
+  nav.site-nav {
+    position: sticky; top: 0; z-index: 100; background: rgba(11,4,5,0.92);
+    backdrop-filter: blur(10px); border-bottom: 1px solid var(--steel);
+    height: 62px; display: flex; align-items: center;
+  }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+  .wordmark { font-family: var(--mono); font-weight: 700; font-size: 15px; letter-spacing: 0.06em; }
+  .wordmark .wp { color: var(--red); }
+  .nav-links { display: flex; align-items: center; gap: 24px; }
+  .nav-links a { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--slate); }
+  .nav-links a:hover { color: var(--green); }
+  .wf-new { background: rgba(78,227,107,0.15); border: 1px dashed var(--green); padding: 2px 6px; font-family: var(--mono); font-size: 9px; color: var(--green); letter-spacing: 0.1em; vertical-align: middle; margin-left: 4px; }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 90vh; display: flex; align-items: center;
+    background: linear-gradient(135deg, #0b0405 0%, #150a0c 60%, #0b0405 100%);
+    border-bottom: 1px solid var(--steel); position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ''; position: absolute; inset: 0;
+    background: repeating-linear-gradient(to bottom, transparent 0 3px, rgba(78,227,107,0.025) 3px 4px);
+    pointer-events: none;
+  }
+  .hero-inner { position: relative; z-index: 2; padding: 100px 0 80px; }
+  .hero h1 { font-size: clamp(44px, 8vw, 96px); line-height: 0.96; max-width: 14ch; margin: 18px 0 24px; }
+  .hero h1 .wp-out { color: var(--red); position: relative; }
+  .hero h1 .wp-out::after { content: ''; position: absolute; left: 0; right: 0; top: 52%; height: 5px; background: var(--red); transform: rotate(-2deg); box-shadow: 0 0 14px rgba(227,39,53,.5); }
+  .hero-sub { color: var(--slate); font-size: clamp(16px, 1.8vw, 20px); max-width: 52ch; line-height: 1.65; }
+  .hero-cta { display: flex; gap: 14px; margin: 32px 0 40px; flex-wrap: wrap; }
+  .hero-url-bar {
+    display: flex; gap: 0; margin-top: 20px; max-width: 560px;
+    border: 1px solid var(--steel); background: rgba(255,255,255,0.03);
+    border-radius: var(--radius); overflow: hidden;
+  }
+  .hero-url-bar input {
+    flex: 1; background: transparent; border: none; outline: none;
+    color: var(--chalk); font-family: var(--mono); font-size: 14px; padding: 14px 16px;
+  }
+  .hero-url-bar input::placeholder { color: var(--slate-dim); }
+  .hero-url-bar .url-btn {
+    background: var(--green); color: #06230f; border: none; cursor: pointer;
+    font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
+    padding: 0 20px; white-space: nowrap;
+  }
+  .hero-note { font-family: var(--mono); font-size: 11px; color: var(--slate-dim); margin-top: 10px; }
+  .hero-stats { display: flex; gap: 36px; flex-wrap: wrap; margin-top: 48px; border-top: 1px solid var(--steel); padding-top: 20px; }
+  .hero-stat { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: var(--slate-dim); }
+  .hero-stat strong { color: var(--green); font-size: 14px; display: block; }
+
+  /* ── CHANGE INDICATOR ── */
+  .change-note {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: #f5a623; border: 1px dashed #f5a623;
+    padding: 2px 7px; display: inline-block; margin-bottom: 10px;
+  }
+
+  /* ── PRISON ── */
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; margin-top: 44px; background: var(--steel); border: 1px solid var(--steel); }
+  .cell { background: var(--graphite); padding: 28px 24px 32px; }
+  .cell-code { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--red); }
+  .cell h3 { font-size: 18px; margin: 14px 0 10px; }
+  .cell p { color: var(--slate); font-size: 14px; line-height: 1.6; }
+
+  /* ── STEPS ── */
+  .steps { margin-top: 44px; border-top: 1px solid var(--steel); }
+  .step { display: grid; grid-template-columns: 110px 1fr; gap: 28px; padding: 30px 0; border-bottom: 1px solid var(--steel); }
+  .step-n { font-family: var(--mono); font-size: 38px; font-weight: 700; color: #2a2228; -webkit-text-stroke: 1px var(--steel); }
+  .step h3 { font-size: 20px; margin-bottom: 8px; }
+  .step p { color: var(--slate); font-size: 14px; line-height: 1.6; }
+
+  /* ── STATS ── */
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: 44px; background: var(--steel); border: 1px solid var(--steel); }
+  .stat-cell { background: var(--graphite); padding: 34px 28px 38px; }
+  .stat-num { font-family: var(--mono); font-size: 48px; font-weight: 700; color: var(--green); display: block; line-height: 1; }
+  .stat-label { display: block; font-size: 15px; font-weight: 600; margin: 12px 0 10px; }
+  .stat-p { color: var(--slate); font-size: 14px; line-height: 1.6; }
+
+  /* ── TIERS (NEW) ── */
+  .tiers-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 44px; }
+  .tier-card { border: 1px solid var(--steel); background: rgba(255,255,255,0.015); padding: 28px 24px 32px; display: flex; flex-direction: column; gap: 12px; }
+  .tier-featured { border-color: var(--green); background: rgba(78,227,107,0.04); }
+  .tier-tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--slate); align-self: flex-start; border: 1px solid var(--steel); padding: 2px 8px; }
+  .tier-tag.green { color: var(--green); border-color: var(--green); }
+  .tier-title { font-size: 22px; }
+  .tier-price { font-family: var(--mono); font-size: 36px; font-weight: 700; color: var(--chalk); line-height: 1; }
+  .tier-price span { font-size: 15px; font-weight: 400; color: var(--slate); }
+  .tier-desc { color: var(--slate); font-size: 14px; line-height: 1.62; flex: 1; }
+  .tier-cta { margin-top: 8px; text-align: center; }
+
+  /* ── CONTACT ── */
+  .breakout { background: var(--graphite); border-top: 1px solid var(--steel); padding: 80px 0; }
+  .breakout-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
+  .breakout h2 { font-size: clamp(28px, 4vw, 44px); line-height: 1.05; margin: 14px 0 16px; }
+  .breakout-list { list-style: none; margin-top: 24px; display: grid; gap: 12px; font-family: var(--mono); font-size: 13px; color: var(--green); }
+  .breakout-form { background: #0b0405; border: 1px solid var(--steel); border-radius: var(--radius); padding: 30px; display: grid; gap: 16px; }
+  .field { display: grid; gap: 6px; }
+  .field label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--slate); }
+  .field input, .field textarea { background: var(--graphite); border: 1px solid var(--steel); border-radius: var(--radius); color: var(--chalk); font-family: var(--sans); font-size: 14px; padding: 11px 13px; }
+  .field textarea { resize: vertical; }
+
+  /* ── FOOTER ── */
+  footer { border-top: 1px solid var(--steel); padding: 36px 0; }
+  .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .footer-mono { font-family: var(--mono); font-size: 12px; color: var(--slate-dim); }
+</style>
+</head>
+<body>
+
+<div class="wf-banner">
+  <span>⚠ WIREFRAME — escapefromwp.com homepage redesign · for James Welbes review</span>
+  <span>🟡 = Changed · 🟢 = New section · ⬜ = Unchanged</span>
+</div>
+
+<!-- NAV -->
+<nav class="site-nav">
+  <div class="wrap nav-inner">
+    <span class="wordmark">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
+    <div class="nav-links">
+      <a href="#">The Prison</a>
+      <a href="#">The Plan</a>
+      <a href="#">The Outside</a>
+      <a href="#">Pricing <span class="wf-new">new</span></a>
+      <a href="#">Liberate</a>
+      <a href="#">Evidence</a>
+      <a href="#">Escapees</a>
+      <a href="#" class="btn btn-primary" style="padding:8px 16px;font-size:11px;">Plan your escape</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap hero-inner">
+    <span class="change-note">🟡 Changed — new copy + URL bar CTA</span>
+    <div class="tag">◦ Containment status: WordPress</div>
+    <h1><span class="wp-out">WordPress</span> is holding your site hostage.</h1>
+    <p class="hero-sub">
+      You built your own site. Now it's all patches, security scares, and plugin drama — and you didn't sign up for any of it. Escape From WP migrates your site off WordPress and onto something that just works. Starting at $49/month.
+    </p>
+
+    <div class="hero-url-bar" style="margin-top:32px;">
+      <input type="text" placeholder="yoursite.com — see it off WordPress in 2 minutes" />
+      <button class="url-btn">▸ Try free</button>
+    </div>
+    <p class="hero-note">◦ Free preview · no account · takes about 2 minutes</p>
+
+    <div class="hero-stats">
+      <div class="hero-stat"><strong>90+</strong> PageSpeed scores</div>
+      <div class="hero-stat"><strong>0</strong> plugins to patch</div>
+      <div class="hero-stat"><strong>99.99%</strong> uptime, global CDN</div>
+      <div class="hero-stat"><strong>$49/mo</strong> all-in, cancel anytime</div>
+    </div>
+  </div>
+</section>
+
+<hr class="hair" />
+
+<!-- THE PRISON -->
+<section>
+  <div class="wrap">
+    <span class="section-num">// 01 — THE PRISON</span>
+    <span style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--slate-dim);">⬜ Unchanged</span>
+    <h2 style="font-size:clamp(30px,5vw,54px);margin-bottom:14px;">WordPress is a walled city.</h2>
+    <p class="section-lead">It was fine when you moved in. Then came the plugins, the updates, the vulnerabilities, the slow crawl.</p>
+    <div class="grid-4">
+      <div class="cell"><span class="cell-code">SEC-01</span><h3>Constant target</h3><p>43% of the web runs WordPress. That makes it the #1 target on the internet. Every plugin is a door someone else installed on your house.</p></div>
+      <div class="cell"><span class="cell-code">SEC-02</span><h3>Plugin dependency hell</h3><p>One abandoned plugin, one bad update, and the whole site goes down. You're renting stability from strangers.</p></div>
+      <div class="cell"><span class="cell-code">SEC-03</span><h3>Bloat &amp; slow loads</h3><p>Page builders ship 2MB of CSS to render a headline. Google notices. So do visitors who bounce before it loads.</p></div>
+      <div class="cell"><span class="cell-code">SEC-04</span><h3>Maintenance tax</h3><p>Core, themes, plugins, PHP versions — endless updates that break things, forever, just to stay in place.</p></div>
+    </div>
+  </div>
+</section>
+
+<hr class="hair" />
+
+<!-- THE PLAN -->
+<section>
+  <div class="wrap">
+    <span class="section-num">// 02 — THE PLAN</span>
+    <span style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--slate-dim);">⬜ Unchanged</span>
+    <h2 style="font-size:clamp(30px,5vw,54px);margin-bottom:14px;">How it works.</h2>
+    <p class="section-lead">Four moves. No downtime. No lost rankings.</p>
+    <div class="steps">
+      <div class="step"><span class="step-n">01</span><div><h3>Recon</h3><p>We audit your current site — content, structure, forms, SEO, every URL. Nothing gets left behind.</p></div></div>
+      <div class="step"><span class="step-n">02</span><div><h3>Rebuild</h3><p>Your site is rebuilt on a modern static stack — no page-builder bloat, pixel-faithful or better.</p></div></div>
+      <div class="step"><span class="step-n">03</span><div><h3>Redirect</h3><p>Every old URL maps to its new home. Search rankings carry over. No 404s, no lost traffic.</p></div></div>
+      <div class="step"><span class="step-n">04</span><div><h3>Extract</h3><p>We cut over on a schedule you approve. The old WordPress install goes dark. You're out.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<hr class="hair" />
+
+<!-- THE OUTSIDE / STATS -->
+<section>
+  <div class="wrap">
+    <span class="section-num">// 03 — THE OUTSIDE</span>
+    <span style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--slate-dim);">⬜ Unchanged</span>
+    <h2 style="font-size:clamp(30px,5vw,54px);margin-bottom:14px;">Life outside the wall.</h2>
+    <p class="section-lead">Same site. Same content. Same brand. Just faster and almost nothing to attack.</p>
+    <div class="grid-3">
+      <div class="stat-cell"><span class="stat-num">90+</span><span class="stat-label">PageSpeed scores</span><p class="stat-p">Static pages load in milliseconds. Real Core Web Vitals wins, not a caching band-aid.</p></div>
+      <div class="stat-cell"><span class="stat-num">0</span><span class="stat-label">Plugins to patch</span><p class="stat-p">No plugin surface means almost nothing to hack. No admin login for bots to hammer.</p></div>
+      <div class="stat-cell"><span class="stat-num">99.99%</span><span class="stat-label">Uptime on a global CDN</span><p class="stat-p">Served from hundreds of edge locations. No single server to crash.</p></div>
+    </div>
+  </div>
+</section>
+
+<hr class="hair" />
+
+<!-- TIERS (NEW) -->
+<section>
+  <div class="wrap">
+    <span class="change-note">🟢 New section</span>
+    <span class="section-num">// 04 — YOUR OPTIONS</span>
+    <h2 style="font-size:clamp(30px,5vw,54px);margin-bottom:14px;">Three ways out.</h2>
+    <p class="section-lead">Not ready to commit? Start free. Already convinced? We'll handle everything.</p>
+    <div class="tiers-grid">
+      <div class="tier-card">
+        <span class="tier-tag">Free</span>
+        <h3 class="tier-title">See it first</h3>
+        <p class="tier-price">$0</p>
+        <p class="tier-desc">Paste your WordPress URL and get a live preview of your site rebuilt off WordPress. Takes about 2 minutes. No commitment, no account required.</p>
+        <a href="#" class="btn btn-ghost tier-cta" style="width:100%;justify-content:center;">▸ Try Liberate — free</a>
+      </div>
+      <div class="tier-card tier-featured">
+        <span class="tier-tag green">Most popular</span>
+        <h3 class="tier-title">Done for you</h3>
+        <p class="tier-price">$49<span>/month</span></p>
+        <p class="tier-desc">We migrate your site, put it on your domain, and host it. No WordPress, no plugins, no more 2am security patches. Cancel anytime.</p>
+        <a href="#" class="btn btn-primary tier-cta" style="width:100%;justify-content:center;">▸ Get started</a>
+      </div>
+      <div class="tier-card">
+        <span class="tier-tag">Custom</span>
+        <h3 class="tier-title">Complex sites</h3>
+        <p class="tier-price">Quote</p>
+        <p class="tier-desc">E-commerce, membership sites, large content libraries, or anything special. Let's talk about what you've got.</p>
+        <a href="#" class="btn btn-ghost tier-cta" style="width:100%;justify-content:center;">▸ Get a quote</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="hair" />
+
+<!-- CONTACT / BREAKOUT -->
+<section class="breakout">
+  <div class="wrap breakout-inner">
+    <div>
+      <span class="change-note">🟡 Updated copy</span>
+      <span class="eyebrow">◦ Extraction request</span>
+      <h2>Let's get you out.</h2>
+      <p class="section-lead">No tech speak. No confusing options. Just tell me your site URL and what's been driving you crazy about WordPress — I'll come back with a plain-English plan and a flat monthly price.</p>
+      <ul class="breakout-list">
+        <li>◦ Free assessment — no obligation</li>
+        <li>◦ Your domain and rankings stay intact</li>
+        <li>◦ Flat $49/month after migration</li>
+      </ul>
+    </div>
+    <div class="breakout-form">
+      <div class="field"><label>Name</label><input type="text" placeholder="Your name" /></div>
+      <div class="field"><label>Email</label><input type="email" placeholder="you@example.com" /></div>
+      <div class="field"><label>Your WordPress site URL</label><input type="text" placeholder="yoursite.com" /></div>
+      <div class="field"><label>What's the situation?</label><textarea rows="4" placeholder="Slow? Hacked? Just sick of WordPress?"></textarea></div>
+      <a href="#" class="btn btn-primary" style="width:100%;justify-content:center;">▸ Request extraction</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="wrap footer-inner">
+    <span class="wordmark" style="font-size:13px;">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
+    <span class="footer-mono">◦ WordPress migration & hosting · escapefromwp.com</span>
+    <span class="footer-mono">© 2026 — All units accounted for.</span>
+  </div>
+</footer>
+
+</body>
+</html>
