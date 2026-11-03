@@ -12,6 +12,17 @@ export const STORY_TYPE_LABEL = {
 
 export const stories = [
   {
+    author:   "Michal Barus",
+    handle:   "@webjuice_ie",
+    source:   "Twitter / X",
+    type:     "thread",
+    url:      "https://x.com/webjuice_ie/status/2117614058513797331",
+    date:     "2026-11-03",
+    storySlug: "webjuice_ie-20261103",
+    quote:    "The real cost of WordPress wasn't hosting — it was the endless hours on updates, plugin conflicts, hacked sites, and manual changes. Static files on Cloudflare = no plugins, no server patching, no WordPress vulnerabilities. Mobile PageSpeed went from 50–70 → 95–100.",
+    context:  "Michal runs an SEO agency that migrated 40 client WordPress sites to Astro + Cloudflare Workers. This is his detailed follow-up thread answering the most common questions: why Astro, how long it took, how clients request edits now, how AI agents manage the repo, and when WordPress might still make sense.",
+  },
+  {
     author:  "Illia",
     handle:  "@illiaonline",
     source:  "LinkedIn",

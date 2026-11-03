@@ -102,7 +102,7 @@ const more = stories.filter((x) => storySlug(x) !== storySlug(s)).slice(0, 3);
             <span class="more-type">{STORY_TYPE_LABEL[m.type] || "Post"}</span>
             <span class="more-author">{m.author}</span>
             <span class="more-handle">{m.handle}</span>
-            <span class="more-summary">{m.summary.slice(0, 100)}…</span>
+            <span class="more-summary">{(m.summary || m.context || '').slice(0, 100)}…</span>
           </a>
         ))}
       </div>
