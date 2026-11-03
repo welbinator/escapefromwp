@@ -12,6 +12,34 @@ export const STORY_TYPE_LABEL = {
 
 export const stories = [
   {
+    author:  "Illia",
+    handle:  "@illiaonline",
+    source:  "LinkedIn",
+    type:    "post",
+    url:     "https://www.linkedin.com/posts/illiaonline_wordpress-ai-webdevelopment-share-7523145884658917376-PQf4/",
+    date:    "2026-10-28",
+    summary: "10 years ago clients paid him to move static HTML sites TO WordPress. Now they ask how to move back. The reason: AI agents manage their sites now, and agents work better with files than dashboards. The best stack depends on who — or what — is editing the content.",
+    story:   `10 years ago, clients paid me to move their static HTML sites to WordPress. The pitch was simple: "You shouldn't need a developer to change a headline. Get a CMS, log in, click Edit, done."
+
+Now I keep seeing people ask for the exact opposite.
+
+"How do I convert my WordPress site to static HTML?"
+
+Why? Because an AI agent manages their site now, and agents work much better with files than with dashboards.
+
+The thinking flipped completely. Back then the CMS was the interface, because the person editing the site wasn't technical. Now the one editing the site is an AI agent, and its interface is plain text, Git, and a terminal.
+
+A database, 40 plugins, and an admin panel were built for humans who click. An agent just wants a folder of files it can read, edit, commit, and deploy.
+
+So the "outdated" static site is suddenly modern again.
+
+I don't think WordPress is going away. It still powers a huge part of the web, and for many teams it's still the right tool. But the lesson I keep coming back to is this: the best stack depends on who (or what) is editing the content.
+
+Ten years ago that was a marketing manager. Today it might be Claude.`,
+    likes:   null,
+    shares:  null,
+  },
+  {
     author:  "Aaron Edwards",
     handle:  "@uglyrobot",
     source:  "X (Twitter)",
