@@ -20,6 +20,7 @@ export const stories = [
     date:     "2026-11-03",
     storySlug: "webjuice_ie-20261103b",
     quote:    "The $90/month hosting savings were minor. The real win was eliminating hours spent monthly on maintenance, updates, and manual work. No servers to maintain, no plugins, no WP tax. Everything in one Git repo so AI agents can edit it. Owner approves every change.",
+    summary:  "Michal's full step-by-step guide to migrating 40 WordPress sites to Astro + Cloudflare Workers: audit everything first, export content to Markdown, rebuild in Astro, deploy to Cloudflare, cut over DNS site by site. Includes before/after cost breakdown and when to stay on WordPress.",
     context:  "Michal's full step-by-step guide to migrating 40 WordPress sites to Astro + Cloudflare Workers: audit everything first, export content to Markdown, rebuild in Astro, deploy to Cloudflare, cut over DNS site by site, monitor Search Console. Includes before/after cost breakdown, the client request workflow, and when to stay on WordPress (WooCommerce, stores).",
   },
   {
@@ -31,6 +32,7 @@ export const stories = [
     date:     "2026-11-03",
     storySlug: "webjuice_ie-20261103",
     quote:    "The real cost of WordPress wasn't hosting — it was the endless hours on updates, plugin conflicts, hacked sites, and manual changes. Static files on Cloudflare = no plugins, no server patching, no WordPress vulnerabilities. Mobile PageSpeed went from 50–70 → 95–100.",
+    summary:  "Michal runs an SEO agency that migrated 40 client WordPress sites to Astro + Cloudflare Workers. Follow-up thread answering the most common questions: why Astro, how long it took, how clients request edits now, how AI agents manage the repo.",
     context:  "Michal runs an SEO agency that migrated 40 client WordPress sites to Astro + Cloudflare Workers. This is his detailed follow-up thread answering the most common questions: why Astro, how long it took, how clients request edits now, how AI agents manage the repo, and when WordPress might still make sense.",
   },
   {
