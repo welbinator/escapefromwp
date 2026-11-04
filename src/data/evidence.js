@@ -9,6 +9,16 @@
 // }
 export const evidence = [
   {
+    title: "CISA Warns of Active Exploitation During WordPress Updates — Patch to 7.1.4 Now",
+    url: "https://x.com/dipakcgajjar/status/2118023426023866500",
+    source: "@dipakcgajjar (WordPress specialist, 5.4k followers)",
+    type: "tweet",
+    date: "2026-11-04",
+    summary:
+      "CISA issued an active exploitation warning: attackers are targeting WordPress sites specifically during core update windows — the update process itself is an attack surface. WordPress specialist Dipak Gajjar is urging site owners not to wait for scheduled maintenance and update to 7.1.4 immediately. Static sites don't have a CMS to patch, ever.",
+    slug: "cisa-wordpress-update-exploit-dipakcgajjar",
+  },
+  {
     title: "WordPress 7.1.4: Yet Another Security Release",
     url: "https://www.searchenginejournal.com/wordpress-announces-another-security-release-version-7-1-4/594798/",
     source: "Search Engine Journal",
