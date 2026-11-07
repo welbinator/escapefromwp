@@ -20,37 +20,37 @@ const startsWith = (path: string) => url.startsWith(base + path);
     <!-- Main -->
     <div class="sb-section-label">Overview</div>
     <a href={`${base}/`} class:list={["sb-link", { active: is("/") }]}>
-      <span class="sb-icon">⌂</span> Home
+      <span class="sb-icon">◈</span> Home
     </a>
 
     <!-- Explore -->
     <div class="sb-section-label">Explore</div>
     <a href={`${base}/`}#prison class:list={["sb-link", { active: false }]}>
-      <span class="sb-icon">⚠</span> Why leave WordPress
+      <span class="sb-icon">◦</span> Why leave WordPress
     </a>
     <a href={`${base}/`}#plan class:list={["sb-link", { active: false }]}>
-      <span class="sb-icon">→</span> How it works
+      <span class="sb-icon">◦</span> How it works
     </a>
     <a href={`${base}/`}#tiers class:list={["sb-link", { active: false }]}>
-      <span class="sb-icon">$</span> Pricing
+      <span class="sb-icon">◦</span> Pricing
     </a>
 
     <!-- Resources -->
     <div class="sb-section-label">Resources</div>
     <a href={`${base}/evidence`} class:list={["sb-link", { active: startsWith("/evidence") }]}>
-      <span class="sb-icon">📋</span> Evidence
+      <span class="sb-icon">◦</span> Evidence
     </a>
     <a href={`${base}/stories`} class:list={["sb-link", { active: startsWith("/stories") }]}>
-      <span class="sb-icon">💬</span> Stories
+      <span class="sb-icon">◦</span> Stories
     </a>
     <a href={`${base}/escapees`} class:list={["sb-link", { active: startsWith("/escapees") }]}>
-      <span class="sb-icon">✓</span> Who we've helped
+      <span class="sb-icon">◦</span> Who we've helped
     </a>
 
     <!-- Tools -->
     <div class="sb-section-label">Tools</div>
     <a href={`${base}/liberate`} class:list={["sb-link", { active: startsWith("/liberate") }]}>
-      <span class="sb-icon">⚡</span> Free preview
+      <span class="sb-icon">◦</span> Free preview
     </a>
   </nav>
 
@@ -155,6 +155,7 @@ const startsWith = (path: string) => url.startsWith(base + path);
     text-align: center;
     color: var(--slate-dim);
     flex-shrink: 0;
+    opacity: 0.5;
   }
 
   .sb-footer {
