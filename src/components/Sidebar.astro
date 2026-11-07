@@ -189,9 +189,9 @@ const startsWith = (path: string) => url.startsWith(base + path);
   .sidebar.collapsed { width: 52px; }
   /* nav uses visibility:hidden (not display:none) so it keeps its flex space → footer stays pinned */
   .sidebar.collapsed .sb-nav { visibility: hidden; }
-  .sidebar.collapsed .sb-wordmark { opacity: 0; }
   .sidebar.collapsed .sb-version { opacity: 0; }
-  .sidebar.collapsed .sb-logo { justify-content: center; }
+  /* wordmark clips naturally via sidebar overflow:hidden — shows just the [ bracket */
+  .sidebar.collapsed .sb-logo { justify-content: flex-start; }
   /* chevron flips to point right → expand */
   .sidebar.collapsed .sb-chevron { transform: scaleX(-1); }
 
