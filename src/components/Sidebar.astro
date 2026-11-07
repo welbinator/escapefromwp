@@ -194,7 +194,12 @@ const startsWith = (path: string) => url.startsWith(base + path);
     font-size: 0.85rem;
   }
 
-  .sb-meta { margin-top: 12px; }
+  .sb-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
 
   .sb-version {
     font-family: var(--font-mono);
