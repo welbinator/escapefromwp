@@ -12,7 +12,7 @@ const startsWith = (path: string) => url.startsWith(base + path);
   <!-- Logo -->
   <div class="sb-logo">
     <a href={`${base}/`} class="sb-wordmark">
-      <span class="sb-name-full"><span class="sb-bracket">[</span>EscapeFromWordPress<span class="sb-bracket">]</span></span>
+      <span class="sb-name-full"><span class="sb-bracket">[</span>ESCAPE FROM WORDPRESS<span class="sb-bracket">]</span></span>
       <span class="sb-name-short"><span class="sb-bracket">[</span><s>WP</s><span class="sb-bracket">]</span></span>
     </a>
     <button class="sb-close" id="sbClose" aria-label="Close menu">✕</button>
@@ -165,20 +165,18 @@ const startsWith = (path: string) => url.startsWith(base + path);
     transition: opacity 0.15s;
   }
 
-  /* Button: left border = the fixed vertical "line" */
   .sb-collapse-btn {
     background: none;
     border: none;
-    border-left: 2px solid var(--steel);
     color: var(--slate-dim);
     cursor: pointer;
-    padding: 3px 6px 3px 8px;
+    padding: 3px 4px;
     display: flex;
     align-items: center;
     flex-shrink: 0;
-    transition: color 0.15s, border-color 0.15s;
+    transition: color 0.15s;
   }
-  .sb-collapse-btn:hover { color: var(--chalk); border-color: var(--slate); }
+  .sb-collapse-btn:hover { color: var(--chalk); }
 
   /* Only the chevron flips; the left-border "line" never moves */
   .sb-chevron {
@@ -190,7 +188,7 @@ const startsWith = (path: string) => url.startsWith(base + path);
   .sb-name-short { display: none; }
 
   /* === Collapsed === */
-  .sidebar.collapsed { width: 52px; }
+  .sidebar.collapsed { width: 75px; }
   .sidebar.collapsed .sb-nav { visibility: hidden; }
   .sidebar.collapsed .sb-version { opacity: 0; }
   .sidebar.collapsed .sb-logo { justify-content: flex-start; }
@@ -242,7 +240,7 @@ const startsWith = (path: string) => url.startsWith(base + path);
   function applyCollapse(collapsed) {
     if (collapsed) {
       sidebar && sidebar.classList.add("collapsed");
-      if (mainContent) mainContent.style.marginLeft = "52px";
+      if (mainContent) mainContent.style.marginLeft = "75px";
     } else {
       sidebar && sidebar.classList.remove("collapsed");
       if (mainContent) mainContent.style.marginLeft = "260px";
