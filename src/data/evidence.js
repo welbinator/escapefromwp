@@ -9,6 +9,15 @@
 // }
 export const evidence = [
   {
+    title: "Hackers Race to Hijack WordPress Sites in the Seconds They Spend Updating",
+    url: "https://x.com/IntCyberDigest/status/2118681050679292135",
+    source: "@IntCyberDigest (International Cyber Digest, 275k followers)",
+    type: "tweet",
+    date: "2026-11-06",
+    summary: "A WordPress core update puts the installer in a public folder — whoever hits it first becomes admin. Wordfence has blocked 240,000+ hijack attempts exploiting this window. h/t @IntCyberDigest",
+    slug: "wordpress-update-hijack-intcyberdigest",
+  },
+  {
     title: "CISA Warns of Active Exploitation During WordPress Updates — Patch to 7.1.4 Now",
     url: "https://x.com/dipakcgajjar/status/2118023426023866500",
     source: "@dipakcgajjar (WordPress specialist, 5.4k followers)",
