@@ -12,7 +12,8 @@ const startsWith = (path: string) => url.startsWith(base + path);
   <!-- Logo -->
   <div class="sb-logo">
     <a href={`${base}/`} class="sb-wordmark">
-      <span class="sb-bracket">[</span>EscapeFromWordPress<span class="sb-bracket">]</span>
+      <span class="sb-name-full"><span class="sb-bracket">[</span>EscapeFromWordPress<span class="sb-bracket">]</span></span>
+      <span class="sb-name-short"><span class="sb-bracket">[</span><s>WP</s><span class="sb-bracket">]</span></span>
     </a>
     <button class="sb-close" id="sbClose" aria-label="Close menu">✕</button>
   </div>
@@ -185,14 +186,16 @@ const startsWith = (path: string) => url.startsWith(base + path);
     transition: transform 0.22s ease;
   }
 
+  .sb-name-full { display: inline; }
+  .sb-name-short { display: none; }
+
   /* === Collapsed === */
   .sidebar.collapsed { width: 52px; }
-  /* nav uses visibility:hidden (not display:none) so it keeps its flex space → footer stays pinned */
   .sidebar.collapsed .sb-nav { visibility: hidden; }
   .sidebar.collapsed .sb-version { opacity: 0; }
-  /* wordmark clips naturally via sidebar overflow:hidden — shows just the [ bracket */
   .sidebar.collapsed .sb-logo { justify-content: flex-start; }
-  /* chevron flips to point right → expand */
+  .sidebar.collapsed .sb-name-full { display: none; }
+  .sidebar.collapsed .sb-name-short { display: inline; }
   .sidebar.collapsed .sb-chevron { transform: scaleX(-1); }
 
   .sb-overlay {
@@ -205,19 +208,13 @@ const startsWith = (path: string) => url.startsWith(base + path);
 
   /* Mobile */
   @media (max-width: 768px) {
-    .sb-name-full { display: none; }
-    .sb-name-mobile { display: inline; }
-
-    /* Always full-width on mobile, never collapsed */
     .sidebar { transform: translateX(-100%); width: 260px !important; }
     .sidebar.open { transform: translateX(0); }
-
-    /* Always show content on mobile regardless of desktop collapsed state */
     .sidebar .sb-nav { visibility: visible !important; }
     .sidebar .sb-wordmark { opacity: 1 !important; }
     .sidebar .sb-version { opacity: 1 !important; }
     .sidebar .sb-logo { justify-content: space-between !important; }
-
+    .sb-collapse-btn { display: none; }
     .sb-close { display: block; }
     .sb-overlay.open { display: block; }
   }
