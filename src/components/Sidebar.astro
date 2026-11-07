@@ -13,7 +13,7 @@ const startsWith = (path: string) => url.startsWith(base + path);
   <!-- Logo -->
   <div class="sb-logo">
     <a href={`${base}/`} class="sb-wordmark">
-      <span class="sb-bracket">[</span>ESCAPE<span class="sb-bracket">]</span>
+      <span class="sb-bracket">[</span><span class="sb-name-full">EscapeFromWordPress</span><span class="sb-name-mobile"><s>WP</s></span><span class="sb-bracket">]</span>
     </a>
     <button class="sb-close" id="sbClose" aria-label="Close menu">✕</button>
   </div>
@@ -209,6 +209,8 @@ const startsWith = (path: string) => url.startsWith(base + path);
     letter-spacing: 0.04em;
   }
 
+  .sb-name-mobile { display: none; }
+
   /* Collapsed state */
   .sidebar.collapsed { width: 48px; }
   .sidebar.collapsed .sb-nav,
@@ -217,9 +219,14 @@ const startsWith = (path: string) => url.startsWith(base + path);
   .sidebar.collapsed .sb-wordmark,
   .sidebar.collapsed .sb-close { display: none; }
   .sidebar.collapsed .sb-logo { justify-content: center; }
-  .sidebar.collapsed .sb-footer { padding: 12px 8px; }
+  .sidebar.collapsed .sb-footer { padding: 12px 8px; margin-top: auto; }
   .sidebar.collapsed .sb-meta { justify-content: center; }
   .sidebar.collapsed .sb-collapse-btn svg { transform: rotate(180deg); }
+
+  @media (max-width: 768px) {
+    .sb-name-full { display: none; }
+    .sb-name-mobile { display: inline; }
+  }
 
   .sb-overlay {
     display: none;
