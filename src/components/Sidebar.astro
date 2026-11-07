@@ -4,7 +4,6 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 const url = Astro.url.pathname;
 const commitHash = execSync("git rev-parse --short HEAD").toString().trim();
 
-// Determine active page
 const is = (path: string) => url === base + path || url === base + path + "/";
 const startsWith = (path: string) => url.startsWith(base + path);
 ---
@@ -13,57 +12,44 @@ const startsWith = (path: string) => url.startsWith(base + path);
   <!-- Logo -->
   <div class="sb-logo">
     <a href={`${base}/`} class="sb-wordmark">
-      <span class="sb-bracket">[</span>ESCAPE<span class="sb-bracket">]</span>
+      <span class="sb-name-full"><span class="sb-bracket">[</span>ESCAPE FROM WORDPRESS<span class="sb-bracket">]</span></span>
+      <span class="sb-name-short"><span class="sb-bracket">[</span><s>WP</s><span class="sb-bracket">]</span></span>
     </a>
     <button class="sb-close" id="sbClose" aria-label="Close menu">✕</button>
   </div>
 
   <nav class="sb-nav">
-    <!-- Main -->
     <div class="sb-section-label">Overview</div>
-    <a href={`${base}/`} class:list={["sb-link", { active: is("/") }]}>
-      Home
-    </a>
+    <a href={`${base}/`} class:list={["sb-link", { active: is("/") }]}>Home</a>
+    <a href={`${base}/#breakout`} class="sb-link">Get started</a>
 
-    <!-- Explore -->
     <div class="sb-section-label">Explore</div>
-    <a href={`${base}/`}#prison class:list={["sb-link", { active: false }]}>
-      Why leave WordPress
-    </a>
-    <a href={`${base}/`}#plan class:list={["sb-link", { active: false }]}>
-      How it works
-    </a>
-    <a href={`${base}/`}#tiers class:list={["sb-link", { active: false }]}>
-      Pricing
-    </a>
+    <a href={`${base}/#prison`} class="sb-link">Why leave WordPress</a>
+    <a href={`${base}/#plan`} class="sb-link">How it works</a>
+    <a href={`${base}/#tiers`} class="sb-link">Pricing</a>
 
-    <!-- Resources -->
     <div class="sb-section-label">Resources</div>
-    <a href={`${base}/evidence`} class:list={["sb-link", { active: startsWith("/evidence") }]}>
-      Evidence
-    </a>
-    <a href={`${base}/stories`} class:list={["sb-link", { active: startsWith("/stories") }]}>
-      Stories
-    </a>
-    <a href={`${base}/escapees`} class:list={["sb-link", { active: startsWith("/escapees") }]}>
-      Who we've helped
-    </a>
+    <a href={`${base}/evidence`} class:list={["sb-link", { active: startsWith("/evidence") }]}>Evidence</a>
+    <a href={`${base}/stories`} class:list={["sb-link", { active: startsWith("/stories") }]}>Stories</a>
+    <a href={`${base}/escapees`} class:list={["sb-link", { active: startsWith("/escapees") }]}>Who we've helped</a>
 
-    <!-- Tools -->
     <div class="sb-section-label">Tools</div>
-    <a href={`${base}/liberate`} class:list={["sb-link", { active: startsWith("/liberate") }]}>
-      Free preview
-    </a>
+    <a href={`${base}/liberate`} class:list={["sb-link", { active: startsWith("/liberate") }]}>Free preview</a>
   </nav>
 
-  <!-- Footer: version + collapse -->
+  <!-- Footer: always pinned to bottom, padding NEVER changes -->
   <div class="sb-footer">
-    <a href={`${base}/#breakout`} class="btn btn-primary sb-cta">Get started free</a>
     <div class="sb-meta">
-      <span class="sb-version">EscapeFromWP ({commitHash})</span>
-      <button class="sb-collapse-btn" id="sbCollapseBtn" aria-label="Collapse sidebar" title="Collapse sidebar">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path d="M10 3L5 8l5 5"/></svg>
+      <!--
+        The button's left border IS the "vertical line".
+        Only the chevron SVG flips — the line never moves.
+      -->
+      <button class="sb-collapse-btn" id="sbCollapseBtn" aria-label="Toggle sidebar">
+        <svg class="sb-chevron-svg" viewBox="0 0 10 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="10" height="14">
+          <polyline class="sb-chevron" points="7,2 3,7 7,12" />
+        </svg>
       </button>
+      <span class="sb-version">EscapeFromWP ({commitHash})</span>
     </div>
   </div>
 </aside>
@@ -82,30 +68,34 @@ const startsWith = (path: string) => url.startsWith(base + path);
     display: flex;
     flex-direction: column;
     z-index: 200;
-    overflow-y: auto;
-    overflow-x: hidden;
-    transition: transform 0.25s ease, width 0.2s ease;
+    overflow: hidden;
+    transition: width 0.4s ease, transform 0.25s ease;
   }
 
   .sb-logo {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 20px 16px;
+    padding: 16px 20px;
     border-bottom: 1px solid var(--steel);
     flex-shrink: 0;
+    min-height: 54px;
   }
 
   .sb-wordmark {
     font-family: var(--font-mono);
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: 700;
     color: var(--chalk);
-    letter-spacing: 0.06em;
+    letter-spacing: 0.04em;
     text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: opacity 0.15s;
   }
   .sb-wordmark:hover { color: var(--term-green); }
   .sb-bracket { color: var(--signal-red); }
+  .sb-name-mobile { display: none; }
 
   .sb-close {
     display: none;
@@ -115,14 +105,18 @@ const startsWith = (path: string) => url.startsWith(base + path);
     cursor: pointer;
     font-size: 1rem;
     padding: 4px;
-    line-height: 1;
+    flex-shrink: 0;
   }
   .sb-close:hover { color: var(--chalk); }
 
+  /* flex:1 so footer is always pinned to bottom */
   .sb-nav {
     flex: 1;
     padding: 12px 0;
     overflow-y: auto;
+    overflow-x: hidden;
+    opacity: 1;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
   }
 
   .sb-section-label {
@@ -133,58 +127,34 @@ const startsWith = (path: string) => url.startsWith(base + path);
     text-transform: uppercase;
     color: var(--slate-dim);
     padding: 14px 20px 4px;
+    white-space: nowrap;
   }
 
   .sb-link {
     display: flex;
     align-items: center;
-    gap: 10px;
     padding: 9px 20px;
     font-family: var(--font-display);
     font-size: 0.875rem;
     color: var(--slate);
     text-decoration: none;
+    white-space: nowrap;
     transition: color 0.15s, background 0.15s;
-    border-radius: 0;
   }
-  .sb-link:hover {
-    color: var(--chalk);
-    background: rgba(255,255,255,0.04);
-  }
-  .sb-link.active {
-    color: var(--term-green);
-    background: rgba(78, 227, 107, 0.07);
-  }
-  .sb-link.active .sb-icon { color: var(--term-green); }
+  .sb-link:hover { color: var(--chalk); background: rgba(255,255,255,0.04); }
+  .sb-link.active { color: var(--term-green); background: rgba(78,227,107,0.07); }
 
-  .sb-icon {
-    font-size: 0.85rem;
-    width: 18px;
-    text-align: center;
-    color: var(--slate-dim);
-    flex-shrink: 0;
-    opacity: 0.5;
-  }
-
+  /* Footer — padding is identical open OR collapsed, never changes */
   .sb-footer {
-    padding: 16px 20px 20px;
-    border-top: 1px solid var(--steel);
     flex-shrink: 0;
-  }
-
-  .sb-cta {
-    display: block;
-    text-align: center;
-    width: 100%;
-    padding: 10px 0;
-    font-size: 0.85rem;
+    padding: 12px 20px 18px;
+    border-top: 1px solid var(--steel);
   }
 
   .sb-meta {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-top: 12px;
+    gap: 10px;
   }
 
   .sb-version {
@@ -192,31 +162,41 @@ const startsWith = (path: string) => url.startsWith(base + path);
     font-size: 0.62rem;
     color: var(--slate-dim);
     letter-spacing: 0.04em;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: opacity 0.15s;
   }
 
   .sb-collapse-btn {
     background: none;
-    border: 1px solid var(--steel);
-    border-radius: 4px;
+    border: none;
     color: var(--slate-dim);
     cursor: pointer;
-    padding: 4px 6px;
+    padding: 3px 4px;
     display: flex;
     align-items: center;
-    transition: color 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+    transition: color 0.15s;
   }
-  .sb-collapse-btn:hover { color: var(--chalk); border-color: var(--slate); }
+  .sb-collapse-btn:hover { color: var(--chalk); }
 
-  /* Collapsed state */
-  .sidebar.collapsed { width: 48px; }
-  .sidebar.collapsed .sb-nav,
-  .sidebar.collapsed .sb-cta,
-  .sidebar.collapsed .sb-version,
-  .sidebar.collapsed .sb-logo .sb-wordmark { display: none; }
-  .sidebar.collapsed .sb-logo { justify-content: center; }
-  .sidebar.collapsed .sb-footer { padding: 12px 8px; }
-  .sidebar.collapsed .sb-meta { justify-content: center; }
-  .sidebar.collapsed .sb-collapse-btn svg { transform: rotate(180deg); }
+  /* Only the chevron flips; the left-border "line" never moves */
+  .sb-chevron {
+    transform-origin: 5px 7px;
+    transition: transform 0.22s ease;
+  }
+
+  .sb-name-full { display: inline; }
+  .sb-name-short { display: none; }
+
+  /* === Collapsed === */
+  .sidebar.collapsed { width: 75px; }
+  .sidebar.collapsed .sb-nav { visibility: hidden; opacity: 0; }
+  .sidebar.collapsed .sb-version { opacity: 0; }
+  .sidebar.collapsed .sb-logo { justify-content: flex-start; }
+  .sidebar.collapsed .sb-name-full { display: none; }
+  .sidebar.collapsed .sb-name-short { display: inline; }
+  .sidebar.collapsed .sb-chevron { transform: scaleX(-1); }
 
   .sb-overlay {
     display: none;
@@ -226,14 +206,15 @@ const startsWith = (path: string) => url.startsWith(base + path);
     z-index: 199;
   }
 
-  /* Mobile hamburger trigger is added by each page's header bar */
+  /* Mobile */
   @media (max-width: 768px) {
-    .sidebar {
-      transform: translateX(-100%);
-    }
-    .sidebar.open {
-      transform: translateX(0);
-    }
+    .sidebar { transform: translateX(-100%); width: 260px !important; }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar .sb-nav { visibility: visible !important; opacity: 1 !important; }
+    .sidebar .sb-wordmark { opacity: 1 !important; }
+    .sidebar .sb-version { opacity: 1 !important; }
+    .sidebar .sb-logo { justify-content: space-between !important; }
+    .sb-collapse-btn { display: none; }
     .sb-close { display: block; }
     .sb-overlay.open { display: block; }
   }
@@ -258,22 +239,23 @@ const startsWith = (path: string) => url.startsWith(base + path);
     document.body.style.overflow = "";
   }
 
-  // Collapse / expand (desktop)
   function applyCollapse(collapsed) {
     if (collapsed) {
       sidebar && sidebar.classList.add("collapsed");
-      if (mainContent) mainContent.style.marginLeft = "48px";
+      if (mainContent) mainContent.style.marginLeft = "75px";
     } else {
       sidebar && sidebar.classList.remove("collapsed");
       if (mainContent) mainContent.style.marginLeft = "260px";
     }
   }
 
-  // Restore from localStorage
-  const stored = localStorage.getItem("sb-collapsed");
-  if (stored === "1") applyCollapse(true);
+  // Only restore collapsed state on desktop
+  if (window.innerWidth > 768 && localStorage.getItem("sb-collapsed") === "1") {
+    applyCollapse(true);
+  }
 
   collapseBtn && collapseBtn.addEventListener("click", () => {
+    if (window.innerWidth <= 768) return;
     const isCollapsed = sidebar && sidebar.classList.contains("collapsed");
     applyCollapse(!isCollapsed);
     localStorage.setItem("sb-collapsed", isCollapsed ? "0" : "1");

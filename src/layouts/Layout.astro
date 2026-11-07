@@ -90,7 +90,7 @@ const orgSchema = {
       <button id="sbHamburger" class="sb-hamburger" aria-label="Open menu">
         <span></span><span></span><span></span>
       </button>
-      <a href={`${base}/`} class="mobile-wordmark">ESCAPE&nbsp;FROM&nbsp;<span>WP</span></a>
+      <a href={`${base}/`} class="mobile-wordmark"><span class="mw-bracket">[</span><s>WP</s><span class="mw-bracket">]</span></a>
       <a href={`${base}/#breakout`} class="mobile-cta btn btn-primary">Start</a>
     </div>
     <div class="app-shell">
@@ -147,14 +147,15 @@ const orgSchema = {
 }
 .mobile-wordmark {
   font-family: var(--font-mono);
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: var(--chalk);
   text-decoration: none;
   letter-spacing: 0.06em;
   flex: 1;
 }
-.mobile-wordmark span { color: var(--signal-red); }
+.mobile-wordmark s { text-decoration-color: var(--signal-red); }
+.mw-bracket { color: var(--signal-red); }
 .mobile-cta { font-size: 0.75rem; padding: 6px 12px; }
 
 @media (max-width: 768px) {
