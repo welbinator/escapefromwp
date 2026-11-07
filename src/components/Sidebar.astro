@@ -36,13 +36,16 @@ const startsWith = (path: string) => url.startsWith(base + path);
     <a href={`${base}/liberate`} class:list={["sb-link", { active: startsWith("/liberate") }]}>Free preview</a>
   </nav>
 
-  <!-- Footer: always pinned to bottom -->
+  <!-- Footer: always pinned to bottom, padding NEVER changes -->
   <div class="sb-footer">
     <div class="sb-meta">
+      <!--
+        The button's left border IS the "vertical line".
+        Only the chevron SVG flips — the line never moves.
+      -->
       <button class="sb-collapse-btn" id="sbCollapseBtn" aria-label="Toggle sidebar">
-        <svg class="sb-toggle-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="16" height="16">
-          <line x1="5" y1="3" x2="5" y2="13" />
-          <polyline class="sb-chevron" points="10,4 6,8 10,12" />
+        <svg class="sb-chevron-svg" viewBox="0 0 10 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="10" height="14">
+          <polyline class="sb-chevron" points="7,2 3,7 7,12" />
         </svg>
       </button>
       <span class="sb-version">EscapeFromWP ({commitHash})</span>
@@ -68,7 +71,6 @@ const startsWith = (path: string) => url.startsWith(base + path);
     transition: width 0.22s ease, transform 0.25s ease;
   }
 
-  /* Logo */
   .sb-logo {
     display: flex;
     align-items: center;
@@ -76,6 +78,7 @@ const startsWith = (path: string) => url.startsWith(base + path);
     padding: 16px 20px;
     border-bottom: 1px solid var(--steel);
     flex-shrink: 0;
+    min-height: 54px;
   }
 
   .sb-wordmark {
@@ -87,6 +90,7 @@ const startsWith = (path: string) => url.startsWith(base + path);
     text-decoration: none;
     white-space: nowrap;
     overflow: hidden;
+    transition: opacity 0.15s;
   }
   .sb-wordmark:hover { color: var(--term-green); }
   .sb-bracket { color: var(--signal-red); }
@@ -104,7 +108,7 @@ const startsWith = (path: string) => url.startsWith(base + path);
   }
   .sb-close:hover { color: var(--chalk); }
 
-  /* Nav — flex: 1 so it always pushes footer to bottom */
+  /* flex:1 so footer is always pinned to bottom */
   .sb-nav {
     flex: 1;
     padding: 12px 0;
@@ -137,7 +141,7 @@ const startsWith = (path: string) => url.startsWith(base + path);
   .sb-link:hover { color: var(--chalk); background: rgba(255,255,255,0.04); }
   .sb-link.active { color: var(--term-green); background: rgba(78,227,107,0.07); }
 
-  /* Footer — always at bottom */
+  /* Footer — padding is identical open OR collapsed, never changes */
   .sb-footer {
     flex-shrink: 0;
     padding: 12px 20px 18px;
@@ -157,18 +161,17 @@ const startsWith = (path: string) => url.startsWith(base + path);
     letter-spacing: 0.04em;
     white-space: nowrap;
     overflow: hidden;
-    opacity: 1;
     transition: opacity 0.15s;
   }
 
-  /* Collapse button */
+  /* Button: left border = the fixed vertical "line" */
   .sb-collapse-btn {
     background: none;
-    border: 1px solid var(--steel);
-    border-radius: 4px;
+    border: none;
+    border-left: 2px solid var(--steel);
     color: var(--slate-dim);
     cursor: pointer;
-    padding: 5px 7px;
+    padding: 3px 6px 3px 8px;
     display: flex;
     align-items: center;
     flex-shrink: 0;
@@ -176,22 +179,22 @@ const startsWith = (path: string) => url.startsWith(base + path);
   }
   .sb-collapse-btn:hover { color: var(--chalk); border-color: var(--slate); }
 
-  /* Animated chevron — only the polyline flips, line stays */
+  /* Only the chevron flips; the left-border "line" never moves */
   .sb-chevron {
-    transform-origin: 8px 8px;
+    transform-origin: 5px 7px;
     transition: transform 0.22s ease;
   }
 
-  /* Collapsed state — nav stays in flex flow (visibility:hidden) so footer stays at bottom */
+  /* === Collapsed === */
   .sidebar.collapsed { width: 52px; }
+  /* nav uses visibility:hidden (not display:none) so it keeps its flex space → footer stays pinned */
   .sidebar.collapsed .sb-nav { visibility: hidden; }
-  .sidebar.collapsed .sb-version { opacity: 0; width: 0; overflow: hidden; }
   .sidebar.collapsed .sb-wordmark { opacity: 0; }
+  .sidebar.collapsed .sb-version { opacity: 0; }
   .sidebar.collapsed .sb-logo { justify-content: center; }
-  .sidebar.collapsed .sb-footer { padding: 12px 10px 18px; }
+  /* chevron flips to point right → expand */
   .sidebar.collapsed .sb-chevron { transform: scaleX(-1); }
 
-  /* Overlay */
   .sb-overlay {
     display: none;
     position: fixed;
@@ -200,13 +203,21 @@ const startsWith = (path: string) => url.startsWith(base + path);
     z-index: 199;
   }
 
+  /* Mobile */
   @media (max-width: 768px) {
     .sb-name-full { display: none; }
     .sb-name-mobile { display: inline; }
+
+    /* Always full-width on mobile, never collapsed */
     .sidebar { transform: translateX(-100%); width: 260px !important; }
     .sidebar.open { transform: translateX(0); }
-    .sidebar.open .sb-nav { visibility: visible; }
-    .sidebar.open .sb-wordmark { opacity: 1; }
+
+    /* Always show content on mobile regardless of desktop collapsed state */
+    .sidebar .sb-nav { visibility: visible !important; }
+    .sidebar .sb-wordmark { opacity: 1 !important; }
+    .sidebar .sb-version { opacity: 1 !important; }
+    .sidebar .sb-logo { justify-content: space-between !important; }
+
     .sb-close { display: block; }
     .sb-overlay.open { display: block; }
   }
@@ -241,9 +252,13 @@ const startsWith = (path: string) => url.startsWith(base + path);
     }
   }
 
-  if (localStorage.getItem("sb-collapsed") === "1") applyCollapse(true);
+  // Only restore collapsed state on desktop
+  if (window.innerWidth > 768 && localStorage.getItem("sb-collapsed") === "1") {
+    applyCollapse(true);
+  }
 
   collapseBtn && collapseBtn.addEventListener("click", () => {
+    if (window.innerWidth <= 768) return;
     const isCollapsed = sidebar && sidebar.classList.contains("collapsed");
     applyCollapse(!isCollapsed);
     localStorage.setItem("sb-collapsed", isCollapsed ? "0" : "1");
