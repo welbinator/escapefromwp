@@ -2,7 +2,7 @@ name: Deploy staging to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [staging]
   workflow_dispatch:
 
 permissions:
