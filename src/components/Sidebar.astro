@@ -1,6 +1,8 @@
 ---
+import { execSync } from "child_process";
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 const url = Astro.url.pathname;
+const commitHash = execSync("git rev-parse --short HEAD").toString().trim();
 
 // Determine active page
 const is = (path: string) => url === base + path || url === base + path + "/";
@@ -10,6 +12,9 @@ const startsWith = (path: string) => url.startsWith(base + path);
 <aside class="sidebar" id="sidebar">
   <!-- Logo -->
   <div class="sb-logo">
+    <button class="sb-collapse-btn" id="sbCollapseBtn" aria-label="Toggle sidebar">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16"><path d="M10 3L5 8l5 5"/></svg>
+    </button>
     <a href={`${base}/`} class="sb-wordmark">
       <span class="sb-bracket">[</span>ESCAPE<span class="sb-bracket">]</span>
     </a>
@@ -54,10 +59,12 @@ const startsWith = (path: string) => url.startsWith(base + path);
     </a>
   </nav>
 
-  <!-- CTA -->
+  <!-- Footer: version -->
   <div class="sb-footer">
     <a href={`${base}/#breakout`} class="btn btn-primary sb-cta">Get started free</a>
-    <div class="sb-byline">escape<span>from</span>wp.com</div>
+    <div class="sb-meta">
+      <span class="sb-version">EscapeFromWP ({commitHash})</span>
+    </div>
   </div>
 </aside>
 
@@ -82,8 +89,8 @@ const startsWith = (path: string) => url.startsWith(base + path);
   .sb-logo {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 20px 20px 16px;
+    gap: 10px;
+    padding: 16px 16px;
     border-bottom: 1px solid var(--steel);
     flex-shrink: 0;
   }
@@ -95,9 +102,24 @@ const startsWith = (path: string) => url.startsWith(base + path);
     color: var(--chalk);
     letter-spacing: 0.06em;
     text-decoration: none;
+    flex: 1;
   }
   .sb-wordmark:hover { color: var(--term-green); }
   .sb-bracket { color: var(--signal-red); }
+
+  .sb-collapse-btn {
+    background: none;
+    border: 1px solid var(--steel);
+    border-radius: 4px;
+    color: var(--slate-dim);
+    cursor: pointer;
+    padding: 4px 6px;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .sb-collapse-btn:hover { color: var(--chalk); border-color: var(--slate); }
 
   .sb-close {
     display: none;
@@ -172,15 +194,24 @@ const startsWith = (path: string) => url.startsWith(base + path);
     font-size: 0.85rem;
   }
 
-  .sb-byline {
-    margin-top: 12px;
+  .sb-meta { margin-top: 12px; }
+
+  .sb-version {
     font-family: var(--font-mono);
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     color: var(--slate-dim);
-    text-align: center;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.04em;
   }
-  .sb-byline span { color: var(--signal-red); }
+
+  /* Collapsed state */
+  .sidebar.collapsed { width: 48px; }
+  .sidebar.collapsed .sb-nav,
+  .sidebar.collapsed .sb-cta,
+  .sidebar.collapsed .sb-meta,
+  .sidebar.collapsed .sb-wordmark,
+  .sidebar.collapsed .sb-close { display: none; }
+  .sidebar.collapsed .sb-logo { justify-content: center; padding: 16px 8px; gap: 0; }
+  .sidebar.collapsed .sb-collapse-btn svg { transform: rotate(180deg); }
 
   .sb-overlay {
     display: none;
