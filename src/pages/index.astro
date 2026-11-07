@@ -54,7 +54,7 @@ const outside = [
     <div class="wrap hero-content">
       <span class="eyebrow danger rise">◦ For small business owners who built their own site</span>
       <h1 class="hero-title rise">
-        Your website<br />shouldn't be this<br />much work.
+        Your website shouldn't be<br />this much work.
       </h1>
       <p class="hero-sub rise">
         You built a WordPress site to help your business — not to spend weekends
@@ -311,7 +311,7 @@ const outside = [
     .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
     /* HERO */
-    .hero { min-height: 100vh; display: flex; align-items: center; padding: 0; overflow: hidden; }
+    .hero { min-height: 100vh; display: flex; align-items: center; padding: 0; overflow: hidden; position: relative; }
     .hero-img {
       position: absolute; inset: 0; background-size: cover; background-position: center 30%;
       z-index: 0;
@@ -319,17 +319,17 @@ const outside = [
     .hero-img::after {
       content: ""; position: absolute; inset: 0;
       background:
-        linear-gradient(90deg, rgba(11,4,5,0.95) 0%, rgba(11,4,5,0.72) 42%, rgba(11,4,5,0.25) 100%),
+        linear-gradient(90deg, rgba(11,4,5,0.97) 0%, rgba(11,4,5,0.88) 38%, rgba(11,4,5,0.30) 62%, rgba(11,4,5,0.0) 100%),
         linear-gradient(0deg, rgba(11,4,5,0.95) 0%, rgba(11,4,5,0) 45%);
     }
     .hero-scan {
       position: absolute; inset: 0; z-index: 1; pointer-events: none; opacity: .5;
       background: repeating-linear-gradient(to bottom, transparent 0 3px, rgba(78,227,107,0.03) 3px 4px);
     }
-    .hero-content { position: relative; z-index: 2; padding-top: 90px; padding-bottom: 60px; }
+    .hero-content { position: relative; z-index: 2; padding-top: 60px; padding-bottom: 60px; max-width: 58%; }
     .hero-title {
-      font-size: clamp(38px, 7.5vw, 88px); line-height: 0.98; margin: 22px 0 26px;
-      max-width: 16ch; letter-spacing: -0.04em;
+      font-size: clamp(42px, 6vw, 82px); line-height: 0.98; margin: 22px 0 26px;
+      max-width: 20ch; letter-spacing: -0.04em;
     }
     .hero-title .wp-out {
       color: var(--signal-red); position: relative; white-space: nowrap;
