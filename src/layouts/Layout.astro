@@ -1,5 +1,4 @@
 ---
-import Sidebar from "../components/Sidebar.astro";
 export interface Props { title?: string; description?: string; }
 const {
   title = "Escape From WP — Break out of WordPress",
@@ -85,20 +84,7 @@ const orgSchema = {
     <slot name="head" />
   </head>
   <body>
-    <!-- Mobile top bar -->
-    <div class="mobile-topbar">
-      <button id="sbHamburger" class="sb-hamburger" aria-label="Open menu">
-        <span></span><span></span><span></span>
-      </button>
-      <a href={`${base}/`} class="mobile-wordmark">ESCAPE&nbsp;FROM&nbsp;<span>WP</span></a>
-      <a href={`${base}/#breakout`} class="mobile-cta btn btn-primary">Start</a>
-    </div>
-    <div class="app-shell">
-      <Sidebar />
-      <main class="main-content">
-        <slot />
-      </main>
-    </div>
+    <slot />
     <script is:inline>
       document.documentElement.classList.add("js");
       const risers = [...document.querySelectorAll(".rise")];
@@ -111,54 +97,4 @@ const orgSchema = {
     </script>
   </body>
 </html>
-<style is:global>@import "../styles/global.css";
-
-/* App shell */
-.app-shell { display: flex; min-height: 100vh; }
-.main-content { margin-left: 260px; flex: 1; min-width: 0; }
-
-/* Mobile top bar */
-.mobile-topbar {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 52px;
-  background: var(--graphite);
-  border-bottom: 1px solid var(--steel);
-  align-items: center;
-  padding: 0 16px;
-  gap: 12px;
-  z-index: 198;
-}
-.sb-hamburger {
-  background: none;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 4px;
-}
-.sb-hamburger span {
-  display: block;
-  width: 20px;
-  height: 2px;
-  background: var(--chalk);
-}
-.mobile-wordmark {
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--chalk);
-  text-decoration: none;
-  letter-spacing: 0.06em;
-  flex: 1;
-}
-.mobile-wordmark span { color: var(--signal-red); }
-.mobile-cta { font-size: 0.75rem; padding: 6px 12px; }
-
-@media (max-width: 768px) {
-  .mobile-topbar { display: flex; }
-  .main-content { margin-left: 0; padding-top: 52px; }
-}
-</style>
+<style is:global>@import "../styles/global.css";</style>

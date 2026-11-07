@@ -23,6 +23,29 @@ const outside = [
 ];
 ---
 <Layout>
+  <!-- NAV -->
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a href="#top" class="wordmark">
+        ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span>
+      </a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-menu">
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+      <nav class="nav-links" id="nav-menu">
+        <a href="#prison">Why leave</a>
+        <a href="#plan">How it works</a>
+        <a href="#tiers">Pricing</a>
+        <a href={`${base}/liberate`}>Free preview</a>
+        <a href={`${base}/evidence`}>Evidence</a>
+        <a href={`${base}/stories`}>Stories</a>
+        <a href={`${base}/escapees`}>Who we've helped</a>
+        <a href="#breakout" class="btn btn-primary nav-cta">Get started</a>
+      </nav>
+    </div>
+  </header>
 
   <!-- HERO -->
   <section class="hero" id="top">

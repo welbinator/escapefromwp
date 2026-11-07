@@ -7,6 +7,29 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
   title="Why You Should Leave WordPress — The Evidence | Escape From WP"
   description="Thinking about leaving WordPress? Here's the evidence: real-world articles, posts, and security reports on WordPress hacks, plugin vulnerabilities, bloat, and maintenance pain — reasons you should get off WordPress and move to a faster, safer stack."
 >
+  <!-- NAV -->
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a href={`${base}/`} class="wordmark">
+        ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span>
+      </a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-menu">
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+      <nav class="nav-links" id="nav-menu">
+        <a href={`${base}/#prison`}>Why leave</a>
+        <a href={`${base}/#plan`}>How it works</a>
+        <a href={`${base}/#tiers`}>Pricing</a>
+        <a href={`${base}/liberate`}>Free preview</a>
+        <a href={`${base}/evidence`} class="active">Evidence</a>
+        <a href={`${base}/stories`}>Stories</a>
+        <a href={`${base}/escapees`}>Who we've helped</a>
+        <a href={`${base}/#breakout`} class="btn btn-primary nav-cta">Get started</a>
+      </nav>
+    </div>
+  </header>
 
   <!-- PAGE HEADER -->
   <section class="wrap page-head">

@@ -50,6 +50,29 @@ const monogram = (name) =>
   title="Who We've Helped — Escape From WP"
   description="Real businesses that moved off WordPress. See their sites and their stories."
 >
+  <!-- NAV -->
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a href={`${base}/`} class="wordmark">
+        ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span>
+      </a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-menu">
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+      <nav class="nav-links" id="nav-menu">
+        <a href={`${base}/#prison`}>Why leave</a>
+        <a href={`${base}/#plan`}>How it works</a>
+        <a href={`${base}/#tiers`}>Pricing</a>
+        <a href={`${base}/liberate`}>Free preview</a>
+        <a href={`${base}/evidence`}>Evidence</a>
+        <a href={`${base}/stories`}>Stories</a>
+        <a href={`${base}/escapees`} class="active">Who we've helped</a>
+        <a href={`${base}/#breakout`} class="btn btn-primary nav-cta">Get started</a>
+      </nav>
+    </div>
+  </header>
 
   <!-- PAGE HEADER -->
   <section class="wrap page-head">

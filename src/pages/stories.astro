@@ -7,6 +7,29 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
   title="Success Stories — People Who Left WordPress | Escape From WP"
   description="Real stories from across the web — developers, agencies, and business owners who left WordPress and never looked back. Tweets, posts, and blog entries from the WordPress escapee community."
 >
+  <!-- NAV -->
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a href={`${base}/`} class="wordmark">
+        ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span>
+      </a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="nav-menu">
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+        <span class="nav-toggle-bar"></span>
+      </button>
+      <nav class="nav-links" id="nav-menu">
+        <a href={`${base}/#prison`}>Why leave</a>
+        <a href={`${base}/#plan`}>How it works</a>
+        <a href={`${base}/#tiers`}>Pricing</a>
+        <a href={`${base}/liberate`}>Free preview</a>
+        <a href={`${base}/evidence`}>Evidence</a>
+        <a href={`${base}/stories`} class="active">Stories</a>
+        <a href={`${base}/escapees`}>Who we've helped</a>
+        <a href={`${base}/#breakout`} class="btn btn-primary nav-cta">Get started</a>
+      </nav>
+    </div>
+  </header>
 
   <!-- PAGE HEADER -->
   <section class="wrap page-head">
