@@ -1,6 +1,8 @@
 ---
+import { execSync } from "child_process";
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 const url = Astro.url.pathname;
+const commitHash = execSync("git rev-parse --short HEAD").toString().trim();
 
 // Determine active page
 const is = (path: string) => url === base + path || url === base + path + "/";
@@ -54,10 +56,15 @@ const startsWith = (path: string) => url.startsWith(base + path);
     </a>
   </nav>
 
-  <!-- CTA -->
+  <!-- Footer: version + collapse -->
   <div class="sb-footer">
     <a href={`${base}/#breakout`} class="btn btn-primary sb-cta">Get started free</a>
-    <div class="sb-byline">escape<span>from</span>wp.com</div>
+    <div class="sb-meta">
+      <span class="sb-version">EscapeFromWP ({commitHash})</span>
+      <button class="sb-collapse-btn" id="sbCollapseBtn" aria-label="Collapse sidebar" title="Collapse sidebar">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14"><path d="M10 3L5 8l5 5"/></svg>
+      </button>
+    </div>
   </div>
 </aside>
 
@@ -76,7 +83,8 @@ const startsWith = (path: string) => url.startsWith(base + path);
     flex-direction: column;
     z-index: 200;
     overflow-y: auto;
-    transition: transform 0.25s ease;
+    overflow-x: hidden;
+    transition: transform 0.25s ease, width 0.2s ease;
   }
 
   .sb-logo {
@@ -159,7 +167,7 @@ const startsWith = (path: string) => url.startsWith(base + path);
   }
 
   .sb-footer {
-    padding: 16px 20px 24px;
+    padding: 16px 20px 20px;
     border-top: 1px solid var(--steel);
     flex-shrink: 0;
   }
@@ -172,15 +180,43 @@ const startsWith = (path: string) => url.startsWith(base + path);
     font-size: 0.85rem;
   }
 
-  .sb-byline {
+  .sb-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     margin-top: 12px;
-    font-family: var(--font-mono);
-    font-size: 0.65rem;
-    color: var(--slate-dim);
-    text-align: center;
-    letter-spacing: 0.08em;
   }
-  .sb-byline span { color: var(--signal-red); }
+
+  .sb-version {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    color: var(--slate-dim);
+    letter-spacing: 0.04em;
+  }
+
+  .sb-collapse-btn {
+    background: none;
+    border: 1px solid var(--steel);
+    border-radius: 4px;
+    color: var(--slate-dim);
+    cursor: pointer;
+    padding: 4px 6px;
+    display: flex;
+    align-items: center;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .sb-collapse-btn:hover { color: var(--chalk); border-color: var(--slate); }
+
+  /* Collapsed state */
+  .sidebar.collapsed { width: 48px; }
+  .sidebar.collapsed .sb-nav,
+  .sidebar.collapsed .sb-cta,
+  .sidebar.collapsed .sb-version,
+  .sidebar.collapsed .sb-logo .sb-wordmark { display: none; }
+  .sidebar.collapsed .sb-logo { justify-content: center; }
+  .sidebar.collapsed .sb-footer { padding: 12px 8px; }
+  .sidebar.collapsed .sb-meta { justify-content: center; }
+  .sidebar.collapsed .sb-collapse-btn svg { transform: rotate(180deg); }
 
   .sb-overlay {
     display: none;
@@ -208,6 +244,8 @@ const startsWith = (path: string) => url.startsWith(base + path);
   const overlay = document.getElementById("sbOverlay");
   const sbClose = document.getElementById("sbClose");
   const hamburger = document.getElementById("sbHamburger");
+  const collapseBtn = document.getElementById("sbCollapseBtn");
+  const mainContent = document.querySelector(".main-content");
 
   function openSidebar() {
     sidebar && sidebar.classList.add("open");
@@ -219,6 +257,27 @@ const startsWith = (path: string) => url.startsWith(base + path);
     overlay && overlay.classList.remove("open");
     document.body.style.overflow = "";
   }
+
+  // Collapse / expand (desktop)
+  function applyCollapse(collapsed) {
+    if (collapsed) {
+      sidebar && sidebar.classList.add("collapsed");
+      if (mainContent) mainContent.style.marginLeft = "48px";
+    } else {
+      sidebar && sidebar.classList.remove("collapsed");
+      if (mainContent) mainContent.style.marginLeft = "260px";
+    }
+  }
+
+  // Restore from localStorage
+  const stored = localStorage.getItem("sb-collapsed");
+  if (stored === "1") applyCollapse(true);
+
+  collapseBtn && collapseBtn.addEventListener("click", () => {
+    const isCollapsed = sidebar && sidebar.classList.contains("collapsed");
+    applyCollapse(!isCollapsed);
+    localStorage.setItem("sb-collapsed", isCollapsed ? "0" : "1");
+  });
 
   hamburger && hamburger.addEventListener("click", openSidebar);
   sbClose && sbClose.addEventListener("click", closeSidebar);
