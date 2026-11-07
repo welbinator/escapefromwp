@@ -20,37 +20,37 @@ const startsWith = (path: string) => url.startsWith(base + path);
     <!-- Main -->
     <div class="sb-section-label">Overview</div>
     <a href={`${base}/`} class:list={["sb-link", { active: is("/") }]}>
-      <span class="sb-icon">◈</span> Home
+      Home
     </a>
 
     <!-- Explore -->
     <div class="sb-section-label">Explore</div>
     <a href={`${base}/`}#prison class:list={["sb-link", { active: false }]}>
-      <span class="sb-icon">◦</span> Why leave WordPress
+      Why leave WordPress
     </a>
     <a href={`${base}/`}#plan class:list={["sb-link", { active: false }]}>
-      <span class="sb-icon">◦</span> How it works
+      How it works
     </a>
     <a href={`${base}/`}#tiers class:list={["sb-link", { active: false }]}>
-      <span class="sb-icon">◦</span> Pricing
+      Pricing
     </a>
 
     <!-- Resources -->
     <div class="sb-section-label">Resources</div>
     <a href={`${base}/evidence`} class:list={["sb-link", { active: startsWith("/evidence") }]}>
-      <span class="sb-icon">◦</span> Evidence
+      Evidence
     </a>
     <a href={`${base}/stories`} class:list={["sb-link", { active: startsWith("/stories") }]}>
-      <span class="sb-icon">◦</span> Stories
+      Stories
     </a>
     <a href={`${base}/escapees`} class:list={["sb-link", { active: startsWith("/escapees") }]}>
-      <span class="sb-icon">◦</span> Who we've helped
+      Who we've helped
     </a>
 
     <!-- Tools -->
     <div class="sb-section-label">Tools</div>
     <a href={`${base}/liberate`} class:list={["sb-link", { active: startsWith("/liberate") }]}>
-      <span class="sb-icon">◦</span> Free preview
+      Free preview
     </a>
   </nav>
 
