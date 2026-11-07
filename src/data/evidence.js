@@ -9,6 +9,15 @@
 // }
 export const evidence = [
   {
+    title: "While People Are Leaving WordPress, Leadership Is Adding Frivolous Features to Core",
+    url: "https://x.com/Tmeister/status/2118796736344867152",
+    source: "@Tmeister (Enrique Chavez, WordPress developer)",
+    type: "tweet",
+    date: "2026-11-06",
+    summary: "Developer @wesbos migrated 307 posts, 6.7GB of photos, and 15 years on a $600 Bluehost server to EmDash — while WordPress leadership adds random features to core 'just for fun.' h/t @Tmeister",
+    slug: "wp-leadership-frivolous-features-tmeister",
+  },
+  {
     title: "Hackers Race to Hijack WordPress Sites in the Seconds They Spend Updating",
     url: "https://x.com/IntCyberDigest/status/2118681050679292135",
     source: "@IntCyberDigest (International Cyber Digest, 275k followers)",
