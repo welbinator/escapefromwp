@@ -69,7 +69,7 @@ const startsWith = (path: string) => url.startsWith(base + path);
     flex-direction: column;
     z-index: 200;
     overflow: hidden;
-    transition: width 0.22s ease, transform 0.25s ease;
+    transition: width 0.4s ease, transform 0.25s ease;
   }
 
   .sb-logo {
@@ -115,6 +115,8 @@ const startsWith = (path: string) => url.startsWith(base + path);
     padding: 12px 0;
     overflow-y: auto;
     overflow-x: hidden;
+    opacity: 1;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
   }
 
   .sb-section-label {
@@ -189,7 +191,7 @@ const startsWith = (path: string) => url.startsWith(base + path);
 
   /* === Collapsed === */
   .sidebar.collapsed { width: 75px; }
-  .sidebar.collapsed .sb-nav { visibility: hidden; }
+  .sidebar.collapsed .sb-nav { visibility: hidden; opacity: 0; }
   .sidebar.collapsed .sb-version { opacity: 0; }
   .sidebar.collapsed .sb-logo { justify-content: flex-start; }
   .sidebar.collapsed .sb-name-full { display: none; }
@@ -208,7 +210,7 @@ const startsWith = (path: string) => url.startsWith(base + path);
   @media (max-width: 768px) {
     .sidebar { transform: translateX(-100%); width: 260px !important; }
     .sidebar.open { transform: translateX(0); }
-    .sidebar .sb-nav { visibility: visible !important; }
+    .sidebar .sb-nav { visibility: visible !important; opacity: 1 !important; }
     .sidebar .sb-wordmark { opacity: 1 !important; }
     .sidebar .sb-version { opacity: 1 !important; }
     .sidebar .sb-logo { justify-content: space-between !important; }
