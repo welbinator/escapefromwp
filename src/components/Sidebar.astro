@@ -199,6 +199,7 @@ const startsWith = (path: string) => url.startsWith(base + path);
     align-items: center;
     gap: 8px;
     margin-top: 12px;
+    justify-content: space-between;
   }
 
   .sb-version {
@@ -246,6 +247,8 @@ const startsWith = (path: string) => url.startsWith(base + path);
   const overlay = document.getElementById("sbOverlay");
   const sbClose = document.getElementById("sbClose");
   const hamburger = document.getElementById("sbHamburger");
+  const collapseBtn = document.getElementById("sbCollapseBtn");
+  const mainContent = document.querySelector(".main-content");
 
   function openSidebar() {
     sidebar && sidebar.classList.add("open");
@@ -257,6 +260,25 @@ const startsWith = (path: string) => url.startsWith(base + path);
     overlay && overlay.classList.remove("open");
     document.body.style.overflow = "";
   }
+
+  function applyCollapse(collapsed) {
+    if (collapsed) {
+      sidebar && sidebar.classList.add("collapsed");
+      if (mainContent) mainContent.style.marginLeft = "48px";
+    } else {
+      sidebar && sidebar.classList.remove("collapsed");
+      if (mainContent) mainContent.style.marginLeft = "260px";
+    }
+  }
+
+  // Restore from localStorage
+  if (localStorage.getItem("sb-collapsed") === "1") applyCollapse(true);
+
+  collapseBtn && collapseBtn.addEventListener("click", () => {
+    const isCollapsed = sidebar && sidebar.classList.contains("collapsed");
+    applyCollapse(!isCollapsed);
+    localStorage.setItem("sb-collapsed", isCollapsed ? "0" : "1");
+  });
 
   hamburger && hamburger.addEventListener("click", openSidebar);
   sbClose && sbClose.addEventListener("click", closeSidebar);
