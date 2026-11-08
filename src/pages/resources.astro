@@ -31,20 +31,11 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
   <!-- RESOURCES GRID -->
   <section class="wrap">
     <div class="res-grid">
-      {resources.map((r, i) => (
-        <article
-          class="res-card rise is-clickable"
-          data-resource
-          data-title={r.title}
-          data-type={RESOURCE_TYPE_LABEL[r.type] || "Resource"}
-          data-date={r.date ? fmtDate(r.date) : ""}
-          data-source={r.source}
-          data-summary={r.summary}
-          data-url={r.url}
-          data-slug={`${base}/resources/${getResourceSlug(r)}`}
+      {resources.map((r) => (
+        <a
+          class="res-card rise"
+          href={`${base}/resources/${getResourceSlug(r)}`}
           data-categories={(r.categories || []).join(",")}
-          tabindex="0"
-          role="button"
           aria-label={`Read: ${r.title}`}
         >
           <div class="res-body">
@@ -64,7 +55,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
               <span class="res-link">Read more ↗</span>
             </div>
           </div>
-        </article>
+        </a>
       ))}
     </div>
   </section>
@@ -80,30 +71,6 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
       <a href={`${base}/#breakout`} class="btn btn-primary">▸ Get a free assessment</a>
     </div>
   </section>
-
-  <!-- RESOURCE MODAL -->
-  <div class="modal-overlay" id="res-modal" aria-hidden="true">
-    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="res-modal-title">
-      <button class="modal-close" id="res-modal-close" aria-label="Close">✕</button>
-      <div class="modal-body">
-        <div class="res-modal-meta">
-          <span class="res-type" id="res-modal-type"></span>
-          <span class="res-date" id="res-modal-date"></span>
-        </div>
-        <h2 class="res-modal-title" id="res-modal-title">—</h2>
-        <p class="res-modal-src" id="res-modal-src"></p>
-        <p class="res-modal-summary" id="res-modal-summary"></p>
-        <div class="modal-links" id="res-modal-links"></div>
-        <div class="modal-cta">
-          <p class="modal-cta-lead">Want help making the switch?</p>
-          <div class="modal-cta-btns">
-            <a href={`${base}/liberate`} class="btn btn-ghost" style="font-size:13px;padding:10px 16px;">▸ See a free preview</a>
-            <a href={`${base}/#breakout`} class="btn btn-primary" style="font-size:13px;padding:10px 16px;">▸ Get a free assessment</a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- FOOTER -->
   <footer class="footer">
@@ -129,9 +96,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     .page-title { font-size: clamp(38px, 7vw, 72px); margin-bottom: 20px; line-height: 1.02; }
 
     /* FILTERS */
-    .res-filters {
-      display: flex; gap: 8px; flex-wrap: wrap; padding-bottom: 28px;
-    }
+    .res-filters { display: flex; gap: 8px; flex-wrap: wrap; padding-bottom: 28px; }
     .res-filter {
       font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em;
       text-transform: uppercase; padding: 5px 12px;
@@ -149,12 +114,11 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     }
     .res-card {
       border: 1px solid var(--steel); background: rgba(255,255,255,0.015);
-      display: flex; flex-direction: column;
+      display: flex; flex-direction: column; text-decoration: none; color: inherit;
       transition: border-color .15s, transform .15s;
     }
-    .res-card.is-clickable { cursor: pointer; }
-    .res-card.is-clickable:hover { border-color: var(--term-green); transform: translateY(-2px); }
-    .res-card.is-clickable:focus-visible { outline: 2px solid var(--term-green); outline-offset: 2px; }
+    .res-card:hover { border-color: var(--term-green); transform: translateY(-2px); }
+    .res-card:focus-visible { outline: 2px solid var(--term-green); outline-offset: 2px; }
     .res-card[data-hidden] { display: none; }
 
     .res-body { padding: 22px 22px 20px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
@@ -184,65 +148,24 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
       border-bottom: 1px solid var(--steel); transition: color .15s, border-color .15s;
       white-space: nowrap;
     }
-    .res-card.is-clickable:hover .res-link { color: var(--term-green); border-color: var(--term-green); }
+    .res-card:hover .res-link { color: var(--term-green); border-color: var(--term-green); }
 
     /* CTA */
     .res-cta { text-align: center; padding: 40px 0 90px; display: flex; flex-direction: column; align-items: center; gap: 22px; }
 
-    /* MODAL */
-    .modal-overlay {
-      position: fixed; inset: 0; z-index: 200; display: none;
-      align-items: center; justify-content: center; padding: 24px;
-      background: rgba(0,0,0,0.78); backdrop-filter: blur(4px);
-    }
-    .modal-overlay.open { display: flex; }
-    .modal-box {
-      position: relative; width: 70vw; max-width: 780px; max-height: 86vh; overflow-y: auto;
-      background: #0b0405; border: 1px solid var(--term-green);
-      box-shadow: 0 0 0 1px rgba(78,227,107,0.15);
-    }
-    .modal-close {
-      position: absolute; top: 12px; right: 12px; z-index: 2;
-      background: rgba(0,0,0,0.6); border: 1px solid var(--steel); color: var(--chalk);
-      width: 38px; height: 38px; cursor: pointer; font-size: 16px;
-      font-family: var(--font-mono); transition: border-color .15s, color .15s;
-    }
-    .modal-close:hover { border-color: var(--signal-red); color: var(--signal-red); }
-    .modal-body { padding: 32px clamp(22px,4vw,44px) 36px; display: flex; flex-direction: column; gap: 14px; }
-    .res-modal-meta { display: flex; gap: 12px; align-items: center; }
-    .res-modal-title { font-size: clamp(20px,3vw,28px); line-height: 1.2; margin: 0; }
-    .res-modal-src { font-family: var(--font-mono); font-size: 12px; color: var(--term-green); margin: 0; }
-    .res-modal-summary { color: var(--slate); font-size: 16px; line-height: 1.78; margin: 0; }
-    .modal-links { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 6px; }
-    .modal-links a {
-      font-family: var(--font-mono); font-size: 13px; color: var(--chalk);
-      border: 1px solid var(--steel); padding: 10px 16px; transition: border-color .15s, color .15s;
-    }
-    .modal-links a:hover { border-color: var(--term-green); color: var(--term-green); }
-    .modal-cta { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--steel); }
-    .modal-cta-lead {
-      font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em;
-      text-transform: uppercase; color: var(--slate); margin-bottom: 14px;
-    }
-    .modal-cta-btns { display: flex; gap: 12px; flex-wrap: wrap; }
-
     @media (max-width: 640px) {
-      .modal-box { width: 92vw; max-height: 90vh; }
       .res-grid { grid-template-columns: 1fr; }
     }
   </style>
 
   <script is:inline>
-    const esc = s => s == null ? "" : String(s)
-      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-
     // ── category filter ──────────────────────────────────────────────────────
     function applyFilter(cat) {
       document.querySelectorAll(".res-filter").forEach(b => b.classList.remove("active"));
-      const target = document.querySelector(`.res-filter[data-cat="${CSS.escape(cat)}"]`)
+      const target = document.querySelector('.res-filter[data-cat="' + CSS.escape(cat) + '"]')
                   || document.querySelector('.res-filter[data-cat="all"]');
       if (target) target.classList.add("active");
-      document.querySelectorAll("[data-resource]").forEach(card => {
+      document.querySelectorAll("[data-categories]").forEach(card => {
         const cats = card.dataset.categories ? card.dataset.categories.split(",") : [];
         if (cat === "all" || cats.includes(cat)) {
           card.removeAttribute("data-hidden");
@@ -252,68 +175,11 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
       });
     }
 
-    // Pre-activate from ?cat= URL param.
     const initCat = new URLSearchParams(location.search).get("cat") || "all";
     applyFilter(initCat);
 
-    document.querySelectorAll(".res-filter").forEach(btn => {
-      btn.addEventListener("click", () => applyFilter(btn.dataset.cat));
-    });
-
-    // ── modal ────────────────────────────────────────────────────────────────
-    const overlay   = document.getElementById("res-modal");
-    const mType     = document.getElementById("res-modal-type");
-    const mDate     = document.getElementById("res-modal-date");
-    const mTitle    = document.getElementById("res-modal-title");
-    const mSrc      = document.getElementById("res-modal-src");
-    const mSummary  = document.getElementById("res-modal-summary");
-    const mLinks    = document.getElementById("res-modal-links");
-    let lastFocused = null;
-
-    function openModal(d) {
-      lastFocused = document.activeElement;
-      mType.textContent    = d.type;
-      mDate.textContent    = d.date;
-      mTitle.textContent   = d.title;
-      mSrc.textContent     = "◦ " + d.source;
-      mSummary.textContent = d.summary;
-      mLinks.innerHTML = [
-        d.url  ? `<a href="${esc(d.url)}" target="_blank" rel="noopener">▸ Read the full article ↗</a>` : "",
-        d.slug ? `<a href="${esc(d.slug)}">View resource page</a>` : "",
-      ].join("");
-      overlay.classList.add("open");
-      overlay.setAttribute("aria-hidden","false");
-      document.body.style.overflow = "hidden";
-      document.getElementById("res-modal-close").focus();
-    }
-
-    function closeModal() {
-      overlay.classList.remove("open");
-      overlay.setAttribute("aria-hidden","true");
-      document.body.style.overflow = "";
-      if (lastFocused) lastFocused.focus();
-    }
-
-    document.getElementById("res-modal-close").addEventListener("click", closeModal);
-    overlay.addEventListener("click", e => { if (e.target === overlay) closeModal(); });
-    document.addEventListener("keydown", e => {
-      if (e.key === "Escape" && overlay.classList.contains("open")) closeModal();
-    });
-
-    document.querySelectorAll("[data-resource]").forEach(el => {
-      const open = () => openModal({
-        type:    el.dataset.type,
-        date:    el.dataset.date,
-        title:   el.dataset.title,
-        source:  el.dataset.source,
-        summary: el.dataset.summary,
-        url:     el.dataset.url,
-        slug:    el.dataset.slug,
-      });
-      el.addEventListener("click", open);
-      el.addEventListener("keydown", e => {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); }
-      });
+    document.querySelectorAll(".res-filter").forEach(function(btn) {
+      btn.addEventListener("click", function() { applyFilter(btn.dataset.cat); });
     });
   </script>
 </Layout>
