@@ -25,10 +25,10 @@ const outside = [
 <Layout>
 
   <!-- HERO -->
-  <section class="hero" id="top">
+  <section class="hero wrap" id="top">
     <div class="hero-img" style={`background-image:url('${base}/images/hero-1600.webp')`}></div>
     <div class="hero-scan"></div>
-    <div class="wrap hero-content">
+    <div class="hero-content">
       <span class="eyebrow danger rise">◦ For small business owners who built their own site</span>
       <h1 class="hero-title rise">
         Your website shouldn't be<br />this much work.
@@ -288,7 +288,7 @@ const outside = [
     .nav-toggle[aria-expanded="true"] .nav-toggle-bar:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
     /* HERO */
-    .hero { min-height: 100vh; display: flex; align-items: center; padding: 0; overflow: hidden; position: relative; }
+    .hero { min-height: 100vh; display: flex; align-items: center; overflow: hidden; position: relative; }
     .hero-img {
       position: absolute; inset: 0; background-size: cover; background-position: center 30%;
       z-index: 0;
