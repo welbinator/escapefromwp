@@ -31,7 +31,7 @@ const startsWith = (path: string) => url.startsWith(base + path);
     <div class="sb-section-label">Resources</div>
     <a href={`${base}/evidence`} class:list={["sb-link", { active: startsWith("/evidence") }]}>Evidence</a>
     <a href={`${base}/stories`} class:list={["sb-link", { active: startsWith("/stories") }]}>Stories</a>
-    <a href={`${base}/resources`} class:list={["sb-link", { active: startsWith("/resources") }]}>Resources</a>
+    <a href={`${base}/resources?cat=how-tos`} class:list={["sb-link", { active: startsWith("/resources") }]}>How-Tos</a>
     <a href={`${base}/escapees`} class:list={["sb-link", { active: startsWith("/escapees") }]}>Who we've helped</a>
 
     <div class="sb-section-label">Tools</div>

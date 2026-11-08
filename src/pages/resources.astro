@@ -237,20 +237,27 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
       .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 
     // ── category filter ──────────────────────────────────────────────────────
-    document.querySelectorAll(".res-filter").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".res-filter").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        const cat = btn.dataset.cat;
-        document.querySelectorAll("[data-resource]").forEach(card => {
-          const cats = card.dataset.categories ? card.dataset.categories.split(",") : [];
-          if (cat === "all" || cats.includes(cat)) {
-            card.removeAttribute("data-hidden");
-          } else {
-            card.setAttribute("data-hidden", "");
-          }
-        });
+    function applyFilter(cat) {
+      document.querySelectorAll(".res-filter").forEach(b => b.classList.remove("active"));
+      const target = document.querySelector(`.res-filter[data-cat="${CSS.escape(cat)}"]`)
+                  || document.querySelector('.res-filter[data-cat="all"]');
+      if (target) target.classList.add("active");
+      document.querySelectorAll("[data-resource]").forEach(card => {
+        const cats = card.dataset.categories ? card.dataset.categories.split(",") : [];
+        if (cat === "all" || cats.includes(cat)) {
+          card.removeAttribute("data-hidden");
+        } else {
+          card.setAttribute("data-hidden", "");
+        }
       });
+    }
+
+    // Pre-activate from ?cat= URL param.
+    const initCat = new URLSearchParams(location.search).get("cat") || "all";
+    applyFilter(initCat);
+
+    document.querySelectorAll(".res-filter").forEach(btn => {
+      btn.addEventListener("click", () => applyFilter(btn.dataset.cat));
     });
 
     // ── modal ────────────────────────────────────────────────────────────────
