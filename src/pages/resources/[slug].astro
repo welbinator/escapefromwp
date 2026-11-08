@@ -1,0 +1,153 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { resources, RESOURCE_TYPE_LABEL, fmtDate, getResourceSlug } from "../../data/resources.js";
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+export function getStaticPaths() {
+  return resources.map((r) => ({
+    params: { slug: getResourceSlug(r) },
+    props: { entry: r },
+  }));
+}
+
+const { entry: r } = Astro.props;
+const typeLabel = RESOURCE_TYPE_LABEL[r.type] || "Resource";
+
+const sourceVerb =
+  r.type === "video" ? "Watch the video"
+  : r.type === "tutorial" ? "Follow the tutorial"
+  : "Read the full article";
+
+// More resources (excluding this one), newest first.
+const more = resources.filter((x) => getResourceSlug(x) !== getResourceSlug(r)).slice(0, 3);
+---
+<Layout
+  title={`${r.title} | Escape From WP Resources`}
+  description={r.summary}
+>
+  <!-- POST -->
+  <article class="wrap post">
+    <a href={`${base}/resources`} class="post-back">← Back to resources</a>
+
+    <div class="post-tags">
+      <span class="res-type">{typeLabel}</span>
+      {r.date && <span class="res-date">{fmtDate(r.date)}</span>}
+      {(r.categories || []).map(cat => (
+        <span class="res-cat-pill">{cat}</span>
+      ))}
+    </div>
+
+    <h1 class="post-title">{r.title}</h1>
+    <p class="post-src">◦ {r.source}</p>
+
+    <p class="post-summary">{r.summary}</p>
+
+    <div class="post-action">
+      <a href={r.url} target="_blank" rel="noopener" class="btn btn-primary">
+        ▸ {sourceVerb} ↗
+      </a>
+    </div>
+
+    <!-- CTA -->
+    <div class="post-cta">
+      <p class="post-cta-lead">Ready to make the move?</p>
+      <div class="post-cta-btns">
+        <a href={`${base}/liberate`} class="btn btn-ghost">▸ See a free preview</a>
+        <a href={`${base}/#breakout`} class="btn btn-primary">▸ Get a free assessment</a>
+      </div>
+    </div>
+  </article>
+
+  <!-- MORE RESOURCES -->
+  {more.length > 0 && (
+    <section class="wrap more-section">
+      <h2 class="more-heading">More from the resources</h2>
+      <div class="more-grid">
+        {more.map((m) => (
+          <a href={`${base}/resources/${getResourceSlug(m)}`} class="more-card">
+            <span class="res-type">{RESOURCE_TYPE_LABEL[m.type] || "Resource"}</span>
+            <p class="more-title">{m.title}</p>
+            <p class="more-summary">{(m.summary || "").slice(0, 100)}…</p>
+            <span class="more-link">Read more ↗</span>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <span class="wordmark small">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
+      <span class="footer-mono">◦ WordPress migration &amp; rescue · escapefromwp.com</span>
+      <span class="footer-mono dim">© {new Date().getFullYear()} — Your site deserves better.</span>
+    </div>
+  </footer>
+
+  <style>
+    /* FOOTER */
+    .footer { border-top: 1px solid var(--steel); padding: 40px 0; }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+    .footer-mono { font-family: var(--font-mono); font-size: 12px; color: var(--slate); letter-spacing: 0.04em; }
+    .footer-mono.dim { color: var(--slate-dim); }
+    .wordmark { font-family: var(--font-mono); font-weight: 700; font-size: 15px; letter-spacing: 0.06em; color: var(--chalk); }
+    .wordmark .wp { color: var(--signal-red); }
+    .wordmark.small { font-size: 13px; }
+
+    /* POST */
+    .post { padding-top: 120px; padding-bottom: 60px; max-width: 760px; display: flex; flex-direction: column; gap: 22px; }
+    .post-back {
+      font-family: var(--font-mono); font-size: 12px; color: var(--slate);
+      letter-spacing: 0.04em; transition: color .15s;
+    }
+    .post-back:hover { color: var(--term-green); }
+    .post-tags { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .res-type {
+      font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--term-green);
+      border: 1px solid var(--steel); padding: 3px 8px;
+    }
+    .res-date { font-family: var(--font-mono); font-size: 11px; color: var(--slate-dim); }
+    .res-cat-pill {
+      font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--slate);
+      border: 1px solid var(--steel); padding: 2px 7px;
+    }
+    .post-title { font-size: clamp(28px, 5vw, 52px); line-height: 1.1; margin: 0; }
+    .post-src { font-family: var(--font-mono); font-size: 13px; color: var(--term-green); margin: 0; }
+    .post-summary { font-size: 18px; line-height: 1.78; color: var(--slate); margin: 0; }
+    .post-action { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    .post-cta {
+      margin-top: 16px; padding: 24px 28px; border: 1px solid var(--steel);
+      background: rgba(255,255,255,0.015);
+    }
+    .post-cta-lead {
+      font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--slate); margin-bottom: 14px;
+    }
+    .post-cta-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    /* MORE */
+    .more-section { padding: 48px 0 80px; }
+    .more-heading {
+      font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--slate); margin-bottom: 20px;
+    }
+    .more-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+    .more-card {
+      border: 1px solid var(--steel); padding: 18px 18px 16px;
+      display: flex; flex-direction: column; gap: 8px;
+      transition: border-color .15s; color: inherit; text-decoration: none;
+    }
+    .more-card:hover { border-color: var(--term-green); }
+    .more-title { font-size: 15px; font-weight: 600; color: var(--chalk); margin: 0; line-height: 1.35; }
+    .more-summary { font-size: 13px; color: var(--slate); line-height: 1.6; margin: 0; flex: 1; }
+    .more-link {
+      font-family: var(--font-mono); font-size: 12px; color: var(--chalk);
+      border-bottom: 1px solid var(--steel); align-self: flex-start;
+      transition: color .15s, border-color .15s;
+    }
+    .more-card:hover .more-link { color: var(--term-green); border-color: var(--term-green); }
+  </style>
+</Layout>
