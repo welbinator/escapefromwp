@@ -9,6 +9,15 @@
 // }
 export const evidence = [
   {
+    title: "16 Years of WordPress. Then I Deleted It.",
+    url: "https://x.com/webjuice_ie/status/2119805618504470668",
+    source: "@webjuice_ie (Michal Barus, web agency owner)",
+    type: "tweet",
+    date: "2026-11-09",
+    summary: "After 16 years building on WordPress, Michal Barus moved 40 client sites to Astro + Cloudflare Workers. His verdict: clients never needed the CMS — they asked for a site, not an admin panel. The login page, the theme license, the plugin stack — all dead weight carried for nothing.",
+    slug: "16-years-wordpress-deleted-webjuice",
+  },
+  {
     title: "While People Are Leaving WordPress, Leadership Is Adding Frivolous Features to Core",
     url: "https://x.com/Tmeister/status/2118796736344867152",
     source: "@Tmeister (Enrique Chavez, WordPress developer)",
