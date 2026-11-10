@@ -9,6 +9,15 @@
 // }
 export const evidence = [
   {
+    title: "CVE-2026-123751: WP Duplicate Plugin — Unauthenticated RCE, CVSS 10.0, Actively Exploited",
+    url: "https://x.com/3kept1c/status/2119821173932351663",
+    source: "@3kept1c (security researcher)",
+    type: "tweet",
+    date: "2026-11-09",
+    summary: "A CVSS 10.0 critical vulnerability in the WP Duplicate plugin allows unauthenticated attackers to upload arbitrary PHP files and execute remote code — no WordPress credentials required. Being actively exploited in the wild. The plugin is commonly left installed after migrations, silently exposing sites. Every plugin you install is another door you have to watch.",
+    slug: "wp-duplicate-rce-cvss10-cve-2026-123751",
+  },
+  {
     title: "16 Years of WordPress. Then I Deleted It.",
     url: "https://x.com/webjuice_ie/status/2119805618504470668",
     source: "@webjuice_ie (Michal Barus, web agency owner)",

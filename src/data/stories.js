@@ -12,6 +12,18 @@ export const STORY_TYPE_LABEL = {
 
 export const stories = [
   {
+    author:   "Dave Foy",
+    handle:   "@davefoy",
+    source:   "davefoy.com",
+    type:     "blog",
+    url:      "https://www.davefoy.com/blog/how-i-built-this-site/",
+    date:     "2026-11-09",
+    storySlug: "davefoy-how-i-built-this-site",
+    quote:    "I haven't written a single line of code. The site went live the next day. It runs on Cloudflare for free.",
+    summary:  "Dave Foy has taught thousands of people to build WordPress sites with page builders for 20+ years. When it came time to rebuild his own site, he ditched both. The result: Astro + Cloudflare Pages, built with Claude Code, live in a day, $0 hosting. His insight: you need solid conventions and best practices more than ever — the AI is just the builder, the decisions are still yours.",
+    context:  "Dave Foy has taught thousands of people to build WordPress sites with page builders for 20+ years. When it came time to rebuild his own site, he ditched both. The result: Astro + Cloudflare Pages, built with Claude Code, live in a day, $0 hosting. His insight: you need solid conventions and best practices more than ever — the AI is just the builder, the decisions are still yours.",
+  },
+  {
     author:   "Michal Barus",
     handle:   "@webjuice_ie",
     source:   "Twitter / X",
