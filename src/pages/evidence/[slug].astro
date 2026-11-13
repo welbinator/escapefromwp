@@ -61,7 +61,7 @@ const more = evidence.filter((x) => getSlug(x) !== getSlug(e)).slice(0, 3);
     </div>
 
     <h1 class="post-title rise">{e.title}</h1>
-    <p class="post-source">◦ Source: {e.source}</p>
+    <p class="post-source">Source: {e.source}</p>
 
     {e.image && (
       <div class="post-media">
@@ -88,7 +88,7 @@ const more = evidence.filter((x) => getSlug(x) !== getSlug(e)).slice(0, 3);
           <a class="more-card" href={`${base}/evidence/${getSlug(m)}`}>
             <span class="more-type">{TYPE_LABEL[m.type] || "Case file"}</span>
             <span class="more-title">{m.title}</span>
-            <span class="more-src">◦ {m.source}</span>
+            <span class="more-src">{m.source}</span>
           </a>
         ))}
       </div>
@@ -111,7 +111,7 @@ const more = evidence.filter((x) => getSlug(x) !== getSlug(e)).slice(0, 3);
   <footer class="footer">
     <div class="wrap footer-inner">
       <span class="wordmark small">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
-      <span class="footer-mono">◦ WordPress migration &amp; rescue · escapefromwp.com</span>
+      <span class="footer-mono">WordPress migration &amp; rescue · escapefromwp.com</span>
       <span class="footer-mono dim">© {new Date().getFullYear()} — Your site deserves better.</span>
     </div>
   </footer>
