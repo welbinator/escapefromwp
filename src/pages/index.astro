@@ -384,8 +384,16 @@ const outside = [
     .breakout { background:
       radial-gradient(120% 100% at 100% 0%, rgba(227,39,53,0.06), transparent 55%),
       var(--graphite); border-top: 1px solid var(--steel);
-      margin-left: calc(-3 * var(--sidebar-w, 260px));
-      padding-left: calc(3 * var(--sidebar-w, 260px)); }
+      position: relative; }
+    .breakout::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      left: -260px;
+      background: inherit;
+      z-index: 0;
+    }
+    .breakout > * { position: relative; z-index: 1; }
     .breakout-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
     .breakout-list { list-style: none; margin-top: 28px; display: grid; gap: 12px;
       font-family: var(--font-mono); font-size: 13px; color: var(--term-green); letter-spacing: 0.02em; }
