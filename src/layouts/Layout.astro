@@ -41,6 +41,12 @@ const orgSchema = {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script is:inline>
+      (function(){
+        var w = (window.innerWidth > 768 && localStorage.getItem('sb-collapsed') === '1') ? '75px' : '260px';
+        document.documentElement.style.setProperty('--sidebar-w', w);
+      })();
+    </script>
     <!-- Google tag (gtag.js) -->
     <script is:inline async src="https://www.googletagmanager.com/gtag/js?id=G-NB17G50LNN"></script>
     <script is:inline>
