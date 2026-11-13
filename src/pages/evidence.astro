@@ -10,7 +10,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
   <!-- PAGE HEADER -->
   <section class="wrap page-head">
-    <span class="eyebrow danger rise">◦ The evidence</span>
+    <span class="eyebrow danger rise">The evidence</span>
     <h1 class="page-title rise">Why people leave WordPress.</h1>
     <p class="section-lead rise">
       Not our opinion — real articles, security reports, and posts from across the web
@@ -46,7 +46,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
                 <div class="ev-nomedia">
                   <span class="ev-nomedia-no">EXHIBIT&nbsp;{String(i + 1).padStart(2, "0")}</span>
                   <span class="ev-nomedia-type">{TYPE_LABEL[e.type] || "Case file"}</span>
-                  <span class="ev-nomedia-src">◦ {e.source}</span>
+                  <span class="ev-nomedia-src">{e.source}</span>
                 </div>
               )}
           </div>
@@ -58,7 +58,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
             <h2 class="ev-title">{e.title}</h2>
             <p class="ev-summary">{e.summary.slice(0, 140)}{e.summary.length > 140 ? "…" : ""}</p>
             <div class="ev-foot">
-              <span class="ev-src">◦ {e.source}</span>
+              <span class="ev-src">{e.source}</span>
               <span class="ev-link">Read more ↗</span>
             </div>
           </div>
@@ -107,7 +107,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
   <footer class="footer">
     <div class="wrap footer-inner">
       <span class="wordmark small">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
-      <span class="footer-mono">◦ WordPress migration &amp; rescue · escapefromwp.com</span>
+      <span class="footer-mono">WordPress migration &amp; rescue · escapefromwp.com</span>
       <span class="footer-mono dim">© {new Date().getFullYear()} — Your site deserves better.</span>
     </div>
   </footer>
@@ -186,7 +186,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
         linear-gradient(150deg, #150a0c 0%, #0b0405 60%);
     }
     .ev-nomedia::before {
-      content: "◦ NO IMAGE ON FILE";
+      content: "NO IMAGE ON FILE";
       position: absolute; top: 16px; left: 18px;
       font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.22em;
       color: var(--slate-dim);
@@ -316,7 +316,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
       mType.textContent    = d.type || "";
       mDate.textContent    = d.date || "";
       mTitle.textContent   = d.title || "";
-      mSource.textContent  = "◦ Source: " + (d.source || "");
+      mSource.textContent  = "Source: " + (d.source || "");
       mSummary.textContent = d.summary || "";
 
       let links = "";

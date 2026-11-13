@@ -97,6 +97,7 @@ h1, h2, h3 { font-weight: 600; letter-spacing: -0.03em; line-height: 1.02; }
 }
 .eyebrow.danger::before { background: var(--signal-red); box-shadow: 0 0 10px var(--signal-red); }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+.eyebrow.danger { color: var(--signal-red); }
 
 /* Buttons */
 .btn {

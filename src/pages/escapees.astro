@@ -53,7 +53,7 @@ const monogram = (name) =>
 
   <!-- PAGE HEADER -->
   <section class="wrap page-head">
-    <span class="eyebrow danger rise">◦ Client work</span>
+    <span class="eyebrow danger rise">Client work</span>
     <h1 class="page-title rise">Real businesses, off WordPress.</h1>
     <p class="section-lead rise">
       These are actual clients who were dealing with slow sites, constant maintenance, and
@@ -92,7 +92,7 @@ const monogram = (name) =>
             <h2 class="mug-name">{e.name}</h2>
             <p class="mug-crime">“{e.crime}”</p>
             <div class="mug-meta">
-              <span class="mug-served">◦ Served: {e.served}</span>
+              <span class="mug-served">Served: {e.served}</span>
               <span class="mug-link">View record ↗</span>
             </div>
           </div>
@@ -103,7 +103,7 @@ const monogram = (name) =>
 
   <!-- SUBMIT YOUR OWN -->
   <section class="wrap submit-section rise" id="report">
-    <span class="eyebrow danger">◦ Submit a site</span>
+    <span class="eyebrow danger">Submit a site</span>
     <h2 class="section-title">Did you move a site off WordPress?</h2>
     <p class="section-lead">
       If you've moved a client's site — or your own — off WordPress and it's running better,
@@ -197,7 +197,7 @@ const monogram = (name) =>
   <footer class="footer">
     <div class="wrap footer-inner">
       <span class="wordmark small">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
-      <span class="footer-mono">◦ WordPress migration &amp; rescue · escapefromwp.com</span>
+      <span class="footer-mono">WordPress migration &amp; rescue · escapefromwp.com</span>
       <span class="footer-mono dim">© {new Date().getFullYear()} — All units accounted for.</span>
     </div>
   </footer>
@@ -437,7 +437,7 @@ const monogram = (name) =>
       lastFocused = document.activeElement;
       mNo.innerHTML = "PRISONER&nbsp;#" + esc(d.prisoner || "0000");
       mName.textContent = d.name || "";
-      mServed.textContent = d.served ? "◦ Served: " + d.served : "";
+      mServed.textContent = d.served ? "Served: " + d.served : "";
       mStory.textContent = d.story || "No story on file for this breakout — but the site's running free.";
       mPhoto.innerHTML = d.image
         ? `<img src="${esc(d.image)}" alt="${esc(d.name)} website">`
@@ -502,7 +502,7 @@ const monogram = (name) =>
               <h2 class="mug-name">${esc(e.name)}</h2>
               <p class="mug-crime">${crime ? "“" + esc(crime) + "”" : "Broke free from WordPress."}</p>
               <div class="mug-meta">
-                <span class="mug-served">◦ Served: Time on WordPress</span>
+                <span class="mug-served">Served: Time on WordPress</span>
                 <span class="mug-link">View record ↗</span>
               </div>
             </div>`;

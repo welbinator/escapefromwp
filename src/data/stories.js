@@ -12,6 +12,18 @@ export const STORY_TYPE_LABEL = {
 
 export const stories = [
   {
+    author:   "WPTuts",
+    handle:   "@WPTutz",
+    source:   "Twitter / X",
+    type:     "tweet",
+    url:      "https://x.com/WPTutz/status/2120861457827156009",
+    date:     "2026-11-12",
+    storySlug: "wptutz-20261112",
+    quote:    "That's one more site taken off WordPress and moved to a static version - less updates = Happier me!",
+    summary:  "WPTuts has helped thousands of people get more from WordPress for years. Even they moved a site off it to a static version. The verdict: fewer updates, happier life. h/t @WPTutz",
+    context:  "WPTuts has helped thousands of people get more from WordPress for years. Even they moved a site off it to a static version. The verdict: fewer updates, happier life.",
+  },
+  {
     author:   "Dave Foy",
     handle:   "@davefoy",
     source:   "davefoy.com",
