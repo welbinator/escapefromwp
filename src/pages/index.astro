@@ -387,7 +387,11 @@ const outside = [
     /* BREAKOUT / CONTACT */
     .breakout { background:
       radial-gradient(120% 100% at 100% 0%, rgba(227,39,53,0.06), transparent 55%),
-      var(--graphite); border-top: 1px solid var(--steel); }
+      var(--graphite); border-top: 1px solid var(--steel);
+      margin-left: calc(-1 * var(--sidebar-w, 260px));
+      padding-left: var(--sidebar-w, 260px);
+      width: 100vw;
+      transition: margin-left 0.3s ease, padding-left 0.3s ease; }
     .breakout-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
     .breakout-list { list-style: none; margin-top: 28px; display: grid; gap: 12px;
       font-family: var(--font-mono); font-size: 13px; color: var(--term-green); letter-spacing: 0.02em; }
