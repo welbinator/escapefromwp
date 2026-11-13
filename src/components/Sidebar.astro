@@ -243,11 +243,11 @@ const startsWith = (path: string) => url.startsWith(base + path);
   function applyCollapse(collapsed) {
     if (collapsed) {
       sidebar && sidebar.classList.add("collapsed");
-      if (mainContent) mainContent.style.marginLeft = "75px";
+      if (mainContent) mainContent.style.paddingLeft = "75px";
       document.documentElement.style.setProperty("--sidebar-w", "75px");
     } else {
       sidebar && sidebar.classList.remove("collapsed");
-      if (mainContent) mainContent.style.marginLeft = "260px";
+      if (mainContent) mainContent.style.paddingLeft = "260px";
       document.documentElement.style.setProperty("--sidebar-w", "260px");
     }
   }
