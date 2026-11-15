@@ -190,14 +190,14 @@ const startsWith = (path: string) => url.startsWith(base + path);
   .sb-name-short { display: none; }
 
   /* === Collapsed === */
-  .sidebar.collapsed { width: 180px; }
+  .sidebar.collapsed { width: 55px; }
   .sidebar.collapsed .sb-nav { visibility: visible; opacity: 1; }
   .sidebar.collapsed .sb-version { opacity: 0; }
   .sidebar.collapsed .sb-logo { justify-content: flex-start; }
   .sidebar.collapsed .sb-name-full { display: none; }
   .sidebar.collapsed .sb-name-short { display: inline; }
   .sidebar.collapsed .sb-chevron { transform: scaleX(-1); }
-  .sidebar.collapsed .sb-section-label { }
+  .sidebar.collapsed .sb-section-label { display: none; }
 
   /* Collapsed: icons stay put, text fades out */
   .sidebar.collapsed .sb-link {
