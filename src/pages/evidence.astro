@@ -9,7 +9,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 >
 
   <!-- PAGE HEADER -->
-  <section class="wrap page-head">
+  <section class="container page-head">
     <span class="eyebrow danger rise">The evidence</span>
     <h1 class="page-title rise">Why people leave WordPress.</h1>
     <p class="section-lead rise">
@@ -20,7 +20,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
   </section>
 
   <!-- EVIDENCE GRID -->
-  <section class="wrap">
+  <section class="container">
     <div class="ev-grid">
       {evidence.map((e, i) => (
         <article
@@ -68,7 +68,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
   </section>
 
   <!-- CTA -->
-  <section class="wrap breakout-cta rise">
+  <section class="container breakout-cta rise">
     <h2 class="section-title">Seen enough?</h2>
     <p class="section-lead" style="max-width:48ch;margin:0 auto 28px;">
       See what your site looks like off WordPress — free, no commitment. Or get a free assessment and we'll give you a plain-English plan.
@@ -105,7 +105,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
   <!-- FOOTER -->
   <footer class="footer">
-    <div class="wrap footer-inner">
+    <div class="container footer-inner">
       <span class="wordmark small">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
       <span class="footer-mono">WordPress migration &amp; rescue · escapefromwp.com</span>
       <span class="footer-mono dim">© {new Date().getFullYear()} — Your site deserves better.</span>

@@ -26,7 +26,7 @@ const more = resources.filter((x) => getResourceSlug(x) !== getResourceSlug(r)).
   description={r.summary}
 >
   <!-- POST -->
-  <article class="wrap post">
+  <article class="container post">
     <a href={`${base}/resources`} class="post-back">← Back to resources</a>
 
     <div class="post-tags">
@@ -60,7 +60,7 @@ const more = resources.filter((x) => getResourceSlug(x) !== getResourceSlug(r)).
 
   <!-- MORE RESOURCES -->
   {more.length > 0 && (
-    <section class="wrap more-section">
+    <section class="container more-section">
       <h2 class="more-heading">More from the resources</h2>
       <div class="more-grid">
         {more.map((m) => (
@@ -77,7 +77,7 @@ const more = resources.filter((x) => getResourceSlug(x) !== getResourceSlug(r)).
 
   <!-- FOOTER -->
   <footer class="footer">
-    <div class="wrap footer-inner">
+    <div class="container footer-inner">
       <span class="wordmark small">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
       <span class="footer-mono">WordPress migration &amp; rescue · escapefromwp.com</span>
       <span class="footer-mono dim">© {new Date().getFullYear()} — Your site deserves better.</span>

@@ -25,7 +25,8 @@ const outside = [
 <Layout>
 
   <!-- HERO -->
-  <section class="hero wrap" id="top">
+  <section class="hero" id="top">
+    <div class="container">
     <div class="hero-img" style={`background-image:url('${base}/images/hero-1600.webp')`}></div>
     <div class="hero-scan"></div>
     <div class="hero-content">
@@ -44,10 +45,12 @@ const outside = [
         <a href="#prison" class="btn btn-ghost">See why people leave</a>
       </div>
     </div>
+    </div>
   </section>
 
   <!-- THE PRISON -->
-  <section id="prison" class="wrap">
+  <section id="prison">
+    <div class="container">
     <span class="section-num rise">// 01 — Why people leave</span>
     <h2 class="section-title rise">WordPress was built for developers. Your business isn't.</h2>
     <p class="section-lead rise">
@@ -66,12 +69,13 @@ const outside = [
     <p class="prison-evidence-link rise">
       Want to see proof? <a href={`${base}/evidence`}>We've collected real articles, security reports, and posts from across the web →</a>
     </p>
+    </div>
   </section>
 
-  <hr class="hair" />
 
   <!-- THE PLAN -->
-  <section id="plan" class="wrap">
+  <section id="plan">
+    <div class="container">
     <span class="section-num rise">// 02 — How it works</span>
     <h2 class="section-title rise">We handle everything. You do nothing.</h2>
     <p class="section-lead rise">
@@ -89,12 +93,13 @@ const outside = [
         </div>
       ))}
     </div>
+    </div>
   </section>
 
-  <hr class="hair" />
 
   <!-- THE OUTSIDE -->
-  <section id="outside" class="wrap">
+  <section id="outside">
+    <div class="container">
     <span class="section-num rise">// 03 — What changes</span>
     <h2 class="section-title rise">A website that runs itself.</h2>
     <p class="section-lead rise">
@@ -110,12 +115,13 @@ const outside = [
         </div>
       ))}
     </div>
+    </div>
   </section>
 
-  <hr class="hair" />
 
   <!-- THE OPTIONS / TIERS -->
-  <section id="tiers" class="wrap">
+  <section id="tiers">
+    <div class="container">
     <span class="section-num rise">// 04 — Pricing</span>
     <h2 class="section-title rise">Simple, flat pricing.</h2>
     <p class="section-lead rise">
@@ -144,11 +150,11 @@ const outside = [
         <a href="#breakout" class="btn btn-ghost tier-cta">▸ Get a quote</a>
       </div>
     </div>
+    </div>
   </section>
 
-  <hr class="hair" />
   <section id="breakout" class="breakout">
-    <div class="wrap breakout-inner">
+    <div class="container breakout-inner">
       <div class="breakout-left rise">
         <span class="eyebrow">Free assessment</span>
         <h2 class="section-title">Let's see what you've got.</h2>
@@ -191,8 +197,8 @@ const outside = [
   </section>
 
   <!-- FOOTER -->
-  <footer class="footer">
-    <div class="wrap footer-inner">
+  <footer class="footer breakout">
+    <div class="container footer-inner">
       <span class="wordmark small">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
       <span class="footer-mono">WordPress migration &amp; rescue · escapefromwp.com</span>
       <span class="footer-mono dim">© {new Date().getFullYear()} — Your site deserves better.</span>
@@ -387,7 +393,17 @@ const outside = [
     /* BREAKOUT / CONTACT */
     .breakout { background:
       radial-gradient(120% 100% at 100% 0%, rgba(227,39,53,0.06), transparent 55%),
-      var(--graphite); border-top: 1px solid var(--steel); }
+      var(--graphite); border-top: 1px solid var(--steel);
+      position: relative; }
+    .breakout::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      left: -260px;
+      background: inherit;
+      z-index: 0;
+    }
+    .breakout > * { position: relative; z-index: 1; }
     .breakout-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
     .breakout-list { list-style: none; margin-top: 28px; display: grid; gap: 12px;
       font-family: var(--font-mono); font-size: 13px; color: var(--term-green); letter-spacing: 0.02em; }
@@ -410,7 +426,7 @@ const outside = [
     .form-status.pending { color: var(--slate); }
 
     /* FOOTER */
-    .footer { border-top: 1px solid var(--steel); padding: 40px 0; }
+    .footer { padding: 40px 0; }
     .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
     .footer-mono { font-family: var(--font-mono); font-size: 12px; color: var(--slate); letter-spacing: 0.04em; }
     .footer-mono.dim { color: var(--slate-dim); }

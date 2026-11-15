@@ -28,7 +28,7 @@ const more = stories.filter((x) => storySlug(x) !== storySlug(s)).slice(0, 3);
 >
   <!-- NAV -->
   <header class="nav">
-    <div class="wrap nav-inner">
+    <div class="container nav-inner">
       <a href={`${base}/`} class="wordmark">
         ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span>
       </a>
@@ -51,7 +51,7 @@ const more = stories.filter((x) => storySlug(x) !== storySlug(s)).slice(0, 3);
   </header>
 
   <!-- POST -->
-  <article class="wrap post">
+  <article class="container post">
     <a href={`${base}/stories`} class="post-back">← Back to stories</a>
 
     <div class="post-tags">
@@ -94,7 +94,7 @@ const more = stories.filter((x) => storySlug(x) !== storySlug(s)).slice(0, 3);
 
   <!-- MORE STORIES -->
   {more.length > 0 && (
-    <section class="wrap more-section">
+    <section class="container more-section">
       <h2 class="more-head">More stories</h2>
       <div class="more-grid">
         {more.map((m) => (
@@ -110,7 +110,7 @@ const more = stories.filter((x) => storySlug(x) !== storySlug(s)).slice(0, 3);
   )}
 
   <!-- CTA -->
-  <section class="wrap breakout-cta rise">
+  <section class="container breakout-cta rise">
     <h2 class="section-title">Your story could be next.</h2>
     <p class="section-lead" style="max-width:520px;margin:0 auto 28px;">
       See what your site looks like off WordPress in about 2 minutes — free, no commitment.
@@ -123,7 +123,7 @@ const more = stories.filter((x) => storySlug(x) !== storySlug(s)).slice(0, 3);
 
   <!-- FOOTER -->
   <footer class="footer">
-    <div class="wrap footer-inner">
+    <div class="container footer-inner">
       <span class="wordmark small">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
       <span class="footer-mono">WordPress migration &amp; rescue · escapefromwp.com</span>
       <span class="footer-mono dim">© {new Date().getFullYear()} — Your site deserves better.</span>
