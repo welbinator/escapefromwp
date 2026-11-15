@@ -258,8 +258,10 @@ const startsWith = (path: string) => url.startsWith(base + path);
   function applyCollapse(collapsed) {
     if (collapsed) {
       sidebar && sidebar.classList.add("collapsed");
+      document.documentElement.style.setProperty("--sidebar-w", "71px");
     } else {
       sidebar && sidebar.classList.remove("collapsed");
+      document.documentElement.style.setProperty("--sidebar-w", "260px");
     }
   }
 

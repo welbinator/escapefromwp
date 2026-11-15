@@ -427,6 +427,14 @@ const outside = [
 
     /* FOOTER */
     .footer { padding: 40px 0; }
+
+    @media (min-width: 769px) {
+      .footer {
+        width: calc(100% - var(--sidebar-w));
+        margin-left: auto;
+        transition: width 0.4s, transform 0.25s;
+      }
+    }
     .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
     .footer-mono { font-family: var(--font-mono); font-size: 12px; color: var(--slate); letter-spacing: 0.04em; }
     .footer-mono.dim { color: var(--slate-dim); }
