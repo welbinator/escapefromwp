@@ -141,7 +141,10 @@ const startsWith = (path: string) => url.startsWith(base + path);
     text-decoration: none;
     white-space: nowrap;
     transition: color 0.15s, background 0.15s;
+    overflow: hidden;
   }
+  .sb-link svg { flex-shrink: 0; }
+  .sb-link span { transition: opacity 0.3s ease, max-width 0.3s ease; max-width: 200px; }
   .sb-link:hover { color: var(--chalk); background: rgba(255,255,255,0.04); }
   .sb-link.active { color: var(--term-green); background: rgba(78,227,107,0.07); }
 
@@ -203,7 +206,6 @@ const startsWith = (path: string) => url.startsWith(base + path);
   /* Collapsed: icons stay put, text fades out */
   .sidebar.collapsed .sb-link {
     padding: 10px 20px;
-    overflow: visible;
     position: relative;
   }
   .sidebar.collapsed .sb-link span {
