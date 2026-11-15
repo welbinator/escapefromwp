@@ -30,6 +30,7 @@
   --section-maxw: 1200px;
   --radius: 4px;
   --gap-section: 120px;
+  --sidebar-w: 260px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
