@@ -22,12 +22,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 12
-      - run: pnpm install --frozen-lockfile
+      - run: npm ci
       - name: Build (staging base path)
-        run: pnpm run build
+        run: npm run build
         env:
           PAGES_BASE: /escapefromwp/
       - uses: actions/upload-pages-artifact@v3
