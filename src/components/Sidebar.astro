@@ -190,14 +190,14 @@ const startsWith = (path: string) => url.startsWith(base + path);
   .sb-name-short { display: none; }
 
   /* === Collapsed === */
-  .sidebar.collapsed { width: 55px; }
+  .sidebar.collapsed { width: 180px; }
   .sidebar.collapsed .sb-nav { visibility: visible; opacity: 1; }
   .sidebar.collapsed .sb-version { opacity: 0; }
   .sidebar.collapsed .sb-logo { justify-content: flex-start; }
   .sidebar.collapsed .sb-name-full { display: none; }
   .sidebar.collapsed .sb-name-short { display: inline; }
   .sidebar.collapsed .sb-chevron { transform: scaleX(-1); }
-  .sidebar.collapsed .sb-section-label { font-size: 9px; border-top: 1px solid var(--steel); margin: 8px 12px 4px; padding-top: 8px; }
+  .sidebar.collapsed .sb-section-label { }
 
   /* Collapsed: icons stay put, text fades out */
   .sidebar.collapsed .sb-link {
@@ -256,10 +256,8 @@ const startsWith = (path: string) => url.startsWith(base + path);
   function applyCollapse(collapsed) {
     if (collapsed) {
       sidebar && sidebar.classList.add("collapsed");
-      document.documentElement.style.setProperty("--sidebar-w", "55px");
     } else {
       sidebar && sidebar.classList.remove("collapsed");
-      document.documentElement.style.setProperty("--sidebar-w", "260px");
     }
   }
 
