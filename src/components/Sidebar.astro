@@ -127,6 +127,7 @@ const startsWith = (path: string) => url.startsWith(base + path);
     color: var(--slate-dim);
     padding: 14px 20px 4px;
     white-space: nowrap;
+    transition: opacity 0.3s ease;
   }
 
   .sb-link {
@@ -190,14 +191,14 @@ const startsWith = (path: string) => url.startsWith(base + path);
   .sb-name-short { display: none; }
 
   /* === Collapsed === */
-  .sidebar.collapsed { width: 120px; }
+  .sidebar.collapsed { width: 55px; }
   .sidebar.collapsed .sb-nav { visibility: visible; opacity: 1; }
   .sidebar.collapsed .sb-version { opacity: 0; }
   .sidebar.collapsed .sb-logo { justify-content: flex-start; }
   .sidebar.collapsed .sb-name-full { display: none; }
   .sidebar.collapsed .sb-name-short { display: inline; }
   .sidebar.collapsed .sb-chevron { transform: scaleX(-1); }
-  .sidebar.collapsed .sb-section-label { }
+  .sidebar.collapsed .sb-section-label { opacity: 0; }
 
   /* Collapsed: icons stay put, text fades out */
   .sidebar.collapsed .sb-link {
