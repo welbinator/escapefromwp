@@ -190,7 +190,7 @@ const startsWith = (path: string) => url.startsWith(base + path);
   .sb-name-short { display: none; }
 
   /* === Collapsed === */
-  .sidebar.collapsed { width: 120px; }
+  .sidebar.collapsed { width: 55px; }
   .sidebar.collapsed .sb-nav { visibility: visible; opacity: 1; }
   .sidebar.collapsed .sb-version { opacity: 0; }
   .sidebar.collapsed .sb-logo { justify-content: flex-start; }
@@ -199,32 +199,17 @@ const startsWith = (path: string) => url.startsWith(base + path);
   .sidebar.collapsed .sb-chevron { transform: scaleX(-1); }
   .sidebar.collapsed .sb-section-label { font-size: 9px; border-top: 1px solid var(--steel); margin: 8px 12px 4px; padding-top: 8px; }
 
-  /* Collapsed: center icon, hide text, show tooltip on hover */
+  /* Collapsed: icons stay put, text fades out */
   .sidebar.collapsed .sb-link {
-    justify-content: center;
-    padding: 10px 0;
-    position: relative;
+    padding: 10px 20px;
     overflow: visible;
+    position: relative;
   }
   .sidebar.collapsed .sb-link span {
-    position: absolute;
-    left: calc(100% + 8px);
-    top: 50%;
-    transform: translateY(-50%);
-    background: var(--graphite);
-    color: var(--chalk);
-    font-size: 0.8rem;
-    white-space: nowrap;
-    padding: 5px 10px;
-    border-radius: var(--radius);
-    border: 1px solid var(--steel);
-    pointer-events: none;
     opacity: 0;
-    transition: opacity 0.15s;
-    z-index: 100;
-  }
-  .sidebar.collapsed .sb-link:hover span {
-    opacity: 1;
+    max-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
   }
 
   .sb-overlay {
@@ -271,11 +256,9 @@ const startsWith = (path: string) => url.startsWith(base + path);
   function applyCollapse(collapsed) {
     if (collapsed) {
       sidebar && sidebar.classList.add("collapsed");
-      if (mainContent) mainContent.style.paddingLeft = "120px";
-      document.documentElement.style.setProperty("--sidebar-w", "120px");
+      document.documentElement.style.setProperty("--sidebar-w", "55px");
     } else {
       sidebar && sidebar.classList.remove("collapsed");
-      if (mainContent) mainContent.style.paddingLeft = "260px";
       document.documentElement.style.setProperty("--sidebar-w", "260px");
     }
   }
