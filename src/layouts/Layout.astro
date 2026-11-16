@@ -169,3 +169,71 @@ const orgSchema = {
   .main-content { margin-left: 0; padding-top: 52px; }
 }
 </style>
+
+<script>
+  // Scroll snap: on wheel/touch, snap to the next or previous section
+  (function () {
+    const COOLDOWN = 900; // ms between snaps
+    let snapping = false;
+    let lastSnap = 0;
+
+    function getSections() {
+      return Array.from(document.querySelectorAll('section, footer'));
+    }
+
+    function getCurrentIndex(sections) {
+      const mid = window.scrollY + window.innerHeight / 2;
+      let closest = 0;
+      let closestDist = Infinity;
+      sections.forEach((el, i) => {
+        const rect = el.getBoundingClientRect();
+        const top = rect.top + window.scrollY;
+        const dist = Math.abs(top + rect.height / 2 - mid);
+        if (dist < closestDist) { closestDist = dist; closest = i; }
+      });
+      return closest;
+    }
+
+    function snapTo(el) {
+      snapping = true;
+      lastSnap = Date.now();
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top, behavior: 'smooth' });
+      setTimeout(() => { snapping = false; }, COOLDOWN);
+    }
+
+    window.addEventListener('wheel', function (e) {
+      // Only snap on desktop, skip if inside a scrollable child
+      if (window.innerWidth <= 768) return;
+      if (snapping || Date.now() - lastSnap < COOLDOWN) return;
+
+      const sections = getSections();
+      const idx = getCurrentIndex(sections);
+      const dir = e.deltaY > 0 ? 1 : -1;
+      const target = sections[Math.min(Math.max(idx + dir, 0), sections.length - 1)];
+      if (!target) return;
+
+      // Don't trap scroll if already at the boundary
+      if (dir === -1 && idx === 0 && window.scrollY <= 0) return;
+      if (dir === 1 && idx === sections.length - 1) return;
+
+      e.preventDefault();
+      snapTo(target);
+    }, { passive: false });
+
+    // Touch support
+    let touchStartY = 0;
+    window.addEventListener('touchstart', (e) => { touchStartY = e.touches[0].clientY; }, { passive: true });
+    window.addEventListener('touchend', (e) => {
+      if (window.innerWidth <= 768) return;
+      if (snapping || Date.now() - lastSnap < COOLDOWN) return;
+      const diff = touchStartY - e.changedTouches[0].clientY;
+      if (Math.abs(diff) < 30) return;
+      const sections = getSections();
+      const idx = getCurrentIndex(sections);
+      const dir = diff > 0 ? 1 : -1;
+      const target = sections[Math.min(Math.max(idx + dir, 0), sections.length - 1)];
+      if (target) snapTo(target);
+    }, { passive: true });
+  })();
+</script>
