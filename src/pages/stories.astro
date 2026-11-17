@@ -343,6 +343,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
         slug:      el.dataset.slug,
       });
       el.addEventListener("click", open);
+      el.addEventListener("touchend", e => { e.preventDefault(); open(); });
       el.addEventListener("keydown", e => {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); }
       });
