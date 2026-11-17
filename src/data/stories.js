@@ -12,6 +12,18 @@ export const STORY_TYPE_LABEL = {
 
 export const stories = [
   {
+    author:   "Lars Jansen",
+    handle:   "@oldstackjournal",
+    source:   "Twitter / X",
+    type:     "tweet",
+    url:      "https://x.com/oldstackjournal/status/2122014591416988019",
+    date:     "2026-11-15",
+    storySlug: "oldstackjournal-20261115",
+    quote:    "I've spent the last couple of evenings moving Old Stack Journal away from WordPress. 511 static pages rebuilt, redirects tested, RSS and sitemaps sorted, and plenty of stuff I'd forgotten WordPress was doing.",
+    summary:  "Lars Jansen migrated Old Stack Journal off WordPress, rebuilding 511 static pages, sorting redirects, RSS, and sitemaps, and rediscovering all the things WordPress had been quietly doing behind the scenes.",
+    context:  "511 pages. Redirects. RSS. Sitemaps. Lars documented the whole process of moving Old Stack Journal off WordPress to a static build.",
+  },
+  {
     author:   "WPTuts",
     handle:   "@WPTutz",
     source:   "Twitter / X",
