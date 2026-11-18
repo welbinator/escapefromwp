@@ -305,7 +305,10 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     const mLinks   = document.getElementById("story-modal-links");
     let lastFocused = null;
 
+    if (!overlay) console.warn("[stories] #story-modal not found in DOM — card clicks will navigate instead.");
+
     function openModal(d) {
+      if (!overlay) throw new Error("story-modal not found");
       lastFocused = document.activeElement;
       const initials = d.handle.replace("@","").slice(0,2).toUpperCase();
       mAvatar.textContent  = initials;
@@ -338,20 +341,31 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     });
 
     document.querySelectorAll("[data-story]").forEach(el => {
-      const open = () => openModal({
-        author:    el.dataset.author,
-        handle:    el.dataset.handle,
-        source:    el.dataset.source,
-        type:      el.dataset.type,
-        date:      el.dataset.date,
-        storyText: el.dataset.storyText,
-        url:       el.dataset.url,
-        slug:      el.dataset.slug,
-      });
+      const open = (e) => {
+        if (e && e.type === "touchend") e.preventDefault();
+        const slug = el.dataset.slug;
+        const url  = el.dataset.url;
+        try {
+          openModal({
+            author:    el.dataset.author,
+            handle:    el.dataset.handle || "",
+            source:    el.dataset.source || "",
+            type:      el.dataset.type   || "",
+            date:      el.dataset.date   || "",
+            storyText: el.dataset.storyText || "",
+            url,
+            slug,
+          });
+        } catch (err) {
+          // Modal failed — navigate directly
+          if (slug) window.location.href = slug;
+          else if (url) window.open(url, "_blank", "noopener");
+        }
+      };
       el.addEventListener("click", open);
-      el.addEventListener("touchend", e => { e.preventDefault(); open(); });
+      el.addEventListener("touchend", open);
       el.addEventListener("keydown", e => {
-        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); }
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(e); }
       });
     });
   </script>
