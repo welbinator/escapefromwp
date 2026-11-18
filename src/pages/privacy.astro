@@ -9,13 +9,16 @@ const updated = "October 23, 2026";
   description="How Escape From WP handles the information you give us: your email, the URL you submit, basic anti-abuse data, and the third-party services involved."
 >
 
-  <section class="container page-head">
-    <span class="eyebrow rise">Legal</span>
-    <h1 class="page-title rise">Privacy Policy</h1>
-    <p class="section-lead rise">Last updated: {updated}</p>
+  <section class="page-head">
+    <div class="container">
+      <span class="eyebrow rise">Legal</span>
+      <h1 class="page-title rise">Privacy Policy</h1>
+      <p class="section-lead rise">Last updated: {updated}</p>
+    </div>
   </section>
 
-  <section class="container legal">
+  <section class="legal-section">
+    <div class="container legal">
     <p>
       Escape From WP (<strong>escapefromwp.com</strong>) is a free tool that copies a public
       website you submit and rebuilds it as a self-contained EmDash or static site. This policy
@@ -90,6 +93,7 @@ const updated = "October 23, 2026";
     <p>
       If this policy changes, we'll update the date at the top of this page.
     </p>
+    </div>
   </section>
 
 </Layout>
@@ -97,7 +101,8 @@ const updated = "October 23, 2026";
 <style>
   .page-head { padding-top: 140px; padding-bottom: 24px; }
   .page-title { font-size: clamp(38px, 7vw, 72px); margin-bottom: 20px; line-height: 1.02; }
-  .legal { max-width: 760px; padding-bottom: 80px; }
+  .legal-section { padding-bottom: 80px; }
+  .legal { max-width: 760px; }
   .legal h2 { font-size: 20px; margin: 36px 0 10px; color: var(--chalk); }
   .legal p, .legal li { font-size: 16px; line-height: 1.7; color: var(--ash, #c7ccd1); }
   .legal ul { padding-left: 20px; margin: 0 0 8px; }
