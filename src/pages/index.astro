@@ -190,7 +190,8 @@ const outside = [
   <!-- FOOTER -->
   <footer class="footer breakout">
     <div class="container footer-inner">
-      <span class="wordmark small">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
+      <span class="wordmark small footer-logo-full">ESCAPE&nbsp;FROM&nbsp;<span class="wp">WP</span></span>
+      <span class="footer-logo-short"><span class="sb-bracket">[</span><s>WP</s><span class="sb-bracket">]</span></span>
       <span class="footer-mono">WordPress migration &amp; rescue · escapefromwp.com</span>
       <span class="footer-mono dim">© {new Date().getFullYear()} — Your site deserves better.</span>
       <a class="footer-mono dim footer-privacy" href="/privacy/">Privacy</a>
@@ -417,7 +418,14 @@ const outside = [
     .form-status.pending { color: var(--slate); }
 
     /* FOOTER */
-    .footer { padding: 40px 0; }
+    .footer { padding: 11px 0 18px; }
+    .footer-logo-short { display: none; font-family: var(--font-mono); font-size: 14px; color: var(--chalk); letter-spacing: 0.04em; }
+    .footer-logo-short s { text-decoration-color: var(--signal-red); }
+    .footer-logo-short .sb-bracket { color: var(--signal-red); }
+    @media (max-width: 768px) {
+      .footer-logo-full { display: none; }
+      .footer-logo-short { display: inline; }
+    }
 
     @media (min-width: 769px) {
       .footer {
