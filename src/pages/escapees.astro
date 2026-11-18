@@ -52,7 +52,8 @@ const monogram = (name) =>
 >
 
   <!-- PAGE HEADER -->
-  <section class="container page-head">
+  <section  class="page-head">
+    <div class="container">
     <span class="eyebrow danger rise">Client work</span>
     <h1 class="page-title rise">Real businesses, off WordPress.</h1>
     <p class="section-lead rise">
@@ -60,10 +61,12 @@ const monogram = (name) =>
       the general headache of running a business <em>and</em> being their own IT department.
       Click any card to read their story.
     </p>
+    </div>
   </section>
 
   <!-- MUGSHOT GRID -->
-  <section class="container">
+  <section >
+    <div class="container">
     <div class="mug-grid" id="mug-grid">
       {escapees.map((e) => (
         <article
@@ -99,10 +102,12 @@ const monogram = (name) =>
         </article>
       ))}
     </div>
+    </div>
   </section>
 
   <!-- SUBMIT YOUR OWN -->
-  <section class="container submit-section rise" id="report">
+  <section  class="submit-section rise" id="report">
+    <div class="container">
     <span class="eyebrow danger">Submit a site</span>
     <h2 class="section-title">Did you move a site off WordPress?</h2>
     <p class="section-lead">
@@ -154,10 +159,12 @@ const monogram = (name) =>
         <span class="form-status" id="form-status" role="status" aria-live="polite"></span>
       </div>
     </form>
+    </div>
   </section>
 
   <!-- CTA -->
-  <section class="container breakout-cta rise">
+  <section  class="breakout-cta rise">
+    <div class="container">
     <h2 class="section-title">Your site could be next.</h2>
     <p class="section-lead" style="max-width:48ch;margin:0 auto 28px;">
       Free assessment. No commitment. We'll tell you exactly what moving off WordPress
@@ -166,6 +173,7 @@ const monogram = (name) =>
     <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;">
       
       <a href={`${base}/#breakout`} class="btn btn-primary">▸ Get a free assessment</a>
+    </div>
     </div>
   </section>
 

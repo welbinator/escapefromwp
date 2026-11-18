@@ -60,7 +60,8 @@ const more = resources.filter((x) => getResourceSlug(x) !== getResourceSlug(r)).
 
   <!-- MORE RESOURCES -->
   {more.length > 0 && (
-    <section class="container more-section">
+    <section  class="more-section">
+      <div class="container">
       <h2 class="more-heading">More from the resources</h2>
       <div class="more-grid">
         {more.map((m) => (
@@ -71,6 +72,7 @@ const more = resources.filter((x) => getResourceSlug(x) !== getResourceSlug(r)).
             <span class="more-link">Read more ↗</span>
           </a>
         ))}
+      </div>
       </div>
     </section>
   )}
