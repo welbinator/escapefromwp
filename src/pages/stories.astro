@@ -353,7 +353,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
             source:    el.dataset.source || "",
             type:      el.dataset.type   || "",
             date:      el.dataset.date   || "",
-            storyText: el.dataset.storyText || "",
+            storyText: el.dataset.storyText || el.dataset.summary || "",
             url,
             slug,
           });
