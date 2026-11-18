@@ -410,6 +410,7 @@ const monogram = (name) =>
   </style>
 
   <script is:inline define:vars={{ base }}>
+  {  // block scope — prevents conflicts with other is:inline scripts (e.g. Sidebar)
     // --- nav toggle ---
     const navToggle = document.querySelector(".nav-toggle");
     const navMenu = document.getElementById("nav-menu");
@@ -568,5 +569,6 @@ const monogram = (name) =>
         submitBtn.textContent = "▸ Submit for review";
       }
     });
+  }  // end block scope
   </script>
 </Layout>

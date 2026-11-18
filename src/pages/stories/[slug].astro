@@ -72,7 +72,7 @@ const more = stories.filter((x) => storySlug(x) !== storySlug(s)).slice(0, 3);
 
     <!-- story body -->
     <div class="post-body">
-      <p class="post-story">{s.story}</p>
+      <p class="post-story">{s.story || s.summary}</p>
     </div>
 
     {(s.likes != null || s.shares != null) && (
