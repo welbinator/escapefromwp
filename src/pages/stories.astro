@@ -276,6 +276,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
   </style>
 
   <script is:inline>
+  {  // block scope — prevents conflicts with other is:inline scripts (e.g. Sidebar)
     // nav toggle
     const navToggle = document.querySelector(".nav-toggle");
     const navMenu   = document.getElementById("nav-menu");
@@ -368,5 +369,6 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(e); }
       });
     });
+  }  // end block scope
   </script>
 </Layout>
