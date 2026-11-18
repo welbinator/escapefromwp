@@ -94,7 +94,8 @@ const more = stories.filter((x) => storySlug(x) !== storySlug(s)).slice(0, 3);
 
   <!-- MORE STORIES -->
   {more.length > 0 && (
-    <section class="container more-section">
+    <section  class="more-section">
+      <div class="container">
       <h2 class="more-head">More stories</h2>
       <div class="more-grid">
         {more.map((m) => (
@@ -106,11 +107,13 @@ const more = stories.filter((x) => storySlug(x) !== storySlug(s)).slice(0, 3);
           </a>
         ))}
       </div>
+      </div>
     </section>
   )}
 
   <!-- CTA -->
-  <section class="container breakout-cta rise">
+  <section  class="breakout-cta rise">
+    <div class="container">
     <h2 class="section-title">Your story could be next.</h2>
     <p class="section-lead" style="max-width:520px;margin:0 auto 28px;">
       See what your site looks like off WordPress in about 2 minutes — free, no commitment.
@@ -118,6 +121,7 @@ const more = stories.filter((x) => storySlug(x) !== storySlug(s)).slice(0, 3);
     <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
       
       <a href={`${base}/#breakout`} class="btn btn-ghost">Get a free assessment</a>
+    </div>
     </div>
   </section>
 

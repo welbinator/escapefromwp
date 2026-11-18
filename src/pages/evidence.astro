@@ -9,7 +9,8 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 >
 
   <!-- PAGE HEADER -->
-  <section class="container page-head">
+  <section  class="page-head">
+    <div class="container">
     <span class="eyebrow danger rise">The evidence</span>
     <h1 class="page-title rise">Why people leave WordPress.</h1>
     <p class="section-lead rise">
@@ -17,10 +18,12 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
       about WordPress hacks, plugin vulnerabilities, slow load times, and maintenance burnout.
       If you've been wondering whether leaving WordPress is the right call, start here.
     </p>
+    </div>
   </section>
 
   <!-- EVIDENCE GRID -->
-  <section class="container">
+  <section >
+    <div class="container">
     <div class="ev-grid">
       {evidence.map((e, i) => (
         <article
@@ -65,10 +68,12 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
         </article>
       ))}
     </div>
+    </div>
   </section>
 
   <!-- CTA -->
-  <section class="container breakout-cta rise">
+  <section  class="breakout-cta rise">
+    <div class="container">
     <h2 class="section-title">Seen enough?</h2>
     <p class="section-lead" style="max-width:48ch;margin:0 auto 28px;">
       See what your site looks like off WordPress — free, no commitment. Or get a free assessment and we'll give you a plain-English plan.
@@ -76,6 +81,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;">
       
       <a href={`${base}/#breakout`} class="btn btn-primary">▸ Get a free assessment</a>
+    </div>
     </div>
   </section>
 
