@@ -12,6 +12,18 @@ export const STORY_TYPE_LABEL = {
 
 export const stories = [
   {
+    author:   "Ryan James",
+    handle:   "@ryanjames96",
+    source:   "LinkedIn",
+    type:     "post",
+    url:      "https://www.linkedin.com/posts/ryanjames96_our-core-at-seahawk-has-always-been-wordpress-share-7529627630040678400-hNiE/",
+    date:     "2026-11-20",
+    storySlug: "ryanjames-seahawk-20261120",
+    quote:    "Our core at Seahawk has always been WordPress, and it still is... Astro and EmDash changed that. I've been watching them closely.",
+    summary:  "Ryan James runs Seahawk, a WordPress agency that has built its entire business on WordPress. He's not leaving WordPress behind, but he's publicly betting on Astro and EmDash for the next wave of the web. Astro weekly downloads grew from 360k to 900k in 2025. Monthly downloads nearly 6x'd in 2026. When a WordPress agency starts building a practice around the alternative, that says something.",
+    context:  "A WordPress-native agency publicly building an Astro and EmDash practice because they see where the market is heading. Astro downloads grew nearly 6x in 2026.",
+  },
+  {
     author:   "Lars Jansen",
     handle:   "@oldstackjournal",
     source:   "Twitter / X",
