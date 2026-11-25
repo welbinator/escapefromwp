@@ -12,6 +12,18 @@ export const STORY_TYPE_LABEL = {
 
 export const stories = [
   {
+    author:   "Travis Street",
+    handle:   "@travismakes",
+    source:   "Twitter / X",
+    type:     "tweet",
+    url:      "https://x.com/travismakes/status/2125166006750355833",
+    date:     "2026-11-24",
+    storySlug: "travismakes-wordpress-20261124",
+    quote:    "Completely retiring / rebuilding all my WordPress websites. No more plugin updates. No more security fixes. What's the point when everything lives as an artefact in Claude Code?",
+    summary:  "Travis Street is a product and community builder and Claude Ambassador. He's retiring and rebuilding every WordPress site he owns - done with the plugin update treadmill, done with security patching. His reasoning: when you can build anything with a few prompts and self-host it, WordPress's maintenance overhead stops making sense. The good parts of WordPress can still exist. The busywork doesn't have to.",
+    context:  "A Claude Ambassador publicly walking away from all his WordPress sites. Not a developer frustrated with the tech stack - a product builder who just did the math on maintenance vs. value.",
+  },
+  {
     author:   "Ryan James",
     handle:   "@ryanjames96",
     source:   "LinkedIn",
